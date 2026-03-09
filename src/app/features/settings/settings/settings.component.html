@@ -1,0 +1,51 @@
+<div class="settings-page">
+  <div class="settings-header">
+    <mat-icon class="settings-header-icon">tune</mat-icon>
+    <div>
+      <h1 class="settings-title">Settings</h1>
+      <p class="settings-sub">Manage your account preferences</p>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="card-section">
+      <h2 class="section-title">Profile</h2>
+      <div class="profile-row">
+        <div class="profile-avatar">
+          {{ (currentUser?.displayName?.[0] ?? "?").toUpperCase() }}
+        </div>
+        <div class="profile-meta">
+          <div class="profile-name">{{ currentUser?.displayName }}</div>
+          <div class="profile-email">{{ currentUser?.email }}</div>
+          <div class="profile-role-badge">{{ currentUser?.role }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-divider"></div>
+
+    <div class="card-section">
+      <h2 class="section-title">Account Info</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Role</span>
+          <span class="info-value">{{ currentUser?.role | titlecase }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Team ID</span>
+          <span class="info-value mono">{{ currentUser?.teamId || "—" }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Company ID</span>
+          <span class="info-value mono">{{
+            currentUser?.companyId || "—"
+          }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">UID</span>
+          <span class="info-value mono">{{ currentUser?.uid }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

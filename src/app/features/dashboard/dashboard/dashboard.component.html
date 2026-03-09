@@ -1,0 +1,150 @@
+<div class="dashboard">
+  <!-- Hero header -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="avatar">{{ initials }}</div>
+      <div>
+        <h1 class="greeting">
+          Good {{ timeOfDay }}, {{ firstName }} <span class="wave">👋</span>
+        </h1>
+        <p class="today-date">{{ today }}</p>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <a class="btn-primary" routerLink="/calendar">
+        <mat-icon>calendar_month</mat-icon>
+        <span>Calendar</span>
+      </a>
+      <a
+        class="btn-secondary"
+        routerLink="/vacation/approve"
+        *ngIf="canApprove"
+      >
+        <mat-icon>approval</mat-icon>
+        <span>Requests</span>
+        <span class="badge" *ngIf="pendingCount() > 0">{{
+          pendingCount()
+        }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-working">
+      <div class="kpi-icon"><mat-icon>laptop_mac</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ working }}</div>
+        <div class="kpi-label">Working</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div class="kpi-card kpi-vacation">
+      <div class="kpi-icon"><mat-icon>beach_access</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ onVacation }}</div>
+        <div class="kpi-label">On Vacation</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div class="kpi-card kpi-activity">
+      <div class="kpi-icon"><mat-icon>work_outline</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ onActivity }}</div>
+        <div class="kpi-label">Activity</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div class="kpi-card kpi-refinement">
+      <div class="kpi-icon"><mat-icon>assignment_turned_in</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ onRefinement }}</div>
+        <div class="kpi-label">Refinement</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div class="kpi-card kpi-planning">
+      <div class="kpi-icon"><mat-icon>event_note</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ onPlanning }}</div>
+        <div class="kpi-label">Planning</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div class="kpi-card kpi-sprint-review">
+      <div class="kpi-icon"><mat-icon>rate_review</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ onSprintReview }}</div>
+        <div class="kpi-label">Sprint Review</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+
+    <div
+      class="kpi-card kpi-pending"
+      *ngIf="canApprove"
+      routerLink="/vacation/approve"
+      style="cursor: pointer"
+    >
+      <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ pendingCount() }}</div>
+        <div class="kpi-label">Pending</div>
+      </div>
+      <div class="kpi-glow"></div>
+    </div>
+  </div>
+
+  <!-- Team section -->
+  <div class="section-header">
+    <mat-icon>groups</mat-icon>
+    <h2>Team — Today</h2>
+    <span class="member-count">{{ todaySummary().length }} members</span>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading team data…</span>
+  </div>
+
+  <div *ngIf="!loading()" class="team-grid">
+    <div
+      *ngFor="let entry of todaySummary()"
+      class="member-card"
+      [ngClass]="getStatusClass(entry)"
+    >
+      <div class="member-avatar">{{ getInitials(entry.user.displayName) }}</div>
+      <div class="member-info">
+        <div class="member-name">{{ entry.user.displayName }}</div>
+        <div class="member-role">{{ entry.user.role | titlecase }}</div>
+      </div>
+      <div class="member-status">
+        <span class="status-pill" [ngClass]="getStatusClass(entry)">
+          <mat-icon class="pill-icon">{{ getStatusIcon(entry) }}</mat-icon>
+          {{ getStatusLabel(entry) }}
+        </span>
+        <span *ngIf="entry.event?.note" class="note">{{
+          entry.event!.note
+        }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="todaySummary().length === 0 && hasTeam" class="empty-state">
+      <mat-icon>group_off</mat-icon>
+      <p>No team members found</p>
+    </div>
+
+    <div *ngIf="!hasTeam" class="empty-state">
+      <mat-icon>groups</mat-icon>
+      <p>
+        You are not assigned to a team yet.<br />Ask your admin to add you to a
+        team.
+      </p>
+    </div>
+  </div>
+</div>

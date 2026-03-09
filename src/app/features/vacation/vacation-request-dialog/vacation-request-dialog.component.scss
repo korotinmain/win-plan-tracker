@@ -1,0 +1,49 @@
+.vac-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 340px;
+  padding-top: 8px;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.days-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #e3f2fd;
+  color: #0d47a1;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+  span {
+    color: #546e7a;
+    font-size: 0.8rem;
+  }
+}
+
+.error-message {
+  color: #c62828;
+  background: #ffebee;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  mat-icon {
+    color: #1976d2;
+  }
+}

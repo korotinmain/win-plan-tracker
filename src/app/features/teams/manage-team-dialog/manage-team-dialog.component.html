@@ -1,0 +1,127 @@
+<div class="mtd-wrap">
+  <!-- Header -->
+  <div class="mtd-header">
+    <div class="mtd-header-icon">
+      <mat-icon>{{ data.team.icon || "groups" }}</mat-icon>
+    </div>
+    <div class="mtd-header-text">
+      <h2 class="mtd-title">{{ data.team.name }}</h2>
+      <p class="mtd-sub">
+        {{ team().memberIds.length }} member{{
+          team().memberIds.length === 1 ? "" : "s"
+        }}
+      </p>
+    </div>
+    <button class="mtd-close" (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="mtd-loading">
+    <mat-spinner diameter="32"></mat-spinner>
+    <span>Loading members…</span>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading()" class="mtd-body">
+    <!-- Current Members -->
+    <div class="mtd-section-header">
+      <span class="mtd-section-icon"><mat-icon>people</mat-icon></span>
+      <span class="mtd-section-title">Current Members</span>
+      <span class="mtd-count-badge">{{ members().length }}</span>
+    </div>
+
+    <div *ngIf="members().length === 0" class="mtd-empty">
+      <mat-icon>person_off</mat-icon>
+      <span>No members yet. Add people below.</span>
+    </div>
+
+    <div class="mtd-list" *ngIf="members().length > 0">
+      <div class="mtd-row" *ngFor="let m of members()">
+        <div class="mtd-avatar">{{ initials(m.displayName) }}</div>
+        <div class="mtd-user-info">
+          <span class="mtd-name">{{ m.displayName }}</span>
+          <span class="mtd-email">{{ m.email }}</span>
+        </div>
+        <span
+          class="mtd-role"
+          [style.background]="roleBg(m.role)"
+          [style.color]="roleColor(m.role)"
+          >{{ m.role }}</span
+        >
+        <button
+          class="mtd-btn-icon mtd-btn-remove"
+          (click)="remove(m)"
+          [disabled]="!!saving()"
+          matTooltip="Remove from team"
+          type="button"
+        >
+          <mat-spinner *ngIf="saving() === m.uid" diameter="16"></mat-spinner>
+          <mat-icon *ngIf="saving() !== m.uid">person_remove</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider class="mtd-divider"></mat-divider>
+
+    <!-- Add People -->
+    <div class="mtd-section-header">
+      <span class="mtd-section-icon"><mat-icon>person_add</mat-icon></span>
+      <span class="mtd-section-title">Add People</span>
+    </div>
+
+    <div class="mtd-search-wrap">
+      <mat-icon class="mtd-search-icon">search</mat-icon>
+      <input
+        class="mtd-search-input"
+        type="text"
+        placeholder="Search by name or email…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </div>
+
+    <div *ngIf="filteredUsers().length === 0" class="mtd-empty">
+      <mat-icon>search_off</mat-icon>
+      <span>{{
+        search()
+          ? "No matching users found"
+          : "All company users are already in this team"
+      }}</span>
+    </div>
+
+    <div class="mtd-list mtd-add-list" *ngIf="filteredUsers().length > 0">
+      <div class="mtd-row" *ngFor="let u of filteredUsers()">
+        <div class="mtd-avatar mtd-avatar-muted">
+          {{ initials(u.displayName) }}
+        </div>
+        <div class="mtd-user-info">
+          <span class="mtd-name">{{ u.displayName }}</span>
+          <span class="mtd-email">{{ u.email }}</span>
+        </div>
+        <span
+          class="mtd-role"
+          [style.background]="roleBg(u.role)"
+          [style.color]="roleColor(u.role)"
+          >{{ u.role }}</span
+        >
+        <button
+          class="mtd-btn-add"
+          (click)="add(u)"
+          [disabled]="!!saving()"
+          type="button"
+        >
+          <mat-spinner *ngIf="saving() === u.uid" diameter="14"></mat-spinner>
+          <mat-icon *ngIf="saving() !== u.uid">add</mat-icon>
+          <span *ngIf="saving() !== u.uid">Add</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="mtd-footer">
+    <button class="btn-done" (click)="close()" type="button">Done</button>
+  </div>
+</div>

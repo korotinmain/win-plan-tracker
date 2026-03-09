@@ -1,0 +1,72 @@
+<h2 mat-dialog-title><mat-icon>beach_access</mat-icon> Request Vacation</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="vac-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Start Date</mat-label>
+      <input
+        matInput
+        formControlName="startDate"
+        [matDatepicker]="startPicker"
+        [min]="minDate"
+      />
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="startPicker"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #startPicker></mat-datepicker>
+      <mat-error>Start date is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>End Date</mat-label>
+      <input
+        matInput
+        formControlName="endDate"
+        [matDatepicker]="endPicker"
+        [min]="form.value.startDate ?? minDate"
+      />
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="endPicker"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #endPicker></mat-datepicker>
+      <mat-error>End date is required</mat-error>
+    </mat-form-field>
+
+    <div class="days-badge" *ngIf="workingDays() > 0">
+      <mat-icon>calendar_today</mat-icon>
+      <strong
+        >{{ workingDays() }} working day{{
+          workingDays() !== 1 ? "s" : ""
+        }}</strong
+      >
+      <span>(weekends excluded)</span>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Note (optional)</mat-label>
+      <textarea
+        matInput
+        formControlName="note"
+        rows="3"
+        placeholder="e.g. Family trip, medical leave..."
+      ></textarea>
+    </mat-form-field>
+
+    <div *ngIf="error()" class="error-message">{{ error() }}</div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="loading()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="loading() || form.invalid || workingDays() === 0"
+  >
+    <mat-spinner *ngIf="loading()" diameter="18"></mat-spinner>
+    <span *ngIf="!loading()">Submit Request</span>
+  </button>
+</mat-dialog-actions>

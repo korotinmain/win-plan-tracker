@@ -1,0 +1,55 @@
+.holidays-page {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  mat-icon {
+    color: #1976d2;
+  }
+}
+.add-card {
+  border-radius: 10px !important;
+  margin-bottom: 20px;
+}
+.add-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  mat-form-field {
+    flex: 1;
+    min-width: 180px;
+  }
+  mat-checkbox {
+    margin-bottom: 20px;
+  }
+  button {
+    margin-bottom: 20px;
+  }
+}
+.table-card {
+  border-radius: 10px !important;
+}
+.holidays-table {
+  width: 100%;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  color: #aaa;
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}

@@ -1,0 +1,513 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// ── Page ──────────────────────────────────────
+.cal-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  gap: 16px;
+  background: #f8fafc;
+  font-family: "Inter", "Roboto", sans-serif;
+  box-sizing: border-box;
+}
+
+// ── Head card ─────────────────────────────────
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  flex-shrink: 0;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  padding: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.month-label {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 170px;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+// ── Legend ────────────────────────────────────
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+
+.legend-entry {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.ld-activity {
+    background: #3b82f6;
+  }
+  &.ld-refinement {
+    background: #f59e0b;
+  }
+  &.ld-planning {
+    background: #10b981;
+  }
+  &.ld-sprint-review {
+    background: #f97316;
+  }
+  &.ld-vacation {
+    background: #8b5cf6;
+  }
+  &.ld-vacation-pending {
+    background: #c084fc;
+    box-shadow: 0 0 0 2px #e9d5ff;
+  }
+  &.ld-holiday {
+    background: #ef4444;
+  }
+  &.ld-weekend {
+    background: #94a3b8;
+  }
+}
+
+.legend-txt {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+// ── Table wrap ────────────────────────────────
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+  background: #fff;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+// ── Table ─────────────────────────────────────
+.cal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+// ── Header ────────────────────────────────────
+.cal-table thead tr {
+  background: #0f172a;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cal-table th {
+  padding: 10px 10px;
+  text-align: left;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.th-wk {
+  width: 52px;
+  text-align: center;
+}
+.th-date {
+  min-width: 170px;
+}
+.th-member {
+  min-width: 148px;
+  text-align: center;
+}
+
+.member-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.member-initials {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-name-short {
+  font-size: 0.63rem;
+  color: #94a3b8;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+// ── Body rows ─────────────────────────────────
+.cal-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+  &:hover {
+    background: #fafbfc;
+  }
+}
+
+.row-weekend {
+  background: #f8fffe;
+  &:hover {
+    background: #f0fdf4;
+  }
+}
+
+.row-holiday {
+  background: #fffbf5;
+  &:hover {
+    background: #fff7ed;
+  }
+}
+
+// ── Week cell ─────────────────────────────────
+.td-wk {
+  text-align: center;
+  vertical-align: middle;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 0 8px;
+}
+
+.wk-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+// ── Date cell ─────────────────────────────────
+.td-date {
+  padding: 10px 14px;
+  border-right: 1px solid #e2e8f0;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &.is-weekend .date-display {
+    color: #16a34a;
+  }
+  &.is-holiday .date-display {
+    color: #ea580c;
+  }
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+}
+
+.date-dow {
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.date-num {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: inherit;
+  letter-spacing: -0.01em;
+}
+
+.hol-icon {
+  font-size: 13px !important;
+  width: 13px !important;
+  height: 13px !important;
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+// ── Event cells ───────────────────────────────
+.td-cell {
+  padding: 8px 6px;
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid #f1f5f9;
+  min-width: 148px;
+  transition: background 0.1s;
+
+  &:last-child {
+    border-right: none;
+  }
+  &.is-clickable {
+    cursor: pointer;
+  }
+}
+
+.cell-trigger {
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+
+// ── Cell pill ─────────────────────────────────
+.cell-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 72px;
+  line-height: 1.4;
+
+  &.empty {
+    color: #cbd5e1;
+    font-weight: 400;
+    background: transparent;
+  }
+}
+
+// ── Cell state colors ─────────────────────────
+.cell-workday {
+  background: transparent;
+}
+.cell-weekend {
+  background: #f0fdf4;
+}
+.cell-holiday {
+  background: #fff7ed;
+}
+
+.cell-activity {
+  background: #eff6ff;
+  .cell-pill {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+}
+.cell-refinement {
+  background: #fffbeb;
+  .cell-pill {
+    background: #fef3c7;
+    color: #b45309;
+  }
+}
+.cell-planning {
+  background: #f0fdf4;
+  .cell-pill {
+    background: #d1fae5;
+    color: #065f46;
+  }
+}
+.cell-sprint-review {
+  background: #fff7ed;
+  .cell-pill {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+}
+.cell-vacation {
+  background: #f5f3ff;
+  .cell-pill {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+}
+.cell-vacation-pending {
+  background: repeating-linear-gradient(
+    45deg,
+    #f5f3ff,
+    #f5f3ff 5px,
+    #ede9fe 5px,
+    #ede9fe 10px
+  );
+  .cell-pill {
+    background: #ede9fe;
+    color: #7c3aed;
+    border: 1px dashed #a78bfa;
+  }
+}
+
+// ── Context menu dots ─────────────────────────
+.menu-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+  vertical-align: middle;
+
+  &.md-activity {
+    background: #3b82f6;
+  }
+  &.md-refinement {
+    background: #f59e0b;
+  }
+  &.md-planning {
+    background: #10b981;
+  }
+  &.md-sprint-review {
+    background: #f97316;
+  }
+}
+
+// ── Sprint separator ──────────────────────────
+.sprint-sep-row {
+  td {
+    border: none;
+    padding: 0;
+    background: transparent;
+  }
+}
+
+.sprint-sep-cell {
+  padding: 16px 14px 6px !important;
+}
+
+.sprint-sep-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.sprint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.sprint-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: #c4b5fd;
+}
+
+.sprint-range {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: -0.01em;
+}
+
+// ── Loading ───────────────────────────────────
+.loading-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

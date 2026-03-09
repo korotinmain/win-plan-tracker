@@ -1,0 +1,62 @@
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  padding: 16px;
+}
+.register-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1565c0;
+  mat-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  mat-form-field {
+    width: 100%;
+  }
+}
+.submit-btn {
+  height: 44px;
+  font-size: 1rem;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.error-message {
+  color: #c62828;
+  font-size: 0.875rem;
+  background: #ffebee;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+.login-link {
+  font-size: 0.875rem;
+  color: #666;
+  padding: 8px 16px;
+  a {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+  }
+}

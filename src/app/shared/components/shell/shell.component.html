@@ -1,0 +1,121 @@
+<div class="shell-wrapper">
+  <!-- ── Sidebar ──────────────────────────────── -->
+  <nav class="sidebar" [class.collapsed]="!sidenavOpen()">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <mat-icon>insights</mat-icon>
+      </div>
+      <div class="logo-wordmark" *ngIf="sidenavOpen()">
+        <span class="logo-name">WinPlan</span>
+        <span class="logo-tagline">Tracker</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-group">
+        <span class="nav-group-label" *ngIf="sidenavOpen()">Workspace</span>
+        <ng-container *ngFor="let item of workspaceNav">
+          <a
+            *ngIf="isVisible(item)"
+            [routerLink]="item.route"
+            routerLinkActive="is-active"
+            class="nav-link"
+            [title]="!sidenavOpen() ? item.label : ''"
+          >
+            <span class="nav-icon-wrap">
+              <mat-icon>{{ item.icon }}</mat-icon>
+            </span>
+            <span class="nav-label-text" *ngIf="sidenavOpen()">{{
+              item.label
+            }}</span>
+          </a>
+        </ng-container>
+      </div>
+
+      <div class="nav-group">
+        <span class="nav-group-label" *ngIf="sidenavOpen()">Account</span>
+        <ng-container *ngFor="let item of accountNav">
+          <a
+            *ngIf="isVisible(item)"
+            [routerLink]="item.route"
+            routerLinkActive="is-active"
+            class="nav-link"
+            [title]="!sidenavOpen() ? item.label : ''"
+          >
+            <span class="nav-icon-wrap">
+              <mat-icon>{{ item.icon }}</mat-icon>
+            </span>
+            <span class="nav-label-text" *ngIf="sidenavOpen()">{{
+              item.label
+            }}</span>
+          </a>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card" [matMenuTriggerFor]="userMenu">
+        <div class="user-avatar-box">
+          {{ (currentUser?.displayName?.[0] ?? "?").toUpperCase() }}
+        </div>
+        <div class="user-meta" *ngIf="sidenavOpen()">
+          <span class="user-name">{{ currentUser?.displayName }}</span>
+          <span class="user-role">{{ currentUser?.role }}</span>
+        </div>
+        <mat-icon class="user-chevron" *ngIf="sidenavOpen()"
+          >unfold_more</mat-icon
+        >
+      </div>
+      <mat-menu #userMenu="matMenu" yPosition="above">
+        <button mat-menu-item routerLink="/settings">
+          <mat-icon>manage_accounts</mat-icon> Settings
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon> Sign Out
+        </button>
+      </mat-menu>
+    </div>
+  </nav>
+
+  <!-- ── Main area ─────────────────────────────── -->
+  <div class="main-area">
+    <header class="top-header">
+      <button
+        class="menu-toggle"
+        (click)="toggleSidenav()"
+        aria-label="Toggle sidebar"
+      >
+        <mat-icon>{{ sidenavOpen() ? "menu_open" : "menu" }}</mat-icon>
+      </button>
+
+      <span class="header-title">{{ pageTitle() }}</span>
+
+      <div class="header-end">
+        <div class="date-pill">
+          <mat-icon>today</mat-icon>
+          <span>{{ today }}</span>
+        </div>
+        <button class="icon-btn">
+          <mat-icon>notifications_none</mat-icon>
+        </button>
+        <div class="header-avatar" [matMenuTriggerFor]="headerMenu">
+          {{ (currentUser?.displayName?.[0] ?? "?").toUpperCase() }}
+        </div>
+        <mat-menu #headerMenu="matMenu" yPosition="below" xPosition="before">
+          <button mat-menu-item routerLink="/settings">
+            <mat-icon>manage_accounts</mat-icon> Settings
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon> Sign Out
+          </button>
+        </mat-menu>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,57 @@
+<div class="ctd-wrap">
+  <!-- Header -->
+  <div class="ctd-header">
+    <div class="ctd-header-icon">
+      <mat-icon>{{ selectedIcon() }}</mat-icon>
+    </div>
+    <div class="ctd-header-text">
+      <h2 class="ctd-title">New Team</h2>
+      <p class="ctd-sub">Name your team and pick an icon</p>
+    </div>
+    <button class="ctd-close" (click)="dismiss()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="ctd-body">
+    <label class="ctd-label">Team Name</label>
+    <input
+      class="ctd-input"
+      type="text"
+      placeholder="e.g. Frontend Squad"
+      [(ngModel)]="name"
+      maxlength="40"
+      (keyup.enter)="submit()"
+      autofocus
+    />
+
+    <label class="ctd-label" style="margin-top: 22px">Icon</label>
+    <div class="ctd-icon-grid">
+      <button
+        *ngFor="let icon of icons"
+        class="icon-tile"
+        [class.selected]="selectedIcon() === icon"
+        (click)="select(icon)"
+        type="button"
+        matRipple
+      >
+        <mat-icon>{{ icon }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="ctd-footer">
+    <button class="btn-cancel" (click)="dismiss()" type="button">Cancel</button>
+    <button
+      class="btn-submit"
+      (click)="submit()"
+      [disabled]="!name.trim()"
+      type="button"
+    >
+      <mat-icon>add</mat-icon>
+      Create Team
+    </button>
+  </div>
+</div>

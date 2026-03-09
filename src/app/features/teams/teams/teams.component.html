@@ -1,0 +1,72 @@
+<div class="teams-page">
+  <!-- Hero banner -->
+  <div class="teams-hero">
+    <div class="hero-content">
+      <div class="hero-icon-wrap">
+        <mat-icon>groups</mat-icon>
+      </div>
+      <div class="hero-text">
+        <h1 class="hero-title">Teams</h1>
+        <p class="hero-sub">Organize people into teams across your company</p>
+      </div>
+    </div>
+    <button class="btn-create" (click)="openCreateTeam()">
+      <mat-icon>add</mat-icon>
+      New Team
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="teams-body">
+    <!-- Loading -->
+    <div *ngIf="loading()" class="loading-box">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading() && teams().length === 0" class="empty-state">
+      <div class="empty-icon">
+        <mat-icon>diversity_3</mat-icon>
+      </div>
+      <h3>No teams yet</h3>
+      <p>Create your first team to start organizing people.</p>
+      <button class="btn-create" (click)="openCreateTeam()">
+        <mat-icon>add</mat-icon>
+        Create Team
+      </button>
+    </div>
+
+    <!-- Teams grid -->
+    <div class="teams-grid" *ngIf="!loading() && teams().length > 0">
+      <div class="team-card" *ngFor="let team of teams(); let i = index">
+        <div class="team-card-top" [style.background]="gradient(i)">
+          <div class="team-card-glow" [style.background]="gradient(i)"></div>
+          <div class="team-top-inner">
+            <div class="team-icon-bubble">
+              <mat-icon>{{ team.icon || "groups" }}</mat-icon>
+            </div>
+            <div class="team-top-meta">
+              <h3 class="team-name">{{ team.name }}</h3>
+              <span class="team-member-count">
+                <mat-icon>person</mat-icon>
+                {{ team.memberIds.length }}
+                member{{ team.memberIds.length === 1 ? "" : "s" }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="team-card-bottom">
+          <div class="team-id-chip">
+            <mat-icon>tag</mat-icon>
+            {{ team.id.slice(0, 8) }}
+          </div>
+          <button class="btn-manage" (click)="openManageTeam(team)">
+            <mat-icon>manage_accounts</mat-icon>
+            Manage
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

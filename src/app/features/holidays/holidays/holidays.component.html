@@ -1,0 +1,93 @@
+<div class="holidays-page">
+  <h2 class="page-title">
+    <mat-icon>event_available</mat-icon> Public Holidays
+  </h2>
+
+  <!-- Add form -->
+  <mat-card class="add-card">
+    <mat-card-header>
+      <mat-card-title>Add Holiday</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onAdd()" class="add-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Holiday Name</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            placeholder="e.g. Christmas Day"
+          />
+          <mat-error>Name is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date</mat-label>
+          <input matInput formControlName="date" [matDatepicker]="picker" />
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-error>Date is required</mat-error>
+        </mat-form-field>
+
+        <mat-checkbox formControlName="recurring">Repeat yearly</mat-checkbox>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="form.invalid"
+        >
+          <mat-icon>add</mat-icon> Add Holiday
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Holidays table -->
+  <mat-card class="table-card">
+    <table mat-table [dataSource]="holidays()" class="holidays-table">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let h">{{ h.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let h">{{ h.date }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="recurring">
+        <th mat-header-cell *matHeaderCellDef>Recurring</th>
+        <td mat-cell *matCellDef="let h">
+          <mat-icon [style.color]="h.recurring ? '#4caf50' : '#bbb'">
+            {{ h.recurring ? "repeat" : "event" }}
+          </mat-icon>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let h">
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="onDelete(h.id)"
+            aria-label="Delete holiday"
+          >
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <div *ngIf="holidays().length === 0" class="empty">
+      <mat-icon>event_busy</mat-icon>
+      <p>No holidays added yet.</p>
+    </div>
+  </mat-card>
+</div>
