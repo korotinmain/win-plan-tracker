@@ -4,7 +4,12 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 // Initialize Firebase eagerly before Angular bootstraps
 import './firebase';
+import { provideEchartsCore } from 'ngx-echarts';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes), provideAnimations()],
+  providers: [
+    provideRouter(routes),
+    provideAnimations(),
+    provideEchartsCore({ echarts: () => import('echarts') }),
+  ],
 };

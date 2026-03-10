@@ -15,17 +15,6 @@
         <mat-icon>calendar_month</mat-icon>
         <span>Calendar</span>
       </a>
-      <a
-        class="btn-secondary"
-        routerLink="/vacation/approve"
-        *ngIf="canApprove"
-      >
-        <mat-icon>approval</mat-icon>
-        <span>Requests</span>
-        <span class="badge" *ngIf="pendingCount() > 0">{{
-          pendingCount()
-        }}</span>
-      </a>
     </div>
   </div>
 
@@ -103,14 +92,11 @@
       </div>
 
       <div class="sprint-chart-wrap">
-        <apx-chart
-          [series]="[sprintInfo.percent]"
-          [chart]="sprintChartCfg.chart"
-          [plotOptions]="sprintChartCfg.plotOptions"
-          [fill]="sprintChartCfg.fill"
-          [colors]="sprintChartCfg.colors"
-          [stroke]="sprintChartCfg.stroke"
-        ></apx-chart>
+        <div
+          echarts
+          [options]="sprintGaugeOpts()"
+          class="sprint-gauge-chart"
+        ></div>
       </div>
 
       <div class="sprint-days-row">
@@ -161,50 +147,7 @@
         <span class="ic-chip">{{ allMembers().length }} members</span>
       </div>
 
-      <div class="heatmap-grid">
-        <div
-          *ngFor="let day of weekHeatmap()"
-          class="hm-col"
-          [class.hm-today]="day.isToday"
-          [class.hm-weekend]="day.weekend"
-        >
-          <span class="hm-dow">{{ day.label }}</span>
-          <span class="hm-date">{{ day.dayNum }}</span>
-          <div class="hm-bar-wrap">
-            <div class="hm-bar">
-              <div
-                class="hm-seg hm-seg-working"
-                [style.flex]="day.working"
-                *ngIf="!day.weekend && day.working > 0"
-              ></div>
-              <div
-                class="hm-seg hm-seg-ceremony"
-                [style.flex]="day.onCeremony"
-                *ngIf="!day.weekend && day.onCeremony > 0"
-              ></div>
-              <div
-                class="hm-seg hm-seg-vacation"
-                [style.flex]="day.onVacation"
-                *ngIf="!day.weekend && day.onVacation > 0"
-              ></div>
-            </div>
-          </div>
-          <span class="hm-pct" *ngIf="!day.weekend">{{ day.availPct }}%</span>
-          <span class="hm-pct hm-pct-off" *ngIf="day.weekend">off</span>
-        </div>
-      </div>
-
-      <div class="hm-legend">
-        <span class="hml-item"
-          ><span class="hml-dot hml-working"></span>Working</span
-        >
-        <span class="hml-item"
-          ><span class="hml-dot hml-ceremony"></span>Ceremony</span
-        >
-        <span class="hml-item"
-          ><span class="hml-dot hml-vacation"></span>Vacation</span
-        >
-      </div>
+      <div echarts [options]="weekBarOpts()" class="week-bar-chart"></div>
     </div>
 
     <!-- Upcoming Events -->
@@ -255,91 +198,53 @@
     </div>
   </div>
 
-  <!-- Team section -->
-  <div class="section-header">
-    <mat-icon>groups</mat-icon>
-    <h2>Team — Today</h2>
-    <span class="member-count">{{ todaySummary().length }} members</span>
-  </div>
+  <!-- ── Analytics row ────────────────────────────────── -->
+  <div class="analytics-row" *ngIf="hasTeam && !loading()">
 
-  <div *ngIf="loading()" class="loading-state">
-    <mat-spinner diameter="40"></mat-spinner>
-    <span>Loading team data…</span>
-  </div>
-
-  <div *ngIf="!loading()" class="team-grid">
-    <div
-      *ngFor="let entry of todaySummary()"
-      class="member-card"
-      [ngClass]="getStatusClass(entry)"
-    >
-      <div class="member-avatar">{{ getInitials(entry.user.displayName) }}</div>
-      <div class="member-info">
-        <div class="member-name">{{ entry.user.displayName }}</div>
-        <div class="member-role">{{ entry.user.role | titlecase }}</div>
+    <!-- Team Velocity -->
+    <div class="insight-card velocity-card">
+      <div class="ic-header">
+        <div class="ic-header-left">
+          <span class="ic-icon ic-icon-green"><mat-icon>trending_up</mat-icon></span>
+          <div>
+            <h3 class="ic-title">Team Velocity</h3>
+            <p class="ic-sub">Availability % per week &middot; {{ currentMonthYear }}</p>
+          </div>
+        </div>
+        <span class="ic-chip">{{ teamVelocity().length }} weeks</span>
       </div>
-      <div class="member-status">
-        <span class="status-pill" [ngClass]="getStatusClass(entry)">
-          <mat-icon class="pill-icon">{{ getStatusIcon(entry) }}</mat-icon>
-          {{ getStatusLabel(entry) }}
+      <div echarts [options]="velocityChartOpts()" class="velocity-chart"></div>
+    </div>
+
+    <!-- Sprint Capacity -->
+    <div class="insight-card capacity-card" *ngIf="sprintCapacity()">
+      <div class="ic-header">
+        <div class="ic-header-left">
+          <span class="ic-icon ic-icon-indigo"><mat-icon>group_work</mat-icon></span>
+          <div>
+            <h3 class="ic-title">Sprint Capacity</h3>
+            <p class="ic-sub">{{ sprintInfo.startDate }} &ndash; {{ sprintInfo.endDate }}</p>
+          </div>
+        </div>
+        <span class="ic-chip ic-chip-done">
+          {{ sprintCapacity()!.totalPersonDays }} person-days
         </span>
-        <span *ngIf="entry.event?.note" class="note">{{
-          entry.event!.note
-        }}</span>
       </div>
-    </div>
-
-    <div *ngIf="todaySummary().length === 0 && hasTeam" class="empty-state">
-      <mat-icon>group_off</mat-icon>
-      <p>No team members found</p>
-    </div>
-
-    <div *ngIf="!hasTeam" class="no-team-state">
-      <div *ngIf="teamsLoading()" class="nt-loading">
-        <mat-spinner diameter="32"></mat-spinner>
-        <span>Loading teams…</span>
+      <div class="cap-stats-row">
+        <div class="cap-stat">
+          <span class="cap-stat-val">{{ sprintCapacity()!.capacityPct }}%</span>
+          <span class="cap-stat-label">efficiency</span>
+        </div>
+        <div class="cap-stat">
+          <span class="cap-stat-val">{{ sprintCapacity()!.total }}</span>
+          <span class="cap-stat-label">team size</span>
+        </div>
+        <div class="cap-stat">
+          <span class="cap-stat-val">{{ sprintCapacity()!.sprintDays }}</span>
+          <span class="cap-stat-label">sprint days</span>
+        </div>
       </div>
-
-      <ng-container *ngIf="!teamsLoading()">
-        <div *ngIf="teamError()" class="nt-error">
-          <mat-icon>error_outline</mat-icon>
-          {{ teamError() }}
-        </div>
-
-        <div *ngIf="availableTeams().length === 0" class="nt-empty">
-          <mat-icon>group_off</mat-icon>
-          <p>No teams available to join yet.</p>
-        </div>
-
-        <ng-container *ngIf="availableTeams().length > 0">
-          <div class="nt-header">
-            <mat-icon>group_add</mat-icon>
-            <span>Choose a team to join</span>
-          </div>
-          <div class="nt-teams-list">
-            <div *ngFor="let team of availableTeams()" class="nt-team-row">
-              <span class="nt-team-icon material-icons">{{ team.icon }}</span>
-              <div class="nt-team-info">
-                <span class="nt-team-name">{{ team.name }}</span>
-                <span class="nt-team-members"
-                  >{{ team.memberIds.length }} members</span
-                >
-              </div>
-              <button
-                class="nt-btn-join"
-                (click)="joinTeam(team)"
-                [disabled]="actingTeamId() !== null"
-              >
-                <mat-spinner
-                  *ngIf="actingTeamId() === team.id"
-                  diameter="16"
-                ></mat-spinner>
-                <span *ngIf="actingTeamId() !== team.id">Join</span>
-              </button>
-            </div>
-          </div>
-        </ng-container>
-      </ng-container>
+      <div echarts [options]="capacityChartOpts()" class="capacity-chart"></div>
     </div>
-  </div>
+
 </div>

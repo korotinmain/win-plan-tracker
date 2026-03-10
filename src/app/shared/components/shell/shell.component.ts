@@ -50,12 +50,6 @@ export class ShellComponent {
   workspaceNav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Calendar', icon: 'calendar_month', route: '/calendar' },
-    {
-      label: 'Holidays',
-      icon: 'event_available',
-      route: '/holidays',
-      roles: ['admin', 'manager'],
-    },
     { label: 'Teams', icon: 'groups', route: '/teams', roles: ['admin'] },
   ];
 

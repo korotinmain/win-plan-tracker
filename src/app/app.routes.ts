@@ -42,14 +42,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'holidays',
-        canActivate: [roleGuard(['admin', 'manager'])],
-        loadComponent: () =>
-          import('./features/holidays/holidays/holidays.component').then(
-            (m) => m.HolidaysComponent,
-          ),
-      },
-      {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings/settings.component').then(
