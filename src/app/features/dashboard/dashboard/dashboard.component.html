@@ -49,15 +49,6 @@
       <div class="kpi-glow"></div>
     </div>
 
-    <div class="kpi-card kpi-activity">
-      <div class="kpi-icon"><mat-icon>work_outline</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ onActivity }}</div>
-        <div class="kpi-label">Activity</div>
-      </div>
-      <div class="kpi-glow"></div>
-    </div>
-
     <div class="kpi-card kpi-refinement">
       <div class="kpi-icon"><mat-icon>assignment_turned_in</mat-icon></div>
       <div class="kpi-body">
@@ -84,19 +75,172 @@
       </div>
       <div class="kpi-glow"></div>
     </div>
+  </div>
 
-    <div
-      class="kpi-card kpi-pending"
-      *ngIf="canApprove"
-      routerLink="/vacation/approve"
-      style="cursor: pointer"
-    >
-      <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ pendingCount() }}</div>
-        <div class="kpi-label">Pending</div>
+  <!-- ── Insights row ─────────────────────────────────────── -->
+  <div class="insights-row" *ngIf="hasTeam && !loading()">
+
+    <!-- Sprint Progress -->
+    <div class="insight-card sprint-card">
+      <div class="ic-header">
+        <div class="ic-header-left">
+          <span class="ic-icon ic-icon-indigo"
+            ><mat-icon>rocket_launch</mat-icon></span
+          >
+          <div>
+            <h3 class="ic-title">Sprint {{ sprintInfo.sprintNumber }}</h3>
+            <p class="ic-sub">{{ sprintInfo.startDate }} – {{ sprintInfo.endDate }}</p>
+          </div>
+        </div>
+        <span class="ic-chip" [class.ic-chip-done]="sprintInfo.remaining === 0">
+          {{ sprintInfo.remaining === 0 ? 'Complete' : sprintInfo.remaining + 'd left' }}
+        </span>
       </div>
-      <div class="kpi-glow"></div>
+
+      <div class="sprint-chart-wrap">
+        <apx-chart
+          [series]="[sprintInfo.percent]"
+          [chart]="sprintChartCfg.chart"
+          [plotOptions]="sprintChartCfg.plotOptions"
+          [fill]="sprintChartCfg.fill"
+          [colors]="sprintChartCfg.colors"
+          [stroke]="sprintChartCfg.stroke"
+        ></apx-chart>
+      </div>
+
+      <div class="sprint-days-row">
+        <div class="sprint-day-stat">
+          <span class="sds-value">{{ sprintInfo.elapsed }}</span>
+          <span class="sds-label">elapsed</span>
+        </div>
+        <div class="sprint-day-divider"></div>
+        <div class="sprint-day-stat">
+          <span class="sds-value">{{ sprintInfo.total }}</span>
+          <span class="sds-label">total days</span>
+        </div>
+        <div class="sprint-day-divider"></div>
+        <div class="sprint-day-stat">
+          <span class="sds-value">{{ sprintInfo.remaining }}</span>
+          <span class="sds-label">remaining</span>
+        </div>
+      </div>
+
+      <div class="sprint-ceremony" *ngIf="sprintInfo.nextCeremony">
+        <mat-icon class="sc-icon">event</mat-icon>
+        <span class="sc-label">{{ sprintInfo.nextCeremony.label }}</span>
+        <span class="sc-date">{{ sprintInfo.nextCeremony.date }}</span>
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 0">Today</span>
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 1">Tomorrow</span>
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway > 1">in {{ sprintInfo.nextCeremony.daysAway }}d</span>
+      </div>
+    </div>
+
+    <!-- Weekly Heatmap -->
+    <div class="insight-card heatmap-card">
+      <div class="ic-header">
+        <div class="ic-header-left">
+          <span class="ic-icon ic-icon-teal"
+            ><mat-icon>grid_view</mat-icon></span
+          >
+          <div>
+            <h3 class="ic-title">Team This Week</h3>
+            <p class="ic-sub">Availability by day</p>
+          </div>
+        </div>
+        <span class="ic-chip">{{ allMembers().length }} members</span>
+      </div>
+
+      <div class="heatmap-grid">
+        <div
+          *ngFor="let day of weekHeatmap()"
+          class="hm-col"
+          [class.hm-today]="day.isToday"
+          [class.hm-weekend]="day.weekend"
+        >
+          <span class="hm-dow">{{ day.label }}</span>
+          <span class="hm-date">{{ day.dayNum }}</span>
+          <div class="hm-bar-wrap">
+            <div class="hm-bar">
+              <div
+                class="hm-seg hm-seg-working"
+                [style.flex]="day.working"
+                *ngIf="!day.weekend && day.working > 0"
+              ></div>
+              <div
+                class="hm-seg hm-seg-ceremony"
+                [style.flex]="day.onCeremony"
+                *ngIf="!day.weekend && day.onCeremony > 0"
+              ></div>
+              <div
+                class="hm-seg hm-seg-vacation"
+                [style.flex]="day.onVacation"
+                *ngIf="!day.weekend && day.onVacation > 0"
+              ></div>
+            </div>
+          </div>
+          <span class="hm-pct" *ngIf="!day.weekend">{{ day.availPct }}%</span>
+          <span class="hm-pct hm-pct-off" *ngIf="day.weekend">off</span>
+        </div>
+      </div>
+
+      <div class="hm-legend">
+        <span class="hml-item"
+          ><span class="hml-dot hml-working"></span>Working</span
+        >
+        <span class="hml-item"
+          ><span class="hml-dot hml-ceremony"></span>Ceremony</span
+        >
+        <span class="hml-item"
+          ><span class="hml-dot hml-vacation"></span>Vacation</span
+        >
+      </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="insight-card events-card">
+      <div class="ic-header">
+        <div class="ic-header-left">
+          <span class="ic-icon ic-icon-orange"
+            ><mat-icon>upcoming</mat-icon></span
+          >
+          <div>
+            <h3 class="ic-title">Upcoming Events</h3>
+            <p class="ic-sub">Rest of this month</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="events-list" *ngIf="upcomingEvents().length > 0">
+        <div
+          *ngFor="let evt of upcomingEvents()"
+          class="evt-row"
+          [ngClass]="'evt-' + evt.type"
+        >
+          <div class="evt-accent"></div>
+          <div class="evt-body">
+            <div class="evt-top">
+              <span class="evt-type">{{ evt.typeLabel }}</span>
+              <span class="evt-when" [class.evt-today]="evt.isToday">{{
+                evt.daysLabel
+              }}</span>
+            </div>
+            <div class="evt-bottom">
+              <mat-icon class="evt-cal-icon">calendar_today</mat-icon>
+              <span class="evt-date">{{ evt.displayDate }}</span>
+              <span class="evt-sep">·</span>
+              <span class="evt-members"
+                >{{ evt.count }}
+                {{ evt.count === 1 ? 'member' : 'members' }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="events-empty" *ngIf="upcomingEvents().length === 0">
+        <mat-icon>event_available</mat-icon>
+        <p>No upcoming events this month</p>
+      </div>
     </div>
   </div>
 
@@ -139,12 +283,52 @@
       <p>No team members found</p>
     </div>
 
-    <div *ngIf="!hasTeam" class="empty-state">
-      <mat-icon>groups</mat-icon>
-      <p>
-        You are not assigned to a team yet.<br />Ask your admin to add you to a
-        team.
-      </p>
+    <div *ngIf="!hasTeam" class="no-team-state">
+      <div *ngIf="teamsLoading()" class="nt-loading">
+        <mat-spinner diameter="32"></mat-spinner>
+        <span>Loading teams…</span>
+      </div>
+
+      <ng-container *ngIf="!teamsLoading()">
+        <div *ngIf="teamError()" class="nt-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ teamError() }}
+        </div>
+
+        <div *ngIf="availableTeams().length === 0" class="nt-empty">
+          <mat-icon>group_off</mat-icon>
+          <p>No teams available to join yet.</p>
+        </div>
+
+        <ng-container *ngIf="availableTeams().length > 0">
+          <div class="nt-header">
+            <mat-icon>group_add</mat-icon>
+            <span>Choose a team to join</span>
+          </div>
+          <div class="nt-teams-list">
+            <div *ngFor="let team of availableTeams()" class="nt-team-row">
+              <span class="nt-team-icon material-icons">{{ team.icon }}</span>
+              <div class="nt-team-info">
+                <span class="nt-team-name">{{ team.name }}</span>
+                <span class="nt-team-members"
+                  >{{ team.memberIds.length }} members</span
+                >
+              </div>
+              <button
+                class="nt-btn-join"
+                (click)="joinTeam(team)"
+                [disabled]="actingTeamId() !== null"
+              >
+                <mat-spinner
+                  *ngIf="actingTeamId() === team.id"
+                  diameter="16"
+                ></mat-spinner>
+                <span *ngIf="actingTeamId() !== team.id">Join</span>
+              </button>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
     </div>
   </div>
 </div>

@@ -134,3 +134,175 @@
     color: #475569;
   }
 }
+
+/* ── Team section ── */
+.st-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.83rem;
+  margin-bottom: 16px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+.st-error-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  padding: 0;
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.st-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.st-no-team {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0 0 16px;
+}
+
+.st-current-team,
+.st-team-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.st-current-team {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.st-team-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #6366f1;
+  }
+}
+
+.st-team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.st-team-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.st-team-label {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.st-btn-join,
+.st-btn-leave {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.st-btn-join {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+  color: #059669;
+
+  &:hover:not(:disabled) {
+    background: #d1fae5;
+    border-color: #10b981;
+  }
+}
+
+.st-btn-leave {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #ef4444;
+
+  &:hover:not(:disabled) {
+    background: #fee2e2;
+    border-color: #ef4444;
+  }
+}
+
+.st-available-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+  margin: 16px 0 10px;
+}
+
+.st-no-teams {
+  font-size: 0.83rem;
+  color: #94a3b8;
+  padding: 12px 0;
+}
+
+.st-teams-list {
+  display: flex;
+  flex-direction: column;
+}

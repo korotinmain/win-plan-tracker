@@ -1,12 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,12 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
     MatIconModule,
-    MatDividerModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './login.component.html',
@@ -36,6 +26,24 @@ export class LoginComponent {
   loading = signal(false);
   error = signal('');
   hidePassword = signal(true);
+
+  readonly features = [
+    {
+      icon: 'calendar_month',
+      title: 'Sprint Calendar',
+      desc: 'Visualize every sprint, holiday and event in one place',
+    },
+    {
+      icon: 'groups',
+      title: 'Team Management',
+      desc: 'Organize teams, assign roles and track performance',
+    },
+    {
+      icon: 'insights',
+      title: 'Live Insights',
+      desc: 'Real-time analytics on velocity, workload and wins',
+    },
+  ];
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -63,7 +71,6 @@ export class LoginComponent {
     this.error.set('');
     try {
       await this.authService.loginWithGoogle();
-      // Page redirects to Google — loading stays true until navigation
     } catch (e: any) {
       this.error.set(e.message ?? 'Google sign-in failed.');
       this.loading.set(false);

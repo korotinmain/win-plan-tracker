@@ -57,12 +57,9 @@ export class CalendarService {
     await deleteDoc(doc(db, `events/${userId}_${date}`));
   }
 
-  /** Stream holidays for a company */
-  getHolidays(companyId: string): Observable<Holiday[]> {
-    const q = query(
-      collection(db, 'holidays'),
-      where('companyId', '==', companyId),
-    );
+  /** Stream holidays for a team */
+  getHolidays(teamId: string): Observable<Holiday[]> {
+    const q = query(collection(db, 'holidays'), where('teamId', '==', teamId));
     return snapObservable<Holiday>(q);
   }
 

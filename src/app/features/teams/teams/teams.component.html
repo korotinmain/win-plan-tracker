@@ -7,12 +7,30 @@
       </div>
       <div class="hero-text">
         <h1 class="hero-title">Teams</h1>
-        <p class="hero-sub">Organize people into teams across your company</p>
+        <p class="hero-sub">Organize people into squads across your company</p>
       </div>
     </div>
-    <button class="btn-create" (click)="openCreateTeam()">
-      <mat-icon>add</mat-icon>
-      New Team
+    <button
+      class="btn-create"
+      (click)="openCreateTeam()"
+      [disabled]="creating()"
+    >
+      <mat-spinner
+        *ngIf="creating()"
+        diameter="18"
+        class="btn-spinner"
+      ></mat-spinner>
+      <mat-icon *ngIf="!creating()">add</mat-icon>
+      {{ creating() ? "Creating…" : "New Team" }}
+    </button>
+  </div>
+
+  <!-- Error banner -->
+  <div *ngIf="createError()" class="create-error-banner">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ createError() }}</span>
+    <button class="error-dismiss" (click)="createError.set(null)" type="button">
+      <mat-icon>close</mat-icon>
     </button>
   </div>
 
@@ -29,16 +47,33 @@
         <mat-icon>diversity_3</mat-icon>
       </div>
       <h3>No teams yet</h3>
-      <p>Create your first team to start organizing people.</p>
-      <button class="btn-create" (click)="openCreateTeam()">
+      <p *ngIf="isAdminOrManager()">
+        Create your first team to start organizing people.
+      </p>
+      <p *ngIf="!isAdminOrManager()">
+        Teams will appear here once they're created.
+      </p>
+      <button
+        *ngIf="isAdminOrManager()"
+        class="btn-create"
+        (click)="openCreateTeam()"
+        [disabled]="creating()"
+      >
         <mat-icon>add</mat-icon>
-        Create Team
+        Create First Team
       </button>
     </div>
 
     <!-- Teams grid -->
-    <div class="teams-grid" *ngIf="!loading() && teams().length > 0">
-      <div class="team-card" *ngFor="let team of teams(); let i = index">
+    <div class="teams-grid" *ngIf="!loading()">
+      <!-- Existing team cards -->
+      <div
+        class="team-card"
+        *ngFor="let team of teams(); let i = index"
+        (click)="openManageTeam(team, $event)"
+        role="button"
+        [attr.aria-label]="'Manage ' + team.name"
+      >
         <div class="team-card-top" [style.background]="gradient(i)">
           <div class="team-card-glow" [style.background]="gradient(i)"></div>
           <div class="team-top-inner">
@@ -50,23 +85,61 @@
               <span class="team-member-count">
                 <mat-icon>person</mat-icon>
                 {{ team.memberIds.length }}
-                member{{ team.memberIds.length === 1 ? "" : "s" }}
+                {{ team.memberIds.length === 1 ? "member" : "members" }}
               </span>
             </div>
           </div>
         </div>
 
         <div class="team-card-bottom">
-          <div class="team-id-chip">
-            <mat-icon>tag</mat-icon>
-            {{ team.id.slice(0, 8) }}
-          </div>
-          <button class="btn-manage" (click)="openManageTeam(team)">
+          <!-- Admin/Manager: open manage dialog -->
+          <button
+            *ngIf="isManagerOf(team) || isAdminOrManager()"
+            class="btn-manage-full"
+            (click)="openManageTeam(team, $event)"
+            type="button"
+          >
             <mat-icon>manage_accounts</mat-icon>
-            Manage
+            Manage Team
           </button>
+
+          <!-- Regular member: just show membership status -->
+          <div
+            *ngIf="!isAdminOrManager() && isMemberOf(team)"
+            class="btn-joined-indicator member"
+          >
+            <mat-icon>check_circle</mat-icon>
+            Your Team
+          </div>
+
+          <!-- Non-member employee: prompt to go to settings -->
+          <div
+            *ngIf="!isAdminOrManager() && !isMemberOf(team)"
+            class="btn-joined-indicator"
+            matTooltip="Go to Settings to join a team"
+          >
+            <mat-icon>settings</mat-icon>
+            Join in Settings
+          </div>
         </div>
       </div>
+
+      <!-- Ghost create card -->
+      <button
+        *ngIf="teams().length > 0 && isAdminOrManager()"
+        class="team-card-create"
+        (click)="openCreateTeam()"
+        [disabled]="creating()"
+        type="button"
+        matTooltip="Create a new team"
+      >
+        <div class="team-card-create-inner">
+          <div class="create-plus-icon">
+            <mat-icon>add</mat-icon>
+          </div>
+          <span class="create-label">New Team</span>
+        </div>
+      </button>
     </div>
   </div>
 </div>

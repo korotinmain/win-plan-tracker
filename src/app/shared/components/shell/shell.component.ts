@@ -39,6 +39,7 @@ export class ShellComponent {
 
   currentUser: AppUser | null = null;
   sidenavOpen = signal(true);
+  isDark = signal(true);
 
   today = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -76,6 +77,8 @@ export class ShellComponent {
     this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user ?? null;
     });
+    // Apply dark theme by default
+    document.documentElement.setAttribute('data-theme', 'dark');
   }
 
   isVisible(item: NavItem): boolean {
@@ -87,8 +90,26 @@ export class ShellComponent {
     this.sidenavOpen.set(!this.sidenavOpen());
   }
 
+  toggleTheme(): void {
+    const next = this.isDark() ? 'light' : 'dark';
+    this.isDark.set(!this.isDark());
+    document.documentElement.setAttribute('data-theme', next);
+  }
+
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  getInitials(name: string): string {
+    return (
+      (name ?? '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase() || '?'
+    );
   }
 
   private titleFromUrl(url: string): string {

@@ -12,7 +12,7 @@ import {
   Query,
   DocumentData,
 } from '@firebase/firestore';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { Team } from '../models/team.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
@@ -31,27 +31,45 @@ function snapObservable<T>(q: Query<DocumentData>): Observable<T[]> {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
-  getTeamsByCompany(companyId: string): Observable<Team[]> {
-    const q = query(
-      collection(db, 'teams'),
-      where('companyId', '==', companyId),
+  getTeamsForUser(uid: string): Observable<Team[]> {
+    const managed = snapObservable<Team>(
+      query(collection(db, 'teams'), where('managerId', '==', uid)),
     );
-    return snapObservable<Team>(q);
+    const member = snapObservable<Team>(
+      query(collection(db, 'teams'), where('memberIds', 'array-contains', uid)),
+    );
+    return combineLatest([managed, member]).pipe(
+      map(([a, b]) => {
+        const seen = new Set<string>();
+        return [...a, ...b].filter((t) => {
+          if (seen.has(t.id)) return false;
+          seen.add(t.id);
+          return true;
+        });
+      }),
+    );
+  }
+
+  getAllTeams(): Observable<Team[]> {
+    return snapObservable<Team>(query(collection(db, 'teams')));
   }
 
   async createTeam(team: Omit<Team, 'id'>): Promise<string> {
+    const iconCheck = await getDocs(
+      query(collection(db, 'teams'), where('icon', '==', team.icon)),
+    );
+    if (!iconCheck.empty) {
+      throw new Error(
+        'This icon is already used by another team. Please choose a different one.',
+      );
+    }
     const ref = doc(collection(db, 'teams'));
     await setDoc(ref, { ...team, id: ref.id });
     return ref.id;
   }
 
-  async getCompanyUsers(companyId: string): Promise<AppUser[]> {
-    if (!companyId) return [];
-    const q = query(
-      collection(db, 'users'),
-      where('companyId', '==', companyId),
-    );
-    const snap = await getDocs(q);
+  async getAllUsers(): Promise<AppUser[]> {
+    const snap = await getDocs(collection(db, 'users'));
     return snap.docs.map((d) => d.data() as AppUser);
   }
 
@@ -74,6 +92,23 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
+    const updated = Array.from(new Set([...currentMemberIds, userId]));
+    await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
+    await updateDoc(doc(db, `users/${userId}`), { teamId });
+  }
+
+  async joinTeam(
+    teamId: string,
+    userId: string,
+    currentMemberIds: string[],
+  ): Promise<void> {
+    const userSnap = await getDoc(doc(db, `users/${userId}`));
+    const existingTeamId = userSnap.exists()
+      ? (userSnap.data() as any)?.teamId
+      : null;
+    if (existingTeamId) {
+      throw new Error('You are already a member of a team. Leave it first.');
+    }
     const updated = Array.from(new Set([...currentMemberIds, userId]));
     await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
     await updateDoc(doc(db, `users/${userId}`), { teamId });

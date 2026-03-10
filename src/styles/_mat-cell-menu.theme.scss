@@ -1,0 +1,198 @@
+// Angular Material — calendar cell event menu theme
+// Scoped to panelClass="cell-event-menu"
+
+.cell-event-menu.mat-mdc-menu-panel {
+  --mat-menu-container-shape: 14px;
+  --mat-menu-item-hover-state-layer-opacity: 0;
+  --mat-menu-item-focus-state-layer-opacity: 0;
+
+  min-width: 200px;
+  max-width: 240px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.06),
+    0 8px 24px rgba(15, 23, 42, 0.14),
+    0 2px 6px rgba(15, 23, 42, 0.06);
+  margin-top: 4px;
+}
+
+.cell-event-menu .mat-mdc-menu-content.mat-mdc-menu-content {
+  padding: 6px 0;
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+.cem-header {
+  padding: 8px 14px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+// ─── Divider ──────────────────────────────────────────────────────────────────
+.cem-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0;
+}
+
+// ─── Items ────────────────────────────────────────────────────────────────────
+.cem-item.mat-mdc-menu-item {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+
+  .mat-icon {
+    margin-right: 0;
+  }
+
+  .mdc-list-item__primary-text {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    overflow: visible;
+  }
+
+  &:hover {
+    background: #f8faff;
+
+    .cem-label {
+      color: #4f46e5;
+    }
+  }
+}
+
+.cem-item-inner {
+  display: contents;
+}
+
+// ─── Colour dot ───────────────────────────────────────────────────────────────
+.cem-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 10px;
+
+  &.cem-dot-activity {
+    background: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+  &.cem-dot-refinement {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  }
+  &.cem-dot-planning {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+  &.cem-dot-sprint-review {
+    background: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+  }
+}
+
+// ─── Label ────────────────────────────────────────────────────────────────────
+.cem-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  transition: color 0.1s;
+}
+
+// ─── Clear icon ───────────────────────────────────────────────────────────────
+.cem-clear-icon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.cem-item-clear.mat-mdc-menu-item {
+  &:hover {
+    background: #fff5f5;
+
+    .cem-label {
+      color: #dc2626;
+    }
+
+    .cem-clear-icon {
+      color: #dc2626;
+    }
+  }
+}
+
+// ─── Dark theme overrides ─────────────────────────────────────────────────────
+[data-theme="dark"] {
+  .cell-event-menu.mat-mdc-menu-panel {
+    --mat-menu-container-color: #1e293b;
+    background: #1e293b;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .cem-header {
+    color: #64748b;
+  }
+
+  .cem-divider {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .cem-item.mat-mdc-menu-item {
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+
+      .cem-label {
+        color: #a5b4fc;
+      }
+    }
+  }
+
+  .cem-label {
+    color: #e2e8f0;
+  }
+
+  .cem-clear-icon {
+    color: #64748b;
+  }
+
+  .cem-item-clear.mat-mdc-menu-item {
+    &:hover {
+      background: rgba(239, 68, 68, 0.08);
+
+      .cem-label {
+        color: #f87171;
+      }
+
+      .cem-clear-icon {
+        color: #f87171;
+      }
+    }
+  }
+
+  .cem-dot {
+    &.cem-dot-activity {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+    &.cem-dot-refinement {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+    &.cem-dot-planning {
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+    &.cem-dot-sprint-review {
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    }
+  }
+}

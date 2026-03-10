@@ -26,18 +26,53 @@
       autofocus
     />
 
-    <label class="ctd-label" style="margin-top: 22px">Icon</label>
-    <div class="ctd-icon-grid">
+    <div class="ctd-icon-section-header">
+      <label class="ctd-label">Icon</label>
+      <div class="ctd-icon-search-wrap">
+        <mat-icon class="ctd-search-icon">search</mat-icon>
+        <input
+          class="ctd-icon-search"
+          type="text"
+          placeholder="Search icons…"
+          [ngModel]="iconSearch()"
+          (ngModelChange)="iconSearch.set($event)"
+        />
+        <button
+          *ngIf="iconSearch()"
+          class="ctd-search-clear"
+          (click)="iconSearch.set('')"
+          type="button"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="ctd-icon-grid" *ngIf="filteredIcons().length > 0">
       <button
-        *ngFor="let icon of icons"
+        *ngFor="let icon of filteredIcons()"
         class="icon-tile"
         [class.selected]="selectedIcon() === icon"
+        [class.taken]="isIconTaken(icon)"
         (click)="select(icon)"
         type="button"
         matRipple
+        [matRippleDisabled]="isIconTaken(icon)"
+        [matTooltip]="
+          isIconTaken(icon) ? 'Already used by another team' : iconLabel(icon)
+        "
+        matTooltipShowDelay="600"
       >
         <mat-icon>{{ icon }}</mat-icon>
+        <span *ngIf="isIconTaken(icon)" class="ctd-icon-lock">
+          <mat-icon>lock</mat-icon>
+        </span>
       </button>
+    </div>
+
+    <div *ngIf="filteredIcons().length === 0" class="ctd-no-icons">
+      <mat-icon>search_off</mat-icon>
+      <span>No icons match "{{ iconSearch() }}"</span>
     </div>
   </div>
 

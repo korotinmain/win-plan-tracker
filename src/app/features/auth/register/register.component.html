@@ -1,81 +1,208 @@
-<div class="register-page">
-  <mat-card class="register-card">
-    <mat-card-header>
-      <mat-card-title>
-        <div class="app-logo">
+<div class="auth-page">
+  <!-- ══ Left branding panel ══ -->
+  <div class="auth-left">
+    <div class="al-glow-1"></div>
+    <div class="al-glow-2"></div>
+    <div class="al-grid"></div>
+
+    <div class="al-content">
+      <div class="al-logo">
+        <div class="al-logo-mark">
           <mat-icon>event_note</mat-icon>
-          <span>Create Account</span>
         </div>
-      </mat-card-title>
-      <mat-card-subtitle>Join your team on Win Plan Tracker</mat-card-subtitle>
-    </mat-card-header>
+        <span class="al-logo-name">WinPlan</span>
+      </div>
 
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
-        <mat-form-field appearance="outline">
-          <mat-label>Full Name</mat-label>
-          <input
-            matInput
-            formControlName="displayName"
-            type="text"
-            autocomplete="name"
-          />
-          <mat-icon matSuffix>person</mat-icon>
-          <mat-error>Name must be at least 2 characters</mat-error>
-        </mat-form-field>
+      <div class="al-hero">
+        <h1 class="al-title">Your first<br />sprint starts<br />now.</h1>
+        <p class="al-sub">
+          Join your team and start tracking sprints, managing people, and
+          celebrating wins.
+        </p>
+      </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input
-            matInput
-            formControlName="email"
-            type="email"
-            autocomplete="email"
-          />
-          <mat-icon matSuffix>email</mat-icon>
-          <mat-error>Valid email is required</mat-error>
-        </mat-form-field>
+      <div class="al-steps">
+        <div class="al-step">
+          <div class="al-step-num">01</div>
+          <div class="al-step-text">
+            <span class="al-step-title">Create your account</span>
+            <span class="al-step-desc">Takes under 30 seconds</span>
+          </div>
+        </div>
+        <div class="al-step">
+          <div class="al-step-num">02</div>
+          <div class="al-step-text">
+            <span class="al-step-title">Build your team</span>
+            <span class="al-step-desc">Invite people, assign roles</span>
+          </div>
+        </div>
+        <div class="al-step">
+          <div class="al-step-num">03</div>
+          <div class="al-step-text">
+            <span class="al-step-title">Ship with clarity</span>
+            <span class="al-step-desc"
+              >Live sprint calendar, zero confusion</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input
-            matInput
-            formControlName="password"
-            [type]="hidePassword() ? 'password' : 'text'"
-            autocomplete="new-password"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="hidePassword.set(!hidePassword())"
+  <!-- ══ Right form panel ══ -->
+  <div class="auth-right">
+    <div class="ar-inner">
+      <div class="ar-header">
+        <h2 class="ar-title">Create account</h2>
+        <p class="ar-sub">Free forever · No credit card needed</p>
+      </div>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="auth-form"
+        novalidate
+      >
+        <!-- Name -->
+        <div
+          class="field-group"
+          [class.field-error-state]="
+            form.get('displayName')?.invalid && form.get('displayName')?.touched
+          "
+        >
+          <label class="field-label">Full Name</label>
+          <div class="field-wrap">
+            <mat-icon class="field-ico">person_outline</mat-icon>
+            <input
+              class="field-input"
+              type="text"
+              formControlName="displayName"
+              placeholder="Alex Johnson"
+              autocomplete="name"
+            />
+          </div>
+          <span
+            class="field-err"
+            *ngIf="
+              form.get('displayName')?.touched &&
+              form.get('displayName')?.invalid
+            "
+            >Name must be at least 2 characters</span
           >
-            <mat-icon>{{
-              hidePassword() ? "visibility_off" : "visibility"
-            }}</mat-icon>
-          </button>
-          <mat-error>Minimum 6 characters required</mat-error>
-        </mat-form-field>
+        </div>
 
-        <div *ngIf="error()" class="error-message">{{ error() }}</div>
+        <!-- Email -->
+        <div
+          class="field-group"
+          [class.field-error-state]="
+            form.get('email')?.invalid && form.get('email')?.touched
+          "
+        >
+          <label class="field-label">Work Email</label>
+          <div class="field-wrap">
+            <mat-icon class="field-ico">mail_outline</mat-icon>
+            <input
+              class="field-input"
+              type="email"
+              formControlName="email"
+              placeholder="you@company.com"
+              autocomplete="email"
+            />
+          </div>
+          <span
+            class="field-err"
+            *ngIf="
+              form.get('email')?.touched &&
+              form.get('email')?.hasError('required')
+            "
+            >Email is required</span
+          >
+          <span
+            class="field-err"
+            *ngIf="
+              form.get('email')?.touched && form.get('email')?.hasError('email')
+            "
+            >Enter a valid email address</span
+          >
+        </div>
 
+        <!-- Password -->
+        <div
+          class="field-group"
+          [class.field-error-state]="
+            form.get('password')?.invalid && form.get('password')?.touched
+          "
+        >
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <mat-icon class="field-ico">lock_outline</mat-icon>
+            <input
+              class="field-input"
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              placeholder="Minimum 6 characters"
+              autocomplete="new-password"
+            />
+            <button
+              class="field-toggle"
+              type="button"
+              (click)="hidePassword.set(!hidePassword())"
+              tabindex="-1"
+            >
+              <mat-icon>{{
+                hidePassword() ? "visibility_off" : "visibility"
+              }}</mat-icon>
+            </button>
+          </div>
+          <span
+            class="field-err"
+            *ngIf="
+              form.get('password')?.touched &&
+              form.get('password')?.hasError('required')
+            "
+            >Password is required</span
+          >
+          <span
+            class="field-err"
+            *ngIf="
+              form.get('password')?.touched &&
+              form.get('password')?.hasError('minlength')
+            "
+            >Minimum 6 characters</span
+          >
+        </div>
+
+        <!-- Error banner -->
+        <div *ngIf="error()" class="auth-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+
+        <!-- Submit -->
         <button
-          mat-flat-button
-          color="primary"
+          class="btn-submit"
           type="submit"
           [disabled]="loading() || form.invalid"
-          class="submit-btn"
         >
-          <mat-spinner *ngIf="loading()" diameter="20"></mat-spinner>
-          <span *ngIf="!loading()">Create Account</span>
+          <mat-spinner
+            *ngIf="loading()"
+            diameter="20"
+            class="btn-spin"
+          ></mat-spinner>
+          <span>{{ loading() ? "Creating account…" : "Create Account" }}</span>
+          <mat-icon *ngIf="!loading()">arrow_forward</mat-icon>
         </button>
       </form>
-    </mat-card-content>
 
-    <mat-card-actions>
-      <span class="login-link">
-        Already have an account? <a routerLink="/auth/login">Sign in</a>
-      </span>
-    </mat-card-actions>
-  </mat-card>
+      <p class="auth-terms">
+        By creating an account you agree to our
+        <a href="#" tabindex="-1">Terms of Service</a> and
+        <a href="#" tabindex="-1">Privacy Policy</a>.
+      </p>
+
+      <p class="auth-switch">
+        Already have an account?&nbsp;<a routerLink="/login">Sign in</a>
+      </p>
+    </div>
+  </div>
 </div>

@@ -24,7 +24,7 @@ export interface CalendarEvent {
 
 export interface Holiday {
   id: string;
-  companyId: string;
+  teamId: string;
   name: string;
   date: string; // YYYY-MM-DD
   recurring: boolean; // yearly repeat

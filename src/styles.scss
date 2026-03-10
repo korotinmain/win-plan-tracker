@@ -1,6 +1,7 @@
 // Angular Material theme
 @use "@angular/material" as mat;
-
+@use "styles/mat-menu.theme";
+@use "styles/mat-cell-menu.theme";
 @include mat.core();
 
 $primary: mat.define-palette(mat.$indigo-palette);
@@ -21,6 +22,56 @@ $theme: mat.define-light-theme(
 
 @include mat.all-component-themes($theme);
 
+// ── Theme tokens ──────────────────────────────────────────────────────────────
+// Applied via [data-theme="light"|"dark"] on <html>
+
+:root,
+[data-theme="light"] {
+  --c-bg: #f0f2f5;
+  --c-surface: #ffffff;
+  --c-surface-2: #f8fafc;
+  --c-border: #e2e8f0;
+  --c-border-faint: #f1f5f9;
+  --c-text: #0f172a;
+  --c-text-2: #475569;
+  --c-text-3: #94a3b8;
+  --c-nav-bg: #0f172a;
+  --c-nav-text: #64748b;
+  --c-nav-active: #c4b5fd;
+  --c-accent: #6366f1;
+  --c-accent-2: #8b5cf6;
+  --c-header-bg: #ffffff;
+  --c-header-border: #e8ecf0;
+  --c-pill-bg: #f1f5f9;
+  --c-pill-text: #475569;
+}
+
+[data-theme="dark"] {
+  --c-bg: #0b0f19;
+  --c-surface: #111827;
+  --c-surface-2: #1a2235;
+  --c-border: rgba(255, 255, 255, 0.08);
+  --c-border-faint: rgba(255, 255, 255, 0.05);
+  --c-text: #f1f5f9;
+  --c-text-2: #94a3b8;
+  --c-text-3: #64748b;
+  --c-nav-bg: #0b0f19;
+  --c-nav-text: #64748b;
+  --c-nav-active: #c4b5fd;
+  --c-accent: #6366f1;
+  --c-accent-2: #8b5cf6;
+  --c-header-bg: #111827;
+  --c-header-border: rgba(255, 255, 255, 0.07);
+  --c-pill-bg: rgba(255, 255, 255, 0.07);
+  --c-pill-text: #94a3b8;
+  --c-today-col-bg: rgba(79, 70, 229, 0.1);
+  --c-menu-bg: #1e293b;
+  --c-menu-border: rgba(255, 255, 255, 0.08);
+  --c-menu-item-text: #e2e8f0;
+  --c-menu-item-icon-bg: rgba(255, 255, 255, 0.07);
+  --c-menu-divider: rgba(255, 255, 255, 0.07);
+}
+
 // Global resets
 *,
 *::before,
@@ -33,7 +84,11 @@ body {
   height: 100%;
   margin: 0;
   font-family: "Inter", Roboto, "Helvetica Neue", sans-serif;
-  background: #f5f7fa;
+  background: var(--c-bg);
+  color: var(--c-text);
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 // Ensure Material Icons render as icon font, not text
@@ -56,4 +111,21 @@ body {
 
 a {
   text-decoration: none;
+}
+
+// ── Add Event Dialog overlay ──────────────────────────────────────────────────
+.add-event-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.add-event-dialog-overlay .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+  }
 }

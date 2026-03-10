@@ -53,9 +53,9 @@ export class HolidaysComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (!this.currentUser?.companyId) return;
+    if (!this.currentUser?.teamId) return;
     this.calendarService
-      .getHolidays(this.currentUser.companyId)
+      .getHolidays(this.currentUser.teamId)
       .subscribe((h) => this.holidays.set(h));
   }
 
@@ -63,7 +63,7 @@ export class HolidaysComponent implements OnInit {
     if (this.form.invalid) return;
     const { name, date, recurring } = this.form.value;
     await this.calendarService.addHoliday({
-      companyId: this.currentUser!.companyId,
+      teamId: this.currentUser!.teamId,
       name: name!,
       date: format(date!, 'yyyy-MM-dd'),
       recurring: recurring ?? false,

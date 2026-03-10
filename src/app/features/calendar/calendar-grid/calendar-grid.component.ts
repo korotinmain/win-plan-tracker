@@ -1,10 +1,22 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  AddEventDialogComponent,
+  AddEventDialogData,
+} from '../add-event-dialog/add-event-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,21 +25,21 @@ import {
   format,
   startOfMonth,
   endOfMonth,
+  startOfISOWeek,
+  endOfISOWeek,
   eachDayOfInterval,
   getISOWeek,
   isWeekend,
   parseISO,
   addMonths,
   subMonths,
+  addWeeks,
+  subWeeks,
 } from 'date-fns';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
-import {
-  CalendarEvent,
-  EventType,
-  Holiday,
-} from '../../../core/models/event.model';
+import { CalendarEvent, Holiday } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest, map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -61,7 +73,7 @@ interface MemberRow {
     FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatMenuModule,
+    MatDialogModule,
     MatTooltipModule,
     MatSelectModule,
     MatProgressSpinnerModule,
@@ -75,6 +87,10 @@ export class CalendarGridComponent implements OnInit {
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
   private teamService = inject(TeamService);
+  private dialog = inject(MatDialog);
+
+  @ViewChild('tableWrap', { static: false })
+  tableWrapRef?: ElementRef<HTMLElement>;
 
   currentUser = this.authService.currentUser;
   currentDate = signal(new Date());
@@ -84,9 +100,50 @@ export class CalendarGridComponent implements OnInit {
   holidays = signal<Holiday[]>([]);
   loading = signal(true);
 
+  sprintGroups = computed(() => {
+    const groups: {
+      sprintNumber: number;
+      range: string;
+      colspan: number;
+      isDone: boolean;
+      lastDate: string;
+    }[] = [];
+    for (const day of this.days()) {
+      if (day.isFirstOfSprint) {
+        groups.push({
+          sprintNumber: day.sprintNumber,
+          range: day.sprintDateRange,
+          colspan: 1,
+          isDone: false,
+          lastDate: day.date,
+        });
+      } else if (groups.length > 0) {
+        groups[groups.length - 1].colspan++;
+        groups[groups.length - 1].lastDate = day.date;
+      }
+    }
+    for (const g of groups) {
+      g.isDone = g.lastDate < this.todayStr;
+    }
+    return groups;
+  });
+
   get monthLabel(): string {
     return format(this.currentDate(), 'MMMM yyyy');
   }
+
+  get monthName(): string {
+    return format(this.currentDate(), 'MMMM');
+  }
+
+  get yearStr(): string {
+    return format(this.currentDate(), 'yyyy');
+  }
+
+  view = signal<'month' | 'week'>('month');
+  memberCount = computed(() => this.members().length);
+
+  todayStr = format(new Date(), 'yyyy-MM-dd');
 
   get canEdit(): boolean {
     return (
@@ -98,26 +155,54 @@ export class CalendarGridComponent implements OnInit {
     this.loadCalendar();
   }
 
-  prevMonth(): void {
-    this.currentDate.set(subMonths(this.currentDate(), 1));
+  get weekLabel(): string {
+    const d = this.currentDate();
+    const start = startOfISOWeek(d);
+    const end = endOfISOWeek(d);
+    const weekNum = getISOWeek(d);
+    if (start.getMonth() === end.getMonth()) {
+      return `Week ${weekNum} · ${format(start, 'MMM d')} – ${format(end, 'd')}`;
+    }
+    return `Week ${weekNum} · ${format(start, 'MMM d')} – ${format(end, 'MMM d')}`;
+  }
+
+  setView(v: 'month' | 'week'): void {
+    this.view.set(v);
     this.loadCalendar();
   }
 
-  nextMonth(): void {
-    this.currentDate.set(addMonths(this.currentDate(), 1));
+  prevPeriod(): void {
+    if (this.view() === 'week') {
+      this.currentDate.set(subWeeks(this.currentDate(), 1));
+    } else {
+      this.currentDate.set(subMonths(this.currentDate(), 1));
+    }
+    this.loadCalendar();
+  }
+
+  nextPeriod(): void {
+    if (this.view() === 'week') {
+      this.currentDate.set(addWeeks(this.currentDate(), 1));
+    } else {
+      this.currentDate.set(addMonths(this.currentDate(), 1));
+    }
+    this.loadCalendar();
+  }
+
+  goToToday(): void {
+    this.currentDate.set(new Date());
     this.loadCalendar();
   }
 
   private loadCalendar(): void {
     this.loading.set(true);
     const teamId = this.currentUser?.teamId ?? '';
-    const companyId = this.currentUser?.companyId ?? '';
     const year = this.currentDate().getFullYear();
     const month = this.currentDate().getMonth() + 1;
 
     combineLatest([
       this.calendarService.getTeamEvents(teamId, year, month),
-      this.calendarService.getHolidays(companyId),
+      this.calendarService.getHolidays(teamId),
     ])
       .pipe(map(([events, holidays]) => ({ events, holidays })))
       .subscribe(async ({ events, holidays }) => {
@@ -125,10 +210,16 @@ export class CalendarGridComponent implements OnInit {
         this.members.set(members);
         this.holidays.set(holidays);
 
-        const allDays = eachDayOfInterval({
-          start: startOfMonth(this.currentDate()),
-          end: endOfMonth(this.currentDate()),
-        });
+        const allDays =
+          this.view() === 'week'
+            ? eachDayOfInterval({
+                start: startOfISOWeek(this.currentDate()),
+                end: endOfISOWeek(this.currentDate()),
+              })
+            : eachDayOfInterval({
+                start: startOfMonth(this.currentDate()),
+                end: endOfMonth(this.currentDate()),
+              });
 
         const holidayDates = new Set(holidays.map((h) => h.date));
         const holidayMap = new Map(holidays.map((h) => [h.date, h.name]));
@@ -211,7 +302,25 @@ export class CalendarGridComponent implements OnInit {
         });
         this.memberRows.set(rows);
         this.loading.set(false);
+        setTimeout(() => this.scrollToToday(), 50);
       });
+  }
+
+  private scrollToToday(): void {
+    const wrap = this.tableWrapRef?.nativeElement;
+    if (!wrap) return;
+    const todayTh = wrap.querySelector<HTMLElement>('.th-day.is-today');
+    if (!todayTh) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    const thRect = todayTh.getBoundingClientRect();
+    // Offset from wrap's left edge to the cell's left edge
+    const cellLeft = todayTh.offsetLeft;
+    // Scroll so the cell is centered in the visible area (minus sticky member col width ~180px)
+    const stickyWidth = 180;
+    const visibleWidth = wrapRect.width - stickyWidth;
+    const scrollTo =
+      cellLeft - stickyWidth - visibleWidth / 2 + thRect.width / 2;
+    wrap.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
   }
 
   getEvent(row: MemberRow, date: string): CalendarEvent | null {
@@ -228,8 +337,6 @@ export class CalendarGridComponent implements OnInit {
     if (day.sprintEvent) return `cell-${day.sprintEvent}`;
     if (!evt) return 'cell-workday';
     switch (evt.type) {
-      case 'activity':
-        return 'cell-activity';
       case 'refinement':
         return 'cell-refinement';
       case 'planning':
@@ -253,8 +360,6 @@ export class CalendarGridComponent implements OnInit {
     if (day.sprintEvent === 'sprint-review') return 'Sprint Review';
     if (!evt) return '';
     switch (evt.type) {
-      case 'activity':
-        return 'Activity';
       case 'refinement':
         return 'Refinement';
       case 'planning':
@@ -266,85 +371,59 @@ export class CalendarGridComponent implements OnInit {
     }
   }
 
-  canClickOwn(row: MemberRow): boolean {
-    return (
-      this.currentUser?.role === 'employee' &&
-      row.user.uid === this.currentUser?.uid
-    );
+  openAddEventDialog(): void {
+    const ref = this.dialog.open(AddEventDialogComponent, {
+      data: {
+        members: this.members(),
+        teamId: this.currentUser?.teamId ?? '',
+      } as AddEventDialogData,
+      panelClass: 'add-event-dialog-overlay',
+      width: '580px',
+      maxWidth: '96vw',
+      backdropClass: 'add-event-backdrop',
+    });
+    ref.afterClosed().subscribe((saved) => {
+      if (saved) this.loadCalendar();
+    });
   }
 
-  async onCellClick(row: MemberRow, day: CalendarDay): Promise<void> {
-    if (day.isWeekend || day.isHoliday) return;
-
-    // Employees can toggle vacation on their own row only
-    if (this.currentUser?.role === 'employee') {
-      if (row.user.uid !== this.currentUser.uid) return;
-      const existing = this.getEvent(row, day.date);
-      if (existing?.type === 'vacation') {
-        await this.calendarService.removeEvent(row.user.uid, day.date);
-      } else {
-        await this.calendarService.setEvent({
-          userId: row.user.uid,
-          teamId: this.currentUser.teamId,
-          type: 'vacation',
-          date: day.date,
-          status: 'approved',
-          createdBy: this.currentUser.uid,
-          createdAt: new Date(),
-        });
-      }
-      return;
-    }
-
-    // Admin/Manager: sprint ceremony days are locked
-    if (day.sprintEvent) return;
-
-    // Manager / Admin: cycle through states
-    const existing = this.getEvent(row, day.date);
-    const types: (EventType | null)[] = [
-      'activity',
-      'refinement',
-      'planning',
-      'sprint-review',
-      null,
-    ];
-    const currentIndex = existing ? types.indexOf(existing.type) : -1;
-    const nextType = types[(currentIndex + 1) % types.length];
-
-    if (!nextType) {
-      await this.calendarService.removeEvent(row.user.uid, day.date);
-    } else {
-      await this.calendarService.setEvent({
-        userId: row.user.uid,
-        teamId: this.currentUser!.teamId,
-        type: nextType,
-        date: day.date,
-        status: 'approved',
-        createdBy: this.currentUser!.uid,
-        createdAt: new Date(),
-      });
-    }
+  getCellEventType(row: MemberRow, day: CalendarDay): string {
+    if (day.isWeekend || day.isHoliday) return '';
+    const evt = this.getEvent(row, day.date);
+    if (evt?.type === 'vacation') return 'vacation';
+    if (day.sprintEvent) return day.sprintEvent;
+    return evt?.type ?? '';
   }
 
-  async setEventType(
-    row: MemberRow,
-    day: CalendarDay,
-    type: EventType | null,
-  ): Promise<void> {
-    if (day.sprintEvent) return; // ceremony days are locked
-    if (!type) {
-      await this.calendarService.removeEvent(row.user.uid, day.date);
-    } else {
-      await this.calendarService.setEvent({
-        userId: row.user.uid,
-        teamId: this.currentUser!.teamId,
-        type,
-        date: day.date,
-        status: 'approved',
-        createdBy: this.currentUser!.uid,
-        createdAt: new Date(),
-      });
-    }
+  private readonly avatarPalette = [
+    ['#6366f1', '#8b5cf6'],
+    ['#0ea5e9', '#6366f1'],
+    ['#14b8a6', '#0ea5e9'],
+    ['#f43f5e', '#ec4899'],
+    ['#22c55e', '#16a34a'],
+    ['#f97316', '#ef4444'],
+  ];
+
+  getAvatarGradient(uid: string): string {
+    const hash = uid.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const [c1, c2] = this.avatarPalette[hash % this.avatarPalette.length];
+    return `linear-gradient(135deg, ${c1}, ${c2})`;
+  }
+
+  getShortLabel(row: MemberRow, day: CalendarDay): string {
+    if (day.isWeekend || day.isHoliday) return '';
+    const evt = this.getEvent(row, day.date);
+    if (evt?.type === 'vacation') return 'Vac';
+    if (day.sprintEvent === 'planning') return 'Plan';
+    if (day.sprintEvent === 'refinement') return 'Rfmt';
+    if (day.sprintEvent === 'sprint-review') return 'SR';
+    if (!evt) return '';
+    const map: Record<string, string> = {
+      refinement: 'Rfmt',
+      planning: 'Plan',
+      'sprint-review': 'SR',
+    };
+    return map[evt.type] ?? '';
   }
 
   trackByDate(_: number, day: CalendarDay): string {

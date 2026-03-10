@@ -23,7 +23,6 @@ import { AppUser } from '../../../core/models/user.model';
 
 export interface ManageTeamDialogData {
   team: Team;
-  companyId: string;
 }
 
 @Component({
@@ -73,7 +72,7 @@ export class ManageTeamDialogComponent {
   private async load(): Promise<void> {
     const [members, allUsers] = await Promise.all([
       this.teamService.getTeamMembers(this.team().id),
-      this.teamService.getCompanyUsers(this.data.companyId),
+      this.teamService.getAllUsers(),
     ]);
     this.members.set(members);
     this.allUsers.set(allUsers);

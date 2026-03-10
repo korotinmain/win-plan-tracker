@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── helpers ───────────────────────────────────────────────────────────
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // True if the calling user is the manager of the given team or is listed
+    // in its memberIds array.
+    function isMember(teamId) {
+      let t = get(/databases/$(database)/documents/teams/$(teamId)).data;
+      return request.auth.uid == t.managerId
+          || request.auth.uid in t.memberIds;
+    }
+
+    function isManager(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data.managerId
+             == request.auth.uid;
+    }
+
+    // Role of the calling user
+    function callerRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid))
+               .data.get('role', 'employee');
+    }
+
+    function isAdminOrManager() {
+      return callerRole() == 'admin' || callerRole() == 'manager';
+    }
+
+    // True if the current user has no team assigned (safe to join one)
+    function hasNoTeam() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid))
+               .data.get('teamId', '') == '';
+    }
+
+    // User is adding only themselves to memberIds; no other fields change
+    function isSelfJoin() {
+      let before = resource.data.memberIds;
+      let after  = request.resource.data.memberIds;
+      return after.size()  == before.size() + 1
+          && request.auth.uid in after
+          && !(request.auth.uid in before)
+          && request.resource.data.managerId == resource.data.managerId
+          && request.resource.data.name      == resource.data.name
+          && request.resource.data.icon      == resource.data.icon
+          && hasNoTeam();
+    }
+
+    // User is removing only themselves from memberIds; no other fields change
+    function isSelfLeave() {
+      let before = resource.data.memberIds;
+      let after  = request.resource.data.memberIds;
+      return before.size() == after.size() + 1
+          && request.auth.uid in before
+          && !(request.auth.uid in after)
+          && request.resource.data.managerId == resource.data.managerId
+          && request.resource.data.name      == resource.data.name
+          && request.resource.data.icon      == resource.data.icon;
+    }
+
+    // ─── users ─────────────────────────────────────────────────────────────
+    // Any authenticated user can read any profile (needed for "all users" list
+    // shown in the manage-team dialog). Only the owner may write their own doc.
+    match /users/{uid} {
+      allow read:  if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ─── teams ─────────────────────────────────────────────────────────────
+    // Any authenticated user can read teams (getTeamsForUser query).
+    // Only the user creating the team (who must set themselves as manager) can
+    // create it. Only the current manager can update or delete.
+    match /teams/{teamId} {
+      allow read:   if signedIn();
+      allow create: if signedIn()
+                    && isAdminOrManager()
+                    && request.resource.data.managerId == request.auth.uid;
+      allow update: if isManager(teamId) || isSelfJoin() || isSelfLeave();
+      allow delete: if isManager(teamId) || isAdminOrManager();
+    }
+
+    // ─── events ────────────────────────────────────────────────────────────
+    // Documents keyed by userId_date (e.g. "abc123_2026-03-09").
+    // Only team members may read/write events that belong to their team.
+    // The event owner or team manager can delete.
+    match /events/{eventId} {
+      allow read:   if signedIn() && isMember(resource.data.teamId);
+      allow create: if signedIn() && isMember(request.resource.data.teamId);
+      allow update: if signedIn()
+                    && isMember(resource.data.teamId)
+                    && (resource.data.userId == request.auth.uid
+                        || isManager(resource.data.teamId));
+      allow delete: if signedIn()
+                    && (resource.data.userId == request.auth.uid
+                        || isManager(resource.data.teamId));
+    }
+
+    // ─── holidays ──────────────────────────────────────────────────────────
+    // Team members can see holidays; only the team manager can add/edit/remove.
+    match /holidays/{holidayId} {
+      allow read:   if signedIn() && isMember(resource.data.teamId);
+      allow create: if signedIn() && isManager(request.resource.data.teamId);
+      allow update,
+            delete: if isManager(resource.data.teamId);
+    }
+  }
+}

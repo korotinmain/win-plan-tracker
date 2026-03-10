@@ -1,55 +1,76 @@
 <div class="cal-page">
-  <!-- ── Head ─────────────────────────────────── -->
+  <!-- ── Head ──────────────────────────────────────────────── -->
   <div class="cal-head">
     <div class="cal-head-left">
-      <div class="month-nav">
-        <button
-          class="nav-btn"
-          (click)="prevMonth()"
-          aria-label="Previous month"
-        >
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <h2 class="month-label">{{ monthLabel }}</h2>
-        <button class="nav-btn" (click)="nextMonth()" aria-label="Next month">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
+      <button class="nav-btn" (click)="prevPeriod()" aria-label="Previous">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <h2 class="month-label">
+        <ng-container *ngIf="view() === 'month'">
+          <span class="month-name">{{ monthName }}</span>
+          <span class="month-year">{{ yearStr }}</span>
+        </ng-container>
+        <ng-container *ngIf="view() === 'week'">
+          <span class="month-name week-label-text">{{ weekLabel }}</span>
+        </ng-container>
+      </h2>
+      <button class="nav-btn" (click)="nextPeriod()" aria-label="Next">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button class="today-btn" (click)="goToToday()">Today</button>
     </div>
+    <div class="cal-head-right">
+      <button class="cal-pill-btn">
+        <mat-icon>group</mat-icon>
+        <span>{{ memberCount() }} members</span>
+      </button>
+      <div class="view-toggle">
+        <button [class.active]="view() === 'month'" (click)="setView('month')">
+          Month
+        </button>
+        <button [class.active]="view() === 'week'" (click)="setView('week')">
+          Week
+        </button>
+      </div>
+      <button class="cal-pill-btn">
+        <mat-icon>tune</mat-icon>
+        <span>Filter</span>
+        <mat-icon class="expand-icon">expand_more</mat-icon>
+      </button>
+      <button class="cal-add-btn" (click)="openAddEventDialog()">
+        <mat-icon>add</mat-icon>
+        <span>Add Event</span>
+      </button>
+    </div>
+  </div>
 
-    <div class="legend">
-      <div class="legend-entry">
-        <span class="legend-dot ld-activity"></span
-        ><span class="legend-txt">Activity</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-refinement"></span
-        ><span class="legend-txt">Refinement</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-planning"></span
-        ><span class="legend-txt">Planning</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-sprint-review"></span
-        ><span class="legend-txt">Sprint Review</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-vacation"></span
-        ><span class="legend-txt">Vacation</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-vacation-pending"></span
-        ><span class="legend-txt">Pending</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-holiday"></span
-        ><span class="legend-txt">Holiday</span>
-      </div>
-      <div class="legend-entry">
-        <span class="legend-dot ld-weekend"></span
-        ><span class="legend-txt">Weekend</span>
-      </div>
+  <!-- ── Legend bar ─────────────────────────────────────────── -->
+  <div class="cal-legend">
+    <span class="legend-label">LEGEND</span>
+    <div class="legend-entry">
+      <span class="legend-dot ld-refinement"></span
+      ><span class="legend-txt">Refinement</span>
+    </div>
+    <div class="legend-entry">
+      <span class="legend-dot ld-planning"></span
+      ><span class="legend-txt">Planning</span>
+    </div>
+    <div class="legend-entry">
+      <span class="legend-dot ld-sprint-review"></span
+      ><span class="legend-txt">Sprint Review</span>
+    </div>
+    <div class="legend-entry">
+      <span class="legend-dot ld-vacation"></span
+      ><span class="legend-txt">Vacation</span>
+    </div>
+    <div class="legend-entry">
+      <span class="legend-dot ld-holiday"></span
+      ><span class="legend-txt">Holiday</span>
+    </div>
+    <span class="legend-spacer"></span>
+    <div class="legend-entry">
+      <span class="legend-dot ld-weekend"></span
+      ><span class="legend-txt">Weekend</span>
     </div>
   </div>
 
@@ -59,180 +80,102 @@
   </div>
 
   <!-- ── Table ────────────────────────────────── -->
-  <div class="table-wrap" *ngIf="!loading()">
+  <div class="table-wrap" #tableWrap *ngIf="!loading()">
     <table class="cal-table">
       <thead>
-        <tr>
-          <th class="th-wk">Wk</th>
-          <th class="th-date">Date</th>
+        <!-- Sprint header row -->
+        <tr class="sprint-header-row">
+          <th class="th-corner">
+            <span class="corner-sprints-label"
+              ><mat-icon>trending_up</mat-icon>SPRINTS</span
+            >
+          </th>
           <th
-            class="th-member"
-            *ngFor="let row of memberRows(); trackBy: trackByUser"
+            *ngFor="let sprint of sprintGroups()"
+            class="th-sprint"
+            [class.sprint-done]="sprint.isDone"
+            [attr.colspan]="sprint.colspan"
           >
-            <div class="member-chip">
-              <span class="member-initials">{{
-                getInitials(row.user.displayName)
-              }}</span>
-              <span class="member-name-short">{{ row.user.displayName }}</span>
+            <div class="sprint-hdr-inner">
+              <mat-icon class="sprint-hdr-icon">{{
+                sprint.isDone ? "check_circle" : "bolt"
+              }}</mat-icon>
+              <span class="sprint-hdr-number"
+                >SPRINT {{ sprint.sprintNumber }}</span
+              >
+              <span class="sprint-hdr-range">{{ sprint.range }}</span>
+              <span *ngIf="sprint.isDone" class="sprint-done-badge"
+                >✓ Done</span
+              >
+            </div>
+          </th>
+        </tr>
+        <!-- Day header row -->
+        <tr class="day-header-row">
+          <th class="th-corner th-team-label">
+            <span class="members-label"><mat-icon>group</mat-icon>MEMBERS</span>
+          </th>
+          <th
+            *ngFor="let day of days(); trackBy: trackByDate"
+            class="th-day"
+            [class.is-weekend]="day.isWeekend"
+            [class.is-holiday]="day.isHoliday"
+            [class.is-today]="day.date === todayStr"
+          >
+            <div class="day-hdr">
+              <span class="day-hdr-dow">{{ day.display | slice: 0 : 3 }}</span>
+              <span class="day-hdr-num">{{ day.display | slice: 5 }}</span>
             </div>
           </th>
         </tr>
       </thead>
       <tbody>
-        <ng-container *ngFor="let day of days(); trackBy: trackByDate">
-          <!-- Sprint separator row — appears once at the first day of each sprint -->
-          <tr *ngIf="day.isFirstOfSprint" class="sprint-sep-row">
-            <td
-              class="sprint-sep-cell"
-              [attr.colspan]="2 + memberRows().length"
-            >
-              <div class="sprint-sep-inner">
-                <span class="sprint-badge">
-                  <mat-icon class="sprint-icon">bolt</mat-icon>
-                  Sprint {{ day.sprintNumber }}
-                </span>
-                <span class="sprint-range">{{ day.sprintDateRange }}</span>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Day row -->
-          <tr
-            [class.row-weekend]="day.isWeekend"
-            [class.row-holiday]="day.isHoliday"
-          >
-            <!-- Week number -->
-            <td
-              *ngIf="day.isFirstOfWeek"
-              class="td-wk"
-              [attr.rowspan]="day.weekRowspan"
-            >
-              <span class="wk-pill">W{{ day.weekNumber }}</span>
-            </td>
-
-            <!-- Date -->
-            <td
-              class="td-date"
-              [class.is-weekend]="day.isWeekend"
-              [class.is-holiday]="day.isHoliday"
-            >
-              <div class="date-display">
-                <span class="date-dow">{{ day.display | slice: 0 : 3 }}</span>
-                <span class="date-num">{{ day.display | slice: 5 }}</span>
-                <mat-icon
-                  *ngIf="day.isHoliday"
-                  class="hol-icon"
-                  [matTooltip]="day.holidayName ?? ''"
-                  >celebration</mat-icon
-                >
-              </div>
-            </td>
-
-            <!-- Per-member cells -->
-            <td
-              *ngFor="let row of memberRows(); trackBy: trackByUser"
-              class="td-cell"
-              [ngClass]="getCellClass(row, day)"
-              [class.is-clickable]="
-                ((!day.sprintEvent && canEdit) || canClickOwn(row)) &&
-                !day.isWeekend &&
-                !day.isHoliday
-              "
-              (click)="
-                ((!day.sprintEvent && canEdit) || canClickOwn(row)) &&
-                  onCellClick(row, day)
-              "
-            >
-              <ng-container
-                *ngIf="
-                  canEdit &&
-                    !day.sprintEvent &&
-                    !day.isWeekend &&
-                    !day.isHoliday;
-                  else checkOwn
-                "
+        <tr
+          *ngFor="let row of memberRows(); trackBy: trackByUser"
+          class="member-row"
+        >
+          <!-- Sticky member cell -->
+          <td class="td-member">
+            <div class="member-cell">
+              <span
+                class="member-avatar"
+                [style.background]="getAvatarGradient(row.user.uid)"
+                >{{ getInitials(row.user.displayName) }}</span
               >
-                <button
-                  class="cell-trigger"
-                  [matMenuTriggerFor]="cellMenu"
-                  (click)="$event.stopPropagation()"
-                >
-                  <span
-                    class="cell-pill"
-                    [class.empty]="!getEvent(row, day.date)"
-                  >
-                    {{ getCellLabel(row, day) || "—" }}
-                  </span>
-                </button>
-                <mat-menu #cellMenu="matMenu">
-                  <button
-                    mat-menu-item
-                    (click)="setEventType(row, day, 'activity')"
-                  >
-                    <span class="menu-dot md-activity"></span>Activity
-                  </button>
-                  <button
-                    mat-menu-item
-                    (click)="setEventType(row, day, 'refinement')"
-                  >
-                    <span class="menu-dot md-refinement"></span>Refinement
-                  </button>
-                  <button
-                    mat-menu-item
-                    (click)="setEventType(row, day, 'planning')"
-                  >
-                    <span class="menu-dot md-planning"></span>Planning
-                  </button>
-                  <button
-                    mat-menu-item
-                    (click)="setEventType(row, day, 'sprint-review')"
-                  >
-                    <span class="menu-dot md-sprint-review"></span>Sprint Review
-                  </button>
-                  <mat-divider></mat-divider>
-                  <button mat-menu-item (click)="setEventType(row, day, null)">
-                    <mat-icon
-                      style="
-                        font-size: 16px;
-                        width: 16px;
-                        height: 16px;
-                        color: #94a3b8;
-                        vertical-align: middle;
-                      "
-                      >clear</mat-icon
-                    >
-                    Clear
-                  </button>
-                </mat-menu>
-              </ng-container>
+              <div class="member-cell-info">
+                <span class="member-cell-name">{{ row.user.displayName }}</span>
+                <div class="member-cell-role-row">
+                  <span class="role-dot role-dot-{{ row.user.role }}"></span>
+                  <span class="member-cell-role">{{
+                    row.user.role | titlecase
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          </td>
 
-              <ng-template #checkOwn>
-                <ng-container
-                  *ngIf="
-                    canClickOwn(row) && !day.isWeekend && !day.isHoliday;
-                    else readOnly
-                  "
-                >
-                  <span
-                    class="cell-pill"
-                    [class.empty]="!getEvent(row, day.date)"
-                    >{{ getCellLabel(row, day) || "—" }}</span
-                  >
-                </ng-container>
-              </ng-template>
-
-              <ng-template #readOnly>
-                <span
-                  class="cell-pill"
-                  *ngIf="
-                    !day.isWeekend && !day.isHoliday && getCellLabel(row, day)
-                  "
-                  >{{ getCellLabel(row, day) }}</span
-                >
-              </ng-template>
-            </td>
-          </tr>
-        </ng-container>
+          <!-- Day cells -->
+          <td
+            *ngFor="let day of days(); trackBy: trackByDate"
+            class="td-cell"
+            [ngClass]="getCellClass(row, day)"
+            [class.is-today-col]="day.date === todayStr"
+          >
+            <span class="cell-pill" *ngIf="getShortLabel(row, day)">
+              <span
+                class="pill-dot pill-dot-{{ getCellEventType(row, day) }}"
+              ></span>
+              {{ getShortLabel(row, day) }}
+            </span>
+            <span
+              class="cell-empty-dot"
+              *ngIf="
+                !getShortLabel(row, day) && !day.isWeekend && !day.isHoliday
+              "
+              >&#183;</span
+            >
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

@@ -6,7 +6,6 @@ export interface AppUser {
   displayName: string;
   role: UserRole;
   teamId: string;
-  companyId: string;
   photoURL?: string;
   createdAt: Date;
 }

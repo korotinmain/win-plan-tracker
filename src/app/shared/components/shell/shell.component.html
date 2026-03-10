@@ -1,5 +1,5 @@
 <div class="shell-wrapper">
-  <!-- ── Sidebar ──────────────────────────────── -->
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
   <nav class="sidebar" [class.collapsed]="!sidenavOpen()">
     <div class="sidebar-logo">
       <div class="logo-mark">
@@ -20,11 +20,12 @@
             [routerLink]="item.route"
             routerLinkActive="is-active"
             class="nav-link"
-            [title]="!sidenavOpen() ? item.label : ''"
+            [matTooltip]="!sidenavOpen() ? item.label : ''"
+            matTooltipPosition="right"
           >
-            <span class="nav-icon-wrap">
-              <mat-icon>{{ item.icon }}</mat-icon>
-            </span>
+            <span class="nav-icon-wrap"
+              ><mat-icon>{{ item.icon }}</mat-icon></span
+            >
             <span class="nav-label-text" *ngIf="sidenavOpen()">{{
               item.label
             }}</span>
@@ -40,11 +41,12 @@
             [routerLink]="item.route"
             routerLinkActive="is-active"
             class="nav-link"
-            [title]="!sidenavOpen() ? item.label : ''"
+            [matTooltip]="!sidenavOpen() ? item.label : ''"
+            matTooltipPosition="right"
           >
-            <span class="nav-icon-wrap">
-              <mat-icon>{{ item.icon }}</mat-icon>
-            </span>
+            <span class="nav-icon-wrap"
+              ><mat-icon>{{ item.icon }}</mat-icon></span
+            >
             <span class="nav-label-text" *ngIf="sidenavOpen()">{{
               item.label
             }}</span>
@@ -54,9 +56,9 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-card" [matMenuTriggerFor]="userMenu">
+      <div class="user-card" [matMenuTriggerFor]="sidebarMenu">
         <div class="user-avatar-box">
-          {{ (currentUser?.displayName?.[0] ?? "?").toUpperCase() }}
+          {{ getInitials(currentUser?.displayName ?? "") }}
         </div>
         <div class="user-meta" *ngIf="sidenavOpen()">
           <span class="user-name">{{ currentUser?.displayName }}</span>
@@ -66,19 +68,47 @@
           >unfold_more</mat-icon
         >
       </div>
-      <mat-menu #userMenu="matMenu" yPosition="above">
-        <button mat-menu-item routerLink="/settings">
-          <mat-icon>manage_accounts</mat-icon> Settings
+      <mat-menu
+        #sidebarMenu="matMenu"
+        yPosition="above"
+        panelClass="user-dropdown"
+      >
+        <div class="udp-header" (click)="$event.stopPropagation()">
+          <div class="udp-avatar">
+            {{ getInitials(currentUser?.displayName ?? "") }}
+            <span class="udp-avatar-ring"></span>
+          </div>
+          <div class="udp-info">
+            <span class="udp-name">{{ currentUser?.displayName }}</span>
+            <span class="udp-email">{{ currentUser?.email }}</span>
+            <span class="udp-role-badge udp-role-{{ currentUser?.role }}">{{
+              currentUser?.role | titlecase
+            }}</span>
+          </div>
+        </div>
+        <div class="udp-divider"></div>
+        <button mat-menu-item class="udp-item" routerLink="/settings">
+          <span class="udp-item-inner">
+            <span class="udp-item-icon"><mat-icon>tune</mat-icon></span>
+            <span class="udp-item-label">Settings</span>
+          </span>
         </button>
-        <mat-divider></mat-divider>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon> Sign Out
+        <div class="udp-divider"></div>
+        <button
+          mat-menu-item
+          class="udp-item udp-item-danger"
+          (click)="logout()"
+        >
+          <span class="udp-item-inner">
+            <span class="udp-item-icon"><mat-icon>logout</mat-icon></span>
+            <span class="udp-item-label">Sign out</span>
+          </span>
         </button>
       </mat-menu>
     </div>
   </nav>
 
-  <!-- ── Main area ─────────────────────────────── -->
+  <!-- ── Main area ──────────────────────────────────────────────── -->
   <div class="main-area">
     <header class="top-header">
       <button
@@ -93,22 +123,64 @@
 
       <div class="header-end">
         <div class="date-pill">
-          <mat-icon>today</mat-icon>
+          <span class="date-dot"></span>
           <span>{{ today }}</span>
         </div>
-        <button class="icon-btn">
+
+        <button class="icon-btn" aria-label="Notifications">
           <mat-icon>notifications_none</mat-icon>
         </button>
+
+        <button
+          class="icon-btn"
+          (click)="toggleTheme()"
+          [attr.aria-label]="
+            isDark() ? 'Switch to light mode' : 'Switch to dark mode'
+          "
+        >
+          <mat-icon>{{ isDark() ? "light_mode" : "dark_mode" }}</mat-icon>
+        </button>
+
         <div class="header-avatar" [matMenuTriggerFor]="headerMenu">
-          {{ (currentUser?.displayName?.[0] ?? "?").toUpperCase() }}
+          {{ getInitials(currentUser?.displayName ?? "") }}
         </div>
-        <mat-menu #headerMenu="matMenu" yPosition="below" xPosition="before">
-          <button mat-menu-item routerLink="/settings">
-            <mat-icon>manage_accounts</mat-icon> Settings
+
+        <mat-menu
+          #headerMenu="matMenu"
+          yPosition="below"
+          xPosition="before"
+          panelClass="user-dropdown"
+        >
+          <div class="udp-header" (click)="$event.stopPropagation()">
+            <div class="udp-avatar">
+              {{ getInitials(currentUser?.displayName ?? "") }}
+              <span class="udp-avatar-ring"></span>
+            </div>
+            <div class="udp-info">
+              <span class="udp-name">{{ currentUser?.displayName }}</span>
+              <span class="udp-email">{{ currentUser?.email }}</span>
+              <span class="udp-role-badge udp-role-{{ currentUser?.role }}">{{
+                currentUser?.role | titlecase
+              }}</span>
+            </div>
+          </div>
+          <div class="udp-divider"></div>
+          <button mat-menu-item class="udp-item" routerLink="/settings">
+            <span class="udp-item-inner">
+              <span class="udp-item-icon"><mat-icon>tune</mat-icon></span>
+              <span class="udp-item-label">Settings</span>
+            </span>
           </button>
-          <mat-divider></mat-divider>
-          <button mat-menu-item (click)="logout()">
-            <mat-icon>logout</mat-icon> Sign Out
+          <div class="udp-divider"></div>
+          <button
+            mat-menu-item
+            class="udp-item udp-item-danger"
+            (click)="logout()"
+          >
+            <span class="udp-item-inner">
+              <span class="udp-item-icon"><mat-icon>logout</mat-icon></span>
+              <span class="udp-item-label">Sign out</span>
+            </span>
           </button>
         </mat-menu>
       </div>
