@@ -1250,7 +1250,7 @@
 }
 
 /* Dark mode for insight cards */
-:host-context([data-theme='dark']) {
+:host-context([data-theme="dark"]) {
   .insight-card {
     background: #1a1d2e;
     border-color: rgba(255, 255, 255, 0.07);

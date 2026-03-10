@@ -79,7 +79,6 @@
 
   <!-- ── Insights row ─────────────────────────────────────── -->
   <div class="insights-row" *ngIf="hasTeam && !loading()">
-
     <!-- Sprint Progress -->
     <div class="insight-card sprint-card">
       <div class="ic-header">
@@ -89,11 +88,17 @@
           >
           <div>
             <h3 class="ic-title">Sprint {{ sprintInfo.sprintNumber }}</h3>
-            <p class="ic-sub">{{ sprintInfo.startDate }} – {{ sprintInfo.endDate }}</p>
+            <p class="ic-sub">
+              {{ sprintInfo.startDate }} – {{ sprintInfo.endDate }}
+            </p>
           </div>
         </div>
         <span class="ic-chip" [class.ic-chip-done]="sprintInfo.remaining === 0">
-          {{ sprintInfo.remaining === 0 ? 'Complete' : sprintInfo.remaining + 'd left' }}
+          {{
+            sprintInfo.remaining === 0
+              ? "Complete"
+              : sprintInfo.remaining + "d left"
+          }}
         </span>
       </div>
 
@@ -129,9 +134,15 @@
         <mat-icon class="sc-icon">event</mat-icon>
         <span class="sc-label">{{ sprintInfo.nextCeremony.label }}</span>
         <span class="sc-date">{{ sprintInfo.nextCeremony.date }}</span>
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 0">Today</span>
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 1">Tomorrow</span>
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway > 1">in {{ sprintInfo.nextCeremony.daysAway }}d</span>
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 0"
+          >Today</span
+        >
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 1"
+          >Tomorrow</span
+        >
+        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway > 1"
+          >in {{ sprintInfo.nextCeremony.daysAway }}d</span
+        >
       </div>
     </div>
 
@@ -230,7 +241,7 @@
               <span class="evt-sep">·</span>
               <span class="evt-members"
                 >{{ evt.count }}
-                {{ evt.count === 1 ? 'member' : 'members' }}</span
+                {{ evt.count === 1 ? "member" : "members" }}</span
               >
             </div>
           </div>
