@@ -200,15 +200,18 @@
 
   <!-- ── Analytics row ────────────────────────────────── -->
   <div class="analytics-row" *ngIf="hasTeam && !loading()">
-
     <!-- Team Velocity -->
     <div class="insight-card velocity-card">
       <div class="ic-header">
         <div class="ic-header-left">
-          <span class="ic-icon ic-icon-green"><mat-icon>trending_up</mat-icon></span>
+          <span class="ic-icon ic-icon-green"
+            ><mat-icon>trending_up</mat-icon></span
+          >
           <div>
             <h3 class="ic-title">Team Velocity</h3>
-            <p class="ic-sub">Availability % per week &middot; {{ currentMonthYear }}</p>
+            <p class="ic-sub">
+              Availability % per week &middot; {{ currentMonthYear }}
+            </p>
           </div>
         </div>
         <span class="ic-chip">{{ teamVelocity().length }} weeks</span>
@@ -220,10 +223,14 @@
     <div class="insight-card capacity-card" *ngIf="sprintCapacity()">
       <div class="ic-header">
         <div class="ic-header-left">
-          <span class="ic-icon ic-icon-indigo"><mat-icon>group_work</mat-icon></span>
+          <span class="ic-icon ic-icon-indigo"
+            ><mat-icon>group_work</mat-icon></span
+          >
           <div>
             <h3 class="ic-title">Sprint Capacity</h3>
-            <p class="ic-sub">{{ sprintInfo.startDate }} &ndash; {{ sprintInfo.endDate }}</p>
+            <p class="ic-sub">
+              {{ sprintInfo.startDate }} &ndash; {{ sprintInfo.endDate }}
+            </p>
           </div>
         </div>
         <span class="ic-chip ic-chip-done">
@@ -246,5 +253,5 @@
       </div>
       <div echarts [options]="capacityChartOpts()" class="capacity-chart"></div>
     </div>
-
+  </div>
 </div>

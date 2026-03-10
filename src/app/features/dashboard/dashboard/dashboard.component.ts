@@ -361,14 +361,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
         ),
       ).length;
       const working = Math.max(0, total - vac - ceremony);
-      return { dateStr, label: format(d, 'EEE d'), working, ceremony, vacation: vac };
+      return {
+        dateStr,
+        label: format(d, 'EEE d'),
+        working,
+        ceremony,
+        vacation: vac,
+      };
     });
 
     const totalPersonDays = days.reduce((s, d) => s + d.working, 0);
     const capacityPct = Math.round(
       (totalPersonDays / (sprintDays.length * total)) * 100,
     );
-    return { days, totalPersonDays, capacityPct, sprintDays: sprintDays.length, total };
+    return {
+      days,
+      totalPersonDays,
+      capacityPct,
+      sprintDays: sprintDays.length,
+      total,
+    };
   });
 
   // ── Velocity ECharts ─────────────────────────────────────────
@@ -376,9 +388,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const dark = this.isDark();
     const data = this.teamVelocity();
     const textColor = dark ? '#94a3b8' : '#64748b';
-    const gridColor = dark
-      ? 'rgba(255,255,255,0.07)'
-      : 'rgba(0,0,0,0.07)';
+    const gridColor = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
     const tooltipBg = dark ? '#1e293b' : '#ffffff';
     const tooltipBorder = dark ? 'rgba(255,255,255,0.1)' : '#e2e8f0';
     const tooltipText = dark ? '#f1f5f9' : '#0f172a';
@@ -389,7 +399,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         trigger: 'axis',
         backgroundColor: tooltipBg,
         borderColor: tooltipBorder,
-        textStyle: { color: tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
+        textStyle: {
+          color: tooltipText,
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const p = params[0];
           return `<b>${p.name}</b><br/>Availability: <b>${p.value}%</b><br/>Person-days: <b>${data[p.dataIndex]?.personDays}</b>`;
@@ -437,9 +451,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
           areaStyle: {
             color: {
               type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
               colorStops: [
-                { offset: 0, color: dark ? 'rgba(16,185,129,0.40)' : 'rgba(16,185,129,0.22)' },
+                {
+                  offset: 0,
+                  color: dark
+                    ? 'rgba(16,185,129,0.40)'
+                    : 'rgba(16,185,129,0.22)',
+                },
                 { offset: 1, color: 'rgba(16,185,129,0.02)' },
               ],
             } as any,
@@ -448,7 +470,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
             silent: true,
             symbol: 'none',
             data: [{ type: 'average', name: 'Avg' }],
-            lineStyle: { color: '#10b981', type: 'dashed', width: 1, opacity: 0.5 },
+            lineStyle: {
+              color: '#10b981',
+              type: 'dashed',
+              width: 1,
+              opacity: 0.5,
+            },
             label: {
               formatter: 'avg {c}%',
               color: '#10b981',
@@ -478,7 +505,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         axisPointer: { type: 'shadow' },
         backgroundColor: tooltipBg,
         borderColor: tooltipBorder,
-        textStyle: { color: tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
+        textStyle: {
+          color: tooltipText,
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const d = cap.days[params[0].dataIndex];
           let html = `<b>${d.label}</b><br/>`;
