@@ -89,10 +89,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "win-plan-tracker:build:production"
+              "buildTarget": "win-plan-tracker:build:production"
             },
             "development": {
-              "browserTarget": "win-plan-tracker:build:development"
+              "buildTarget": "win-plan-tracker:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -100,7 +100,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "win-plan-tracker:build"
+            "buildTarget": "win-plan-tracker:build"
           }
         },
         "test": {
