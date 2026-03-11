@@ -162,3 +162,17 @@ a {
     overflow: visible;
   }
 }
+
+// ── Event Info Dialog ─────────────────────────────────────────────────────────
+.event-info-dialog-overlay .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+}

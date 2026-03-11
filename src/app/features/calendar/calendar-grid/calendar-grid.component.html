@@ -117,6 +117,14 @@
             [attr.colspan]="sprint.colspan"
           >
             <div class="sprint-hdr-inner">
+              <button
+                class="sprint-nav-btn"
+                (click)="prevPeriod()"
+                *ngIf="!sprint.isDone"
+                aria-label="Previous period"
+              >
+                <mat-icon>chevron_left</mat-icon>
+              </button>
               <mat-icon class="sprint-hdr-icon">{{
                 sprint.isDone ? "check_circle" : "bolt"
               }}</mat-icon>
@@ -124,9 +132,18 @@
                 >SPRINT {{ sprint.sprintNumber }}</span
               >
               <span class="sprint-hdr-range">{{ sprint.range }}</span>
-              <span *ngIf="sprint.isDone" class="sprint-done-badge"
-                >✓ Done</span
+              <span *ngIf="sprint.isDone" class="sprint-done-badge">
+                <mat-icon>check_circle</mat-icon>DONE
+              </span>
+              <span *ngIf="!sprint.isDone" class="sprint-active-dot"></span>
+              <button
+                class="sprint-nav-btn"
+                (click)="nextPeriod()"
+                *ngIf="sprint.isDone"
+                aria-label="Next period"
               >
+                <mat-icon>chevron_right</mat-icon>
+              </button>
             </div>
           </th>
         </tr>
@@ -148,18 +165,8 @@
             (click)="day.isHoliday && openHolidayInfo(day)"
           >
             <div class="day-hdr">
-              <mat-icon
-                class="day-hdr-badge day-hdr-badge-holiday"
-                *ngIf="day.isHoliday"
-                >celebration</mat-icon
-              >
-              <mat-icon
-                class="day-hdr-badge day-hdr-badge-weekend"
-                *ngIf="day.isWeekend && !day.isHoliday"
-                >bedtime</mat-icon
-              >
               <span class="day-hdr-dow">{{ day.display | slice: 0 : 3 }}</span>
-              <span class="day-hdr-num">{{ day.display | slice: 5 }}</span>
+              <span class="day-hdr-num">{{ day.date | date: "d" }}</span>
             </div>
           </th>
         </tr>
@@ -193,15 +200,18 @@
           <td
             *ngFor="let day of days(); trackBy: trackByDate"
             class="td-cell"
-            [ngClass]="getCellClass(row, day)"
+            [class.is-weekend]="day.isWeekend"
+            [class.is-holiday]="day.isHoliday"
             [class.is-today-col]="day.date === todayStr"
           >
-            <span class="cell-pill" *ngIf="getShortLabel(row, day)">
-              <span
-                class="pill-dot pill-dot-{{ getCellEventType(row, day) }}"
-              ></span>
-              {{ getShortLabel(row, day) }}
-            </span>
+            <button
+              class="cell-chip chip-{{ getCellEventType(row, day) }}"
+              *ngIf="getShortLabel(row, day)"
+              (click)="openCellEvent(row, day)"
+              type="button"
+            >
+              + {{ getShortLabel(row, day) }}
+            </button>
             <!-- Holiday icon in empty holiday cell -->
             <button
               class="cell-icon-btn cell-icon-holiday-btn"
@@ -218,13 +228,6 @@
                 !getShortLabel(row, day) && day.isWeekend && !day.isHoliday
               "
               >bedtime</mat-icon
-            >
-            <span
-              class="cell-empty-dot"
-              *ngIf="
-                !getShortLabel(row, day) && !day.isWeekend && !day.isHoliday
-              "
-              >&#183;</span
             >
           </td>
         </tr>

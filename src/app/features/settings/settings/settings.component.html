@@ -137,6 +137,135 @@
       </ng-container>
     </div>
 
+    <!-- SPRINT CEREMONIES -->
+    <div class="st-card" *ngIf="myTeam()">
+      <div class="st-section-label">Sprint Ceremonies</div>
+
+      <!-- Sprint length toggle -->
+      <div class="st-ceremony-sprint-len">
+        <div class="st-ceremony-len-label">
+          <mat-icon>speed</mat-icon>
+          <span>Sprint length</span>
+        </div>
+        <div class="st-len-btns">
+          <button
+            class="st-len-btn"
+            [class.active]="ceremonyConfig().sprintLengthWeeks === 1"
+            (click)="isTeamAdmin() && updateSprintLength(1)"
+            [disabled]="!isTeamAdmin()"
+            type="button"
+          >
+            1 week
+          </button>
+          <button
+            class="st-len-btn"
+            [class.active]="ceremonyConfig().sprintLengthWeeks === 2"
+            (click)="isTeamAdmin() && updateSprintLength(2)"
+            [disabled]="!isTeamAdmin()"
+            type="button"
+          >
+            2 weeks
+          </button>
+        </div>
+      </div>
+
+      <!-- Ceremony rows -->
+      <div class="st-ceremony-list">
+        <div class="st-ceremony-item">
+          <span class="st-cer-badge st-cer-badge--planning">PLAN</span>
+          <span class="st-cer-name">Planning</span>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().planningDow"
+            (ngModelChange)="patchCeremony({ planningDow: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+              {{ d.label }}
+            </option>
+          </select>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().planningWeek"
+            (ngModelChange)="patchCeremony({ planningWeek: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+              {{ w.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="st-ceremony-item">
+          <span class="st-cer-badge st-cer-badge--refinement">REF</span>
+          <span class="st-cer-name">Refinement</span>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().refinementDow"
+            (ngModelChange)="patchCeremony({ refinementDow: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+              {{ d.label }}
+            </option>
+          </select>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().refinementWeek"
+            (ngModelChange)="patchCeremony({ refinementWeek: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+              {{ w.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="st-ceremony-item">
+          <span class="st-cer-badge st-cer-badge--sprint-review">REV</span>
+          <span class="st-cer-name">Sprint Review</span>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().sprintReviewDow"
+            (ngModelChange)="patchCeremony({ sprintReviewDow: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+              {{ d.label }}
+            </option>
+          </select>
+          <select
+            class="st-select"
+            [ngModel]="ceremonyConfig().sprintReviewWeek"
+            (ngModelChange)="patchCeremony({ sprintReviewWeek: $event })"
+            [disabled]="!isTeamAdmin()"
+          >
+            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+              {{ w.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <p class="st-ceremony-hint" *ngIf="!isTeamAdmin()">
+        <mat-icon>info_outline</mat-icon>
+        Only admins and managers can change ceremony settings.
+      </p>
+
+      <div class="st-ceremony-footer" *ngIf="isTeamAdmin()">
+        <button
+          class="st-btn-save"
+          (click)="saveCeremonyConfig()"
+          [disabled]="savingCeremony()"
+          type="button"
+        >
+          <mat-spinner *ngIf="savingCeremony()" diameter="14"></mat-spinner>
+          <mat-icon *ngIf="!savingCeremony()">save</mat-icon>
+          {{ savingCeremony() ? "Saving…" : "Save" }}
+        </button>
+      </div>
+    </div>
+
     <!-- APPEARANCE -->
     <div class="st-card">
       <div class="st-section-label">Appearance</div>

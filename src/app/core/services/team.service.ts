@@ -14,7 +14,7 @@ import {
   DocumentData,
 } from '@firebase/firestore';
 import { Observable, combineLatest, map } from 'rxjs';
-import { Team } from '../models/team.model';
+import { Team, SprintCeremonyConfig } from '../models/team.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
 
@@ -138,5 +138,12 @@ export class TeamService {
     await updateDoc(doc(db, `teams/${teamId}`), {
       holidayCountryCode: countryCode || deleteField(),
     });
+  }
+
+  async updateCeremonyConfig(
+    teamId: string,
+    config: SprintCeremonyConfig,
+  ): Promise<void> {
+    await updateDoc(doc(db, `teams/${teamId}`), { ceremonyConfig: config });
   }
 }

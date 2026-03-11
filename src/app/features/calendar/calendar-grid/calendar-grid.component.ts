@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -21,6 +22,10 @@ import {
   HolidayInfoDialogComponent,
   HolidayInfoDialogData,
 } from '../holiday-info-dialog/holiday-info-dialog.component';
+import {
+  EventInfoDialogComponent,
+  EventInfoDialogData,
+} from '../event-info-dialog/event-info-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
@@ -48,6 +53,7 @@ import {
   PublicHoliday,
 } from '../../../core/services/holiday.service';
 import { CalendarEvent, Holiday } from '../../../core/models/event.model';
+import { DEFAULT_CEREMONY_CONFIG } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest, map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -79,6 +85,7 @@ interface MemberRow {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
@@ -273,12 +280,17 @@ export class CalendarGridComponent implements OnInit {
           weekMap.set(w, (weekMap.get(w) ?? 0) + 1);
         });
 
-        // Sprint = 2 ISO weeks; sprint N covers weeks (2N-1) and 2N.
-        // First pass: compute sprint date ranges visible in this month.
+        // Build team ceremony config (from Firestore or defaults)
+        const cfg = {
+          ...DEFAULT_CEREMONY_CONFIG,
+          ...(team?.ceremonyConfig ?? {}),
+        };
+
+        // Sprint = N ISO weeks. First pass: compute sprint date ranges.
         const sprintFirstDate = new Map<number, Date>();
         const sprintLastDate = new Map<number, Date>();
         allDays.forEach((d) => {
-          const sprint = Math.ceil(getISOWeek(d) / 2);
+          const sprint = Math.ceil(getISOWeek(d) / cfg.sprintLengthWeeks);
           if (!sprintFirstDate.has(sprint)) sprintFirstDate.set(sprint, d);
           sprintLastDate.set(sprint, d);
         });
@@ -290,7 +302,8 @@ export class CalendarGridComponent implements OnInit {
         allDays.forEach((d) => {
           const dateStr = format(d, 'yyyy-MM-dd');
           const week = getISOWeek(d);
-          const sprint = Math.ceil(week / 2);
+          const sprint = Math.ceil(week / cfg.sprintLengthWeeks);
+          const weekWithinSprint = week - (sprint - 1) * cfg.sprintLengthWeeks;
           const isFirstW = !seenWeeks.has(week);
           const isFirstS = !seenSprints.has(sprint);
           if (isFirstW) seenWeeks.add(week);
@@ -301,19 +314,24 @@ export class CalendarGridComponent implements OnInit {
             const end = sprintLastDate.get(sprint)!;
             sprintDateRange = `${format(start, 'MMM d')} – ${format(end, 'MMM d')}`;
           }
-          // Compute fixed sprint ceremonies from day-of-week + ISO week position
-          const firstWeekOfSprint = 2 * sprint - 1; // odd week = first week of sprint
-          const secondWeekOfSprint = 2 * sprint; // even week = second week of sprint
-          const dow = d.getDay(); // 0=Sun,1=Mon,5=Fri
+          // Compute sprint ceremonies from team config
+          const dow = d.getDay();
           let sprintEvent:
             | 'planning'
             | 'refinement'
             | 'sprint-review'
             | undefined;
-          if (dow === 1 && week === firstWeekOfSprint) sprintEvent = 'planning';
-          else if (dow === 1 && week === secondWeekOfSprint)
+          if (dow === cfg.planningDow && weekWithinSprint === cfg.planningWeek)
+            sprintEvent = 'planning';
+          else if (
+            dow === cfg.refinementDow &&
+            weekWithinSprint === cfg.refinementWeek
+          )
             sprintEvent = 'refinement';
-          else if (dow === 5 && week === secondWeekOfSprint)
+          else if (
+            dow === cfg.sprintReviewDow &&
+            weekWithinSprint === cfg.sprintReviewWeek
+          )
             sprintEvent = 'sprint-review';
 
           calDays.push({
@@ -427,11 +445,13 @@ export class CalendarGridComponent implements OnInit {
     });
   }
 
-  openAddEventDialog(): void {
+  openAddEventDialog(defaultDate?: string, defaultMemberUid?: string): void {
     const ref = this.dialog.open(AddEventDialogComponent, {
       data: {
         members: this.members(),
         teamId: this.currentUser?.teamId ?? '',
+        defaultDate,
+        defaultMemberUid,
       } as AddEventDialogData,
       panelClass: 'add-event-dialog-overlay',
       width: '580px',
@@ -447,8 +467,63 @@ export class CalendarGridComponent implements OnInit {
     if (day.isWeekend || day.isHoliday) return '';
     const evt = this.getEvent(row, day.date);
     if (evt?.type === 'vacation') return 'vacation';
+    if (evt?.type === 'day-off') return 'day-off';
+    if (evt?.type === 'standup' || evt?.type === 'activity') return 'standup';
     if (day.sprintEvent) return day.sprintEvent;
     return evt?.type ?? '';
+  }
+
+  openCellEvent(row: MemberRow, day: CalendarDay): void {
+    const evt = this.getEvent(row, day.date);
+    const type = this.getCellEventType(row, day);
+    const sprintGroup = this.sprintGroups().find(
+      (g) => g.sprintNumber === day.sprintNumber,
+    );
+    const timeDisplay =
+      evt?.startTime && evt?.endTime
+        ? `${evt.startTime} – ${evt.endTime}`
+        : 'All day';
+    const titleMap: Record<string, string> = {
+      standup: 'Standup',
+      activity: 'Standup',
+      refinement: 'Refinement',
+      planning: 'Planning',
+      'sprint-review': 'Sprint Review',
+      vacation: 'Vacation',
+      'day-off': 'Day Off',
+    };
+    const badgeMap: Record<string, string> = {
+      standup: 'STAN',
+      activity: 'STAN',
+      refinement: 'REF',
+      planning: 'PLAN',
+      'sprint-review': 'REV',
+      vacation: 'VAC',
+      'day-off': 'OFF',
+    };
+    this.dialog
+      .open(EventInfoDialogComponent, {
+        data: {
+          eventTitle: titleMap[type] ?? type,
+          eventType: type,
+          badge: badgeMap[type] ?? type.toUpperCase().slice(0, 4),
+          date: day.date,
+          timeDisplay,
+          user: row.user,
+          sprintNumber: day.sprintNumber,
+          sprintIsDone: sprintGroup?.isDone ?? false,
+          event: evt,
+          teamId: this.currentUser?.teamId ?? '',
+        } as EventInfoDialogData,
+        panelClass: 'event-info-dialog-overlay',
+        backdropClass: 'add-event-backdrop',
+        width: '540px',
+        maxWidth: '96vw',
+      })
+      .afterClosed()
+      .subscribe((removed) => {
+        if (removed) this.loadCalendar();
+      });
   }
 
   private readonly avatarPalette = [
@@ -470,14 +545,18 @@ export class CalendarGridComponent implements OnInit {
     if (day.isWeekend || day.isHoliday) return '';
     const evt = this.getEvent(row, day.date);
     if (evt?.type === 'vacation') return 'Vac';
+    if (evt?.type === 'day-off') return 'Off';
+    if (evt?.type === 'standup' || evt?.type === 'activity') return 'Stan';
     if (day.sprintEvent === 'planning') return 'Plan';
-    if (day.sprintEvent === 'refinement') return 'Rfmt';
-    if (day.sprintEvent === 'sprint-review') return 'SR';
+    if (day.sprintEvent === 'refinement') return 'Ref';
+    if (day.sprintEvent === 'sprint-review') return 'Rev';
     if (!evt) return '';
     const map: Record<string, string> = {
-      refinement: 'Rfmt',
+      refinement: 'Ref',
       planning: 'Plan',
-      'sprint-review': 'SR',
+      'sprint-review': 'Rev',
+      standup: 'Stan',
+      activity: 'Stan',
     };
     return map[evt.type] ?? '';
   }

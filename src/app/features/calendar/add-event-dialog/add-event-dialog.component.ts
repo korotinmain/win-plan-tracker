@@ -18,6 +18,7 @@ export interface AddEventDialogData {
   members: AppUser[];
   teamId: string;
   defaultDate?: string;
+  defaultMemberUid?: string;
 }
 
 interface EventTypeOption {
@@ -60,11 +61,18 @@ export class AddEventDialogComponent implements OnInit {
 
   readonly eventTypes: EventTypeOption[] = [
     {
+      type: 'standup',
+      label: 'Standup',
+      shortLabel: 'Stan',
+      color: '#2dd4bf',
+      bg: 'rgba(20,184,166,0.18)',
+    },
+    {
       type: 'refinement',
       label: 'Refinement',
-      shortLabel: 'Rfmt',
-      color: '#fcd34d',
-      bg: 'rgba(245,158,11,0.18)',
+      shortLabel: 'Ref',
+      color: '#a5b4fc',
+      bg: 'rgba(99,102,241,0.18)',
     },
     {
       type: 'planning',
@@ -84,8 +92,15 @@ export class AddEventDialogComponent implements OnInit {
       type: 'vacation',
       label: 'Vacation',
       shortLabel: 'Vac',
-      color: '#c4b5fd',
-      bg: 'rgba(139,92,246,0.18)',
+      color: '#facc15',
+      bg: 'rgba(234,179,8,0.18)',
+    },
+    {
+      type: 'day-off',
+      label: 'Day Off',
+      shortLabel: 'Off',
+      color: '#94a3b8',
+      bg: 'rgba(100,116,139,0.18)',
     },
   ];
 
@@ -111,8 +126,11 @@ export class AddEventDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Pre-select all members
-    this.selectedMemberUids.set(new Set(this.members.map((m) => m.uid)));
+    if (this.data.defaultMemberUid) {
+      this.selectedMemberUids.set(new Set([this.data.defaultMemberUid]));
+    } else {
+      this.selectedMemberUids.set(new Set(this.members.map((m) => m.uid)));
+    }
   }
 
   toggleMember(uid: string): void {

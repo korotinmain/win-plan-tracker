@@ -1,0 +1,74 @@
+<div class="eid-dialog">
+  <!-- Header -->
+  <div class="eid-header">
+    <div class="eid-header-left">
+      <div class="eid-icon">
+        <mat-icon>calendar_today</mat-icon>
+      </div>
+      <div class="eid-title-group">
+        <h2 class="eid-title">{{ data.eventTitle }}</h2>
+        <p class="eid-date">{{ dateLabel }}</p>
+      </div>
+    </div>
+    <span class="eid-badge eid-badge--{{ data.eventType }}">{{
+      data.badge
+    }}</span>
+  </div>
+
+  <!-- Body card -->
+  <div class="eid-body">
+    <!-- Time -->
+    <div class="eid-row">
+      <mat-icon class="eid-row-icon">schedule</mat-icon>
+      <div class="eid-row-content">
+        <div class="eid-row-label">Time</div>
+        <div class="eid-row-value">{{ data.timeDisplay }}</div>
+      </div>
+    </div>
+
+    <!-- Assignee -->
+    <div class="eid-row">
+      <mat-icon class="eid-row-icon">person</mat-icon>
+      <div class="eid-row-content">
+        <div class="eid-row-label">Assignee</div>
+        <div class="eid-assignee">
+          <span
+            class="eid-avatar"
+            [style.background]="getAvatarGradient(data.user.uid)"
+            >{{ getInitials(data.user.displayName) }}</span
+          >
+          <span class="eid-assignee-name">{{ data.user.displayName }}</span>
+          <span class="eid-role-chip">{{ data.user.role | titlecase }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sprint -->
+    <div class="eid-row">
+      <mat-icon class="eid-row-icon">label</mat-icon>
+      <div class="eid-row-content">
+        <div class="eid-row-label">Sprint</div>
+        <div class="eid-sprint-row">
+          <span class="eid-sprint-name">SPRINT {{ data.sprintNumber }}</span>
+          <span class="eid-sprint-done" *ngIf="data.sprintIsDone">DONE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="eid-footer">
+    <button
+      class="eid-btn-remove"
+      *ngIf="data.event"
+      (click)="remove()"
+      [disabled]="removing()"
+      type="button"
+    >
+      <mat-spinner *ngIf="removing()" diameter="14"></mat-spinner>
+      <mat-icon *ngIf="!removing()">delete</mat-icon>
+      {{ removing() ? "Removing…" : "Remove" }}
+    </button>
+    <button class="eid-btn-close" (click)="close()" type="button">Close</button>
+  </div>
+</div>
