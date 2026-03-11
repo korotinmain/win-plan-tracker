@@ -1,0 +1,93 @@
+<div class="ued">
+  <!-- ─── Header ──────────────────────────────────────────── -->
+  <div class="ued-header">
+    <div class="ued-title-block">
+      <span class="ued-title">Upcoming Events</span>
+      <span class="ued-sub"
+        >{{ data.currentMonth }} &middot; Sprint {{ data.sprintNumber }}</span
+      >
+    </div>
+    <button
+      mat-icon-button
+      class="ued-close"
+      (click)="close()"
+      aria-label="Close dialog"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ─── Filter chips ─────────────────────────────────────── -->
+  <div class="ued-filters" role="group" aria-label="Filter events by type">
+    <button
+      *ngFor="let chip of filterChips"
+      type="button"
+      class="ued-chip"
+      [class.active]="activeFilter() === chip.value"
+      (click)="activeFilter.set(chip.value)"
+    >
+      <mat-icon *ngIf="chip.icon" class="ued-chip-icon">{{
+        chip.icon
+      }}</mat-icon>
+      {{ chip.label }}
+    </button>
+  </div>
+
+  <!-- ─── Scrollable event list ────────────────────────────── -->
+  <div class="ued-body">
+    <ng-container *ngIf="filteredRows().length > 0; else emptyTpl">
+      <div
+        *ngFor="let row of filteredRows()"
+        class="ued-row"
+        [style.--row-accent]="row.accentColor"
+      >
+        <div class="ued-accent-bar"></div>
+        <div class="ued-row-content">
+          <!-- Left: event name + date -->
+          <div class="ued-row-left">
+            <span class="ued-event-name">{{ row.typeLabel }}</span>
+            <div class="ued-meta">
+              <mat-icon class="ued-meta-icon">calendar_today</mat-icon>
+              <span>{{ row.displayDate }}</span>
+            </div>
+          </div>
+
+          <!-- Right: badge + avatars + category -->
+          <div class="ued-row-right">
+            <span class="ued-badge ued-badge-{{ badgeClass(row) }}">{{
+              row.daysLabel
+            }}</span>
+
+            <div class="ued-avatars" *ngIf="row.memberAvatars.length > 0">
+              <div
+                *ngFor="let av of row.memberAvatars.slice(0, 3)"
+                class="ued-av"
+                [style.background]="av.color"
+                [title]="av.name"
+              >
+                {{ av.initials }}
+              </div>
+              <div
+                *ngIf="row.memberAvatars.length > 3"
+                class="ued-av ued-av-more"
+              >
+                +{{ row.memberAvatars.length - 3 }}
+              </div>
+            </div>
+
+            <span class="ued-category" [style.color]="row.accentColor">{{
+              row.category
+            }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #emptyTpl>
+      <div class="ued-empty">
+        <mat-icon>event_available</mat-icon>
+        <p>No events for this filter</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

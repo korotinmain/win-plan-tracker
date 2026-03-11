@@ -1,145 +1,259 @@
 <div class="teams-page">
-  <!-- Hero banner -->
-  <div class="teams-hero">
-    <div class="hero-content">
-      <div class="hero-icon-wrap">
-        <mat-icon>groups</mat-icon>
+  <!-- ── Header ── -->
+  <div class="tm-header">
+    <div class="tm-header-left">
+      <div class="tm-header-icon">
+        <mat-icon>people_alt</mat-icon>
       </div>
-      <div class="hero-text">
-        <h1 class="hero-title">Teams</h1>
-        <p class="hero-sub">Organize people into squads across your company</p>
+      <div class="tm-header-text">
+        <h1 class="tm-header-title">Team Members</h1>
+        <p class="tm-header-sub">
+          Manage your team roster, roles, and availability
+        </p>
       </div>
     </div>
     <button
-      class="btn-create"
-      (click)="openCreateTeam()"
-      [disabled]="creating()"
+      *ngIf="isAdminOrManager() && hasTeam()"
+      class="btn-add-member"
+      (click)="openAddMember()"
+      type="button"
     >
-      <mat-spinner
-        *ngIf="creating()"
-        diameter="18"
-        class="btn-spinner"
-      ></mat-spinner>
-      <mat-icon *ngIf="!creating()">add</mat-icon>
-      {{ creating() ? "Creating…" : "New Team" }}
+      <mat-icon>add</mat-icon>
+      Add Member
     </button>
   </div>
 
-  <!-- Error banner -->
-  <div *ngIf="createError()" class="create-error-banner">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ createError() }}</span>
-    <button class="error-dismiss" (click)="createError.set(null)" type="button">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-
-  <!-- Body -->
-  <div class="teams-body">
-    <!-- Loading -->
-    <div *ngIf="loading()" class="loading-box">
-      <mat-spinner diameter="36"></mat-spinner>
-    </div>
-
-    <!-- Empty state -->
-    <div *ngIf="!loading() && teams().length === 0" class="empty-state">
-      <div class="empty-icon">
-        <mat-icon>diversity_3</mat-icon>
+  <!-- ── Stats row ── -->
+  <div class="tm-stats-row tm-animate-in" *ngIf="hasTeam()">
+    <div class="tm-stat-card">
+      <div class="tm-stat-icon tm-stat-icon--members">
+        <mat-icon>people_alt</mat-icon>
       </div>
-      <h3>No teams yet</h3>
-      <p *ngIf="isAdminOrManager()">
-        Create your first team to start organizing people.
-      </p>
-      <p *ngIf="!isAdminOrManager()">
-        Teams will appear here once they're created.
-      </p>
-      <button
-        *ngIf="isAdminOrManager()"
-        class="btn-create"
-        (click)="openCreateTeam()"
-        [disabled]="creating()"
-      >
-        <mat-icon>add</mat-icon>
-        Create First Team
-      </button>
+      <div class="tm-stat-info">
+        <div class="tm-stat-value">{{ members().length }}</div>
+        <div class="tm-stat-label">Total Members</div>
+      </div>
+    </div>
+    <div class="tm-stat-card">
+      <div class="tm-stat-icon tm-stat-icon--online">
+        <mat-icon>show_chart</mat-icon>
+      </div>
+      <div class="tm-stat-info">
+        <div class="tm-stat-value">{{ onlineCount() }}</div>
+        <div class="tm-stat-label">Online Now</div>
+      </div>
+    </div>
+    <div class="tm-stat-card">
+      <div class="tm-stat-icon tm-stat-icon--events">
+        <mat-icon>grade</mat-icon>
+      </div>
+      <div class="tm-stat-info">
+        <div class="tm-stat-value">{{ totalEvents() }}</div>
+        <div class="tm-stat-label">Total Events</div>
+      </div>
+    </div>
+    <div class="tm-stat-card">
+      <div class="tm-stat-icon tm-stat-icon--sprints">
+        <mat-icon>bolt</mat-icon>
+      </div>
+      <div class="tm-stat-info">
+        <div class="tm-stat-value">{{ totalSprints() }}</div>
+        <div class="tm-stat-label">Active Sprints</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── No-team onboarding banner (any user without a team) ── -->
+  <div class="tm-join-banner" *ngIf="!loading() && !hasTeam()">
+    <div class="tm-join-banner-glow"></div>
+    <div class="tm-join-banner-inner">
+      <div class="tm-join-banner-icon">
+        <mat-icon>group_add</mat-icon>
+      </div>
+      <div class="tm-join-banner-text">
+        <h2 class="tm-join-banner-title">You're not on a team yet</h2>
+        <p class="tm-join-banner-sub">
+          Join one of the available teams to start collaborating, tracking
+          events, and sprints together.
+        </p>
+      </div>
     </div>
 
-    <!-- Teams grid -->
-    <div class="teams-grid" *ngIf="!loading()">
-      <!-- Existing team cards -->
+    <div class="tm-join-error" *ngIf="joinError()">
+      <mat-icon>error_outline</mat-icon>
+      {{ joinError() }}
+    </div>
+
+    <div class="tm-join-list" *ngIf="teams().length > 0; else noTeamsYet">
+      <!-- Search -->
+      <div class="tm-join-search-wrap">
+        <mat-icon class="tm-join-search-icon">search</mat-icon>
+        <input
+          class="tm-join-search-input"
+          type="text"
+          placeholder="Search teams…"
+          [ngModel]="joinSearchQuery()"
+          (ngModelChange)="joinSearchQuery.set($event)"
+        />
+        <button
+          *ngIf="joinSearchQuery()"
+          class="tm-join-search-clear"
+          (click)="joinSearchQuery.set('')"
+          type="button"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <p class="tm-join-no-results" *ngIf="filteredJoinTeams().length === 0">
+        No teams match "{{ joinSearchQuery() }}"
+      </p>
+
       <div
-        class="team-card"
-        *ngFor="let team of teams(); let i = index"
-        (click)="openManageTeam(team, $event)"
-        role="button"
-        [attr.aria-label]="'Manage ' + team.name"
+        class="tm-join-team-row"
+        [class.tm-join-team-row--success]="joinSuccess() === team.id"
+        *ngFor="let team of filteredJoinTeams()"
       >
-        <div class="team-card-top" [style.background]="gradient(i)">
-          <div class="team-card-glow" [style.background]="gradient(i)"></div>
-          <div class="team-top-inner">
-            <div class="team-icon-bubble">
-              <mat-icon>{{ team.icon || "groups" }}</mat-icon>
-            </div>
-            <div class="team-top-meta">
-              <h3 class="team-name">{{ team.name }}</h3>
-              <span class="team-member-count">
-                <mat-icon>person</mat-icon>
-                {{ team.memberIds.length }}
-                {{ team.memberIds.length === 1 ? "member" : "members" }}
-              </span>
+        <div class="tm-join-team-left">
+          <div class="tm-join-team-icon">
+            <mat-icon *ngIf="team.icon; else defaultIcon">{{
+              team.icon
+            }}</mat-icon>
+            <ng-template #defaultIcon
+              ><mat-icon>diversity_3</mat-icon></ng-template
+            >
+          </div>
+          <div class="tm-join-team-info">
+            <div class="tm-join-team-name">{{ team.name }}</div>
+            <div class="tm-join-team-meta">
+              <mat-icon>people_alt</mat-icon>
+              {{ team.memberIds.length }} member{{
+                team.memberIds.length === 1 ? "" : "s"
+              }}
             </div>
           </div>
         </div>
-
-        <div class="team-card-bottom">
-          <!-- Admin/Manager: open manage dialog -->
-          <button
-            *ngIf="isManagerOf(team) || isAdminOrManager()"
-            class="btn-manage-full"
-            (click)="openManageTeam(team, $event)"
-            type="button"
+        <button
+          class="btn-join-team"
+          [class.btn-join-team--loading]="joining() === team.id"
+          [class.btn-join-team--success]="joinSuccess() === team.id"
+          [disabled]="joining() !== null || joinSuccess() !== null"
+          (click)="joinTeam(team)"
+          type="button"
+        >
+          <mat-spinner
+            *ngIf="joining() === team.id"
+            diameter="16"
+          ></mat-spinner>
+          <mat-icon *ngIf="joinSuccess() === team.id">check_circle</mat-icon>
+          <mat-icon *ngIf="joining() !== team.id && joinSuccess() !== team.id"
+            >login</mat-icon
           >
-            <mat-icon>manage_accounts</mat-icon>
-            Manage Team
-          </button>
+          {{
+            joining() === team.id
+              ? "Joining…"
+              : joinSuccess() === team.id
+                ? "Joined!"
+                : "Join"
+          }}
+        </button>
+      </div>
+    </div>
+    <ng-template #noTeamsYet>
+      <p class="tm-join-empty">
+        No teams have been created yet. Ask your admin to set one up.
+      </p>
+    </ng-template>
+  </div>
 
-          <!-- Regular member: just show membership status -->
-          <div
-            *ngIf="!isAdminOrManager() && isMemberOf(team)"
-            class="btn-joined-indicator member"
-          >
-            <mat-icon>check_circle</mat-icon>
-            Your Team
-          </div>
+  <!-- ── Search ── -->
+  <div class="tm-search-wrap" *ngIf="hasTeam()">
+    <mat-icon class="tm-search-icon">search</mat-icon>
+    <input
+      class="tm-search-input"
+      type="text"
+      placeholder="Search members by name or role..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+  </div>
 
-          <!-- Non-member employee: prompt to go to settings -->
-          <div
-            *ngIf="!isAdminOrManager() && !isMemberOf(team)"
-            class="btn-joined-indicator"
-            matTooltip="Go to Settings to join a team"
-          >
-            <mat-icon>settings</mat-icon>
-            Join in Settings
-          </div>
+  <!-- ── Loading ── -->
+  <div *ngIf="loading()" class="tm-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <!-- ── Members grid ── -->
+  <div class="tm-members-grid tm-animate-in" *ngIf="!loading() && hasTeam()">
+    <div class="tm-member-card" *ngFor="let member of filteredMembers()">
+      <!-- Avatar -->
+      <div class="tm-avatar-wrap">
+        <div class="tm-avatar" [style.background]="avatarColor(member.uid)">
+          <img
+            *ngIf="member.photoURL"
+            [src]="member.photoURL"
+            [alt]="member.displayName"
+          />
+          <span *ngIf="!member.photoURL">{{
+            initials(member.displayName)
+          }}</span>
         </div>
+        <div
+          class="tm-online-dot"
+          [class.tm-online-dot--offline]="!isOnline(member.uid)"
+        ></div>
       </div>
 
-      <!-- Ghost create card -->
-      <button
-        *ngIf="teams().length > 0 && isAdminOrManager()"
-        class="team-card-create"
-        (click)="openCreateTeam()"
-        [disabled]="creating()"
-        type="button"
-        matTooltip="Create a new team"
-      >
-        <div class="team-card-create-inner">
-          <div class="create-plus-icon">
-            <mat-icon>add</mat-icon>
-          </div>
-          <span class="create-label">New Team</span>
+      <!-- Name -->
+      <div class="tm-member-name">{{ member.displayName }}</div>
+
+      <!-- Role badge -->
+      <div class="tm-role-badge tm-role-badge--{{ member.role }}">
+        {{ member.role | titlecase }}
+      </div>
+
+      <!-- Status -->
+      <div class="tm-member-status">
+        <span
+          class="tm-status-dot"
+          [class.tm-status-dot--offline]="!isOnline(member.uid)"
+        ></span>
+        {{ isOnline(member.uid) ? "Online" : "Offline" }} &middot; Since
+        {{ sinceLabel(member) }}
+      </div>
+
+      <!-- Stats -->
+      <div class="tm-member-stats">
+        <div class="tm-member-stat">
+          <span class="tm-member-stat-value">{{
+            memberEventCount(member.uid)
+          }}</span>
+          <span class="tm-member-stat-label">EVENTS</span>
         </div>
-      </button>
+        <div class="tm-member-stat-divider"></div>
+        <div class="tm-member-stat">
+          <span class="tm-member-stat-value">{{
+            memberSprintCount(member.uid)
+          }}</span>
+          <span class="tm-member-stat-label">SPRINTS</span>
+        </div>
+      </div>
     </div>
+
+    <!-- Ghost add card -->
+    <button
+      *ngIf="isAdminOrManager()"
+      class="tm-add-card"
+      (click)="openAddMember()"
+      type="button"
+    >
+      <div class="tm-add-card-inner">
+        <div class="tm-add-icon">
+          <mat-icon>add</mat-icon>
+        </div>
+        <div class="tm-add-label">Add Team Member</div>
+        <div class="tm-add-sub">Click to add a new member</div>
+      </div>
+    </button>
   </div>
 </div>

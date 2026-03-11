@@ -1,0 +1,91 @@
+<div class="kpi-dialog" [ngStyle]="cssVars">
+  <!-- Accent band -->
+  <div class="kd-accent-band"></div>
+
+  <!-- Header -->
+  <div class="kd-header">
+    <div>
+      <h2 class="kd-title">{{ config.title }}</h2>
+      <p class="kd-subtitle">{{ config.subtitle }}</p>
+    </div>
+    <button class="kd-close" (click)="close()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Scrollable body -->
+  <div class="kd-body">
+    <!-- Summary card -->
+    <div class="kd-summary-card">
+      <div class="kds-icon" [style.background]="config.accentBg">
+        <mat-icon [style.color]="config.accentColor">{{
+          config.icon
+        }}</mat-icon>
+      </div>
+      <div class="kds-body">
+        <span class="kds-count" [style.color]="config.accentColor">{{
+          activeCount
+        }}</span>
+        <span class="kds-meta"
+          >{{ activeCount === 1 ? "member" : "members" }} ·
+          {{ typeLabel }}</span
+        >
+      </div>
+      <div class="kds-asof">
+        <span class="kds-asof-label">As of</span>
+        <span class="kds-asof-date">{{ asOfFormatted }}</span>
+      </div>
+    </div>
+
+    <!-- Active Members -->
+    <div class="kd-section">
+      <h3 class="kd-section-title">Active Members</h3>
+      <div
+        class="kd-members-list"
+        *ngIf="data.activeMembers.length > 0; else noMembers"
+      >
+        <div class="kd-member-row" *ngFor="let item of data.activeMembers">
+          <div class="kd-member-avatar">
+            {{ getInitials(item.user.displayName) }}
+          </div>
+          <div class="kd-member-body">
+            <span class="kd-member-name">{{ item.user.displayName }}</span>
+            <span class="kd-member-note">{{ memberNote(item.event) }}</span>
+          </div>
+          <div class="kd-member-time">
+            <mat-icon class="kd-time-icon">schedule</mat-icon>
+            <span>{{ memberTime(item.event) }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noMembers>
+        <div class="kd-empty">
+          <mat-icon>person_off</mat-icon>
+          <p>No active members</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Full Team Overview -->
+    <div class="kd-section">
+      <h3 class="kd-section-title">Full Team Overview</h3>
+      <div class="kd-overview-list">
+        <div class="kd-ov-row" *ngFor="let row of overviewRows()">
+          <span class="kd-ov-label">{{ row.label }}</span>
+          <div class="kd-ov-track">
+            <div
+              class="kd-ov-fill"
+              [style.width.%]="row.pct"
+              [style.background]="row.color"
+            ></div>
+          </div>
+          <span
+            class="kd-ov-val"
+            [style.color]="row.value > 0 ? row.color : undefined"
+            >{{ row.value }}</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

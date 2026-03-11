@@ -20,6 +20,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { TeamService } from '../../../core/services/team.service';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
+import {
+  HolidayService,
+  NagerCountry,
+} from '../../../core/services/holiday.service';
 
 export interface ManageTeamDialogData {
   team: Team;
@@ -44,6 +48,7 @@ export interface ManageTeamDialogData {
 })
 export class ManageTeamDialogComponent {
   private teamService = inject(TeamService);
+  private holidayService = inject(HolidayService);
   private ref = inject(MatDialogRef<ManageTeamDialogComponent>);
   readonly data: ManageTeamDialogData = inject(MAT_DIALOG_DATA);
 
@@ -53,6 +58,13 @@ export class ManageTeamDialogComponent {
   search = signal('');
   loading = signal(true);
   saving = signal<string | null>(null);
+
+  countries = signal<NagerCountry[]>([]);
+  countriesError = signal(false);
+  selectedCountry = signal(this.data.team.holidayCountryCode ?? '');
+  countrySaving = signal(false);
+  countrySaved = signal(false);
+  countrySaveError = signal<string | null>(null);
 
   filteredUsers = computed(() => {
     const q = this.search().toLowerCase();
@@ -67,6 +79,15 @@ export class ManageTeamDialogComponent {
 
   constructor() {
     this.load();
+    this.loadCountries();
+  }
+
+  private async loadCountries(): Promise<void> {
+    try {
+      this.countries.set(await this.holidayService.getCountries());
+    } catch {
+      this.countriesError.set(true);
+    }
   }
 
   private async load(): Promise<void> {
@@ -139,6 +160,26 @@ export class ManageTeamDialogComponent {
         } as Record<string, string>
       )[role] ?? '#475569'
     );
+  }
+
+  async saveCountry(): Promise<void> {
+    this.countrySaving.set(true);
+    this.countrySaveError.set(null);
+    try {
+      const code = this.selectedCountry().trim().toUpperCase();
+      this.selectedCountry.set(code);
+      await this.teamService.updateHolidayCountry(this.team().id, code);
+      this.team.update((t) => ({
+        ...t,
+        holidayCountryCode: code || undefined,
+      }));
+      this.countrySaved.set(true);
+      setTimeout(() => this.countrySaved.set(false), 2500);
+    } catch (e: any) {
+      this.countrySaveError.set(e?.message ?? 'Failed to save.');
+    } finally {
+      this.countrySaving.set(false);
+    }
   }
 
   close(): void {

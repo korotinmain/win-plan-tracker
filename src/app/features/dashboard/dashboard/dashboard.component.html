@@ -20,49 +20,89 @@
 
   <!-- KPI cards -->
   <div class="kpi-grid">
-    <div class="kpi-card kpi-working">
-      <div class="kpi-icon"><mat-icon>laptop_mac</mat-icon></div>
+    <div
+      class="kpi-card kpi-working"
+      (click)="openKpiDialog('working')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="kpi-shine"></div>
+      <div class="kpi-top">
+        <div class="kpi-icon"><mat-icon>laptop_mac</mat-icon></div>
+        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
+      </div>
       <div class="kpi-body">
         <div class="kpi-value">{{ working }}</div>
         <div class="kpi-label">Working</div>
       </div>
-      <div class="kpi-glow"></div>
     </div>
 
-    <div class="kpi-card kpi-vacation">
-      <div class="kpi-icon"><mat-icon>beach_access</mat-icon></div>
+    <div
+      class="kpi-card kpi-vacation"
+      (click)="openKpiDialog('vacation')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="kpi-shine"></div>
+      <div class="kpi-top">
+        <div class="kpi-icon"><mat-icon>beach_access</mat-icon></div>
+        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
+      </div>
       <div class="kpi-body">
         <div class="kpi-value">{{ onVacation }}</div>
         <div class="kpi-label">On Vacation</div>
       </div>
-      <div class="kpi-glow"></div>
     </div>
 
-    <div class="kpi-card kpi-refinement">
-      <div class="kpi-icon"><mat-icon>assignment_turned_in</mat-icon></div>
+    <div
+      class="kpi-card kpi-refinement"
+      (click)="openKpiDialog('refinement')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="kpi-shine"></div>
+      <div class="kpi-top">
+        <div class="kpi-icon"><mat-icon>assignment_turned_in</mat-icon></div>
+        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
+      </div>
       <div class="kpi-body">
         <div class="kpi-value">{{ onRefinement }}</div>
         <div class="kpi-label">Refinement</div>
       </div>
-      <div class="kpi-glow"></div>
     </div>
 
-    <div class="kpi-card kpi-planning">
-      <div class="kpi-icon"><mat-icon>event_note</mat-icon></div>
+    <div
+      class="kpi-card kpi-planning"
+      (click)="openKpiDialog('planning')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="kpi-shine"></div>
+      <div class="kpi-top">
+        <div class="kpi-icon"><mat-icon>event_note</mat-icon></div>
+        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
+      </div>
       <div class="kpi-body">
         <div class="kpi-value">{{ onPlanning }}</div>
         <div class="kpi-label">Planning</div>
       </div>
-      <div class="kpi-glow"></div>
     </div>
 
-    <div class="kpi-card kpi-sprint-review">
-      <div class="kpi-icon"><mat-icon>rate_review</mat-icon></div>
+    <div
+      class="kpi-card kpi-sprint-review"
+      (click)="openKpiDialog('sprint-review')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="kpi-shine"></div>
+      <div class="kpi-top">
+        <div class="kpi-icon"><mat-icon>rate_review</mat-icon></div>
+        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
+      </div>
       <div class="kpi-body">
         <div class="kpi-value">{{ onSprintReview }}</div>
         <div class="kpi-label">Sprint Review</div>
       </div>
-      <div class="kpi-glow"></div>
     </div>
   </div>
 
@@ -76,7 +116,16 @@
             ><mat-icon>rocket_launch</mat-icon></span
           >
           <div>
-            <h3 class="ic-title">Sprint {{ sprintInfo.sprintNumber }}</h3>
+            <div class="ic-title-row">
+              <h3 class="ic-title">Sprint {{ sprintInfo.sprintNumber }}</h3>
+              <a
+                routerLink="/calendar"
+                class="ic-title-link"
+                aria-label="View calendar"
+              >
+                <mat-icon>open_in_new</mat-icon>
+              </a>
+            </div>
             <p class="ic-sub">
               {{ sprintInfo.startDate }} – {{ sprintInfo.endDate }}
             </p>
@@ -147,6 +196,13 @@
         <span class="ic-chip">{{ allMembers().length }} members</span>
       </div>
 
+      <div class="week-chart-legend">
+        <span class="wl-dot wl-available"></span>
+        <span class="wl-label">Available</span>
+        <span class="wl-dot wl-partial"></span>
+        <span class="wl-label">Partial</span>
+      </div>
+
       <div echarts [options]="weekBarOpts()" class="week-bar-chart"></div>
     </div>
 
@@ -195,6 +251,10 @@
         <mat-icon>event_available</mat-icon>
         <p>No upcoming events this month</p>
       </div>
+
+      <button type="button" class="view-all-link" (click)="openEventsDialog()">
+        View all events &#8594;
+      </button>
     </div>
   </div>
 
@@ -214,7 +274,12 @@
             </p>
           </div>
         </div>
-        <span class="ic-chip">{{ teamVelocity().length }} weeks</span>
+        <div class="ic-header-chips">
+          <span class="ic-chip ic-chip-green"
+            >&#9679; Avg {{ avgVelocity() }}%</span
+          >
+          <span class="ic-chip">{{ teamVelocity().length }} weeks</span>
+        </div>
       </div>
       <div echarts [options]="velocityChartOpts()" class="velocity-chart"></div>
     </div>

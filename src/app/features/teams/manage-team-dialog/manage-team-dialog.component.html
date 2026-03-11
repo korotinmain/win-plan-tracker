@@ -118,6 +118,109 @@
         </button>
       </div>
     </div>
+
+    <mat-divider class="mtd-divider"></mat-divider>
+
+    <!-- Public Holidays -->
+    <div class="mtd-section-header">
+      <span class="mtd-section-icon"><mat-icon>event_busy</mat-icon></span>
+      <span class="mtd-section-title">Public Holidays</span>
+    </div>
+
+    <div class="mtd-country-wrap">
+      <p class="mtd-country-desc">
+        Team calendar will show official public holidays for the selected
+        country. Holidays falling on weekends are observed on the following
+        Monday.
+      </p>
+
+      <!-- Dropdown (loaded from nager.at) -->
+      <div
+        class="mtd-country-row"
+        *ngIf="!countriesError() && countries().length > 0"
+      >
+        <select
+          class="mtd-country-select"
+          [ngModel]="selectedCountry()"
+          (ngModelChange)="selectedCountry.set($event)"
+          [disabled]="countrySaving()"
+        >
+          <option value="">— None —</option>
+          <option *ngFor="let c of countries()" [value]="c.countryCode">
+            {{ c.name }} ({{ c.countryCode }})
+          </option>
+        </select>
+        <button
+          type="button"
+          class="mtd-btn-save-country"
+          (click)="saveCountry()"
+          [disabled]="countrySaving()"
+        >
+          <mat-spinner *ngIf="countrySaving()" diameter="14"></mat-spinner>
+          <mat-icon *ngIf="!countrySaving() && !countrySaved()">save</mat-icon>
+          <mat-icon *ngIf="!countrySaving() && countrySaved()">check</mat-icon>
+          {{ countrySaving() ? "Saving…" : countrySaved() ? "Saved!" : "Save" }}
+        </button>
+      </div>
+
+      <!-- Loading state -->
+      <div
+        class="mtd-country-loading"
+        *ngIf="!countriesError() && countries().length === 0"
+      >
+        <mat-spinner diameter="16"></mat-spinner>
+        <span>Loading countries…</span>
+      </div>
+
+      <!-- Fallback: manual country code input (shown when API fails) -->
+      <div *ngIf="countriesError()">
+        <p class="mtd-country-fallback-hint">
+          <mat-icon>warning_amber</mat-icon>
+          Could not load country list. Enter a country code manually (e.g.
+          <strong>UA</strong>, <strong>DE</strong>, <strong>US</strong>,
+          <strong>GB</strong>).
+        </p>
+        <div class="mtd-country-row">
+          <input
+            class="mtd-country-code-input"
+            type="text"
+            placeholder="Country code, e.g. UA"
+            maxlength="2"
+            [ngModel]="selectedCountry()"
+            (ngModelChange)="selectedCountry.set($event)"
+            [disabled]="countrySaving()"
+          />
+          <button
+            type="button"
+            class="mtd-btn-save-country"
+            (click)="saveCountry()"
+            [disabled]="countrySaving()"
+          >
+            <mat-spinner *ngIf="countrySaving()" diameter="14"></mat-spinner>
+            <mat-icon *ngIf="!countrySaving() && !countrySaved()"
+              >save</mat-icon
+            >
+            <mat-icon *ngIf="!countrySaving() && countrySaved()"
+              >check</mat-icon
+            >
+            {{
+              countrySaving() ? "Saving…" : countrySaved() ? "Saved!" : "Save"
+            }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Save error -->
+      <p class="mtd-country-save-error" *ngIf="countrySaveError()">
+        <mat-icon>error_outline</mat-icon> {{ countrySaveError() }}
+      </p>
+
+      <!-- Current value -->
+      <div *ngIf="team().holidayCountryCode" class="mtd-country-current">
+        <mat-icon>public</mat-icon>
+        Currently set: <strong>{{ team().holidayCountryCode }}</strong>
+      </div>
+    </div>
   </div>
 
   <!-- Footer -->

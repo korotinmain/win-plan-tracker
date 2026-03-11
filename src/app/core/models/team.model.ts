@@ -5,4 +5,5 @@ export interface Team {
   managerId: string;
   memberIds: string[];
   createdAt: Date;
+  holidayCountryCode?: string;
 }

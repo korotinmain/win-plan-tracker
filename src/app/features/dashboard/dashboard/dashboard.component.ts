@@ -12,6 +12,7 @@ import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import {
@@ -35,6 +36,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalendarEvent } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest } from 'rxjs';
+import {
+  KpiDetailDialogComponent,
+  KpiType,
+} from '../kpi-detail-dialog/kpi-detail-dialog.component';
+import {
+  UpcomingEventsDialogComponent,
+  UpcomingEventRow,
+  MemberAvatar,
+} from '../upcoming-events-dialog/upcoming-events-dialog.component';
 
 interface TodaySummary {
   user: AppUser;
@@ -61,6 +71,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
   private doc = inject(DOCUMENT);
+  private dialog = inject(MatDialog);
   private themeObserver?: MutationObserver;
 
   isDark = signal(
@@ -172,7 +183,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             fontSize: 30,
             fontWeight: 'bold',
             fontFamily: 'Inter, sans-serif',
-            offsetCenter: [0, '15%'],
+            offsetCenter: [0, '-5%'],
           },
           title: { show: false },
           data: [{ value: pct }],
@@ -211,9 +222,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           if (d.weekend) return `<b>${d.label} ${d.dayNum}</b><br/>Weekend`;
           let html = `<b>${d.label}, ${d.dayNum}</b><br/>`;
           if (d.working > 0)
-            html += `<span style="color:#10b981">●</span> Working: ${d.working}<br/>`;
+            html += `<span style="color:#10b981">●</span> Available: ${d.working}<br/>`;
           if (d.onCeremony > 0)
-            html += `<span style="color:#6366f1">●</span> Ceremony: ${d.onCeremony}<br/>`;
+            html += `<span style="color:#a78bfa">●</span> Partial: ${d.onCeremony}<br/>`;
           if (d.onVacation > 0)
             html += `<span style="color:#7c3aed">●</span> Vacation: ${d.onVacation}<br/>`;
           return html;
@@ -237,12 +248,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       yAxis: { type: 'value', max: total, show: false },
       series: [
         {
-          name: 'Working',
+          name: 'Available',
           type: 'bar',
           stack: 'total',
           barMaxWidth: 40,
           barCategoryGap: '30%',
-          itemStyle: { color: '#10b981', borderRadius: [0, 0, 4, 4] },
+          itemStyle: { color: '#6366f1', borderRadius: [0, 0, 4, 4] },
           data: days.map((d) => ({
             value: d.working,
             itemStyle: d.weekend
@@ -252,8 +263,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 }
               : d.isToday
                 ? {
-                    color: '#10b981',
-                    borderColor: '#34d399',
+                    color: '#6366f1',
+                    borderColor: '#818cf8',
                     borderWidth: 1,
                     borderRadius: [0, 0, 4, 4],
                   }
@@ -261,11 +272,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           })),
         },
         {
-          name: 'Ceremony',
+          name: 'Partial',
           type: 'bar',
           stack: 'total',
           barMaxWidth: 40,
-          itemStyle: { color: '#6366f1' },
+          itemStyle: { color: '#a78bfa' },
           data: days.map((d) => ({
             value: d.onCeremony,
             itemStyle: d.weekend ? { color: 'transparent' } : {},
@@ -284,6 +295,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
       ] as any,
     };
+  });
+
+  readonly avgVelocity = computed(() => {
+    const data = this.teamVelocity();
+    if (!data.length) return 0;
+    return Math.round(data.reduce((s, d) => s + d.pct, 0) / data.length);
   });
 
   // ── Team Velocity (week-by-week availability trend) ────────
@@ -568,6 +585,143 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get currentMonthYear(): string {
     return format(new Date(), 'MMMM yyyy');
+  }
+
+  openKpiDialog(type: KpiType): void {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const summary = this.todaySummary();
+    const members = this.allMembers();
+    const events = this.allMonthEvents();
+
+    let activeMembers: { user: AppUser; event: CalendarEvent | null }[];
+    if (type === 'working') {
+      activeMembers = summary
+        .filter((s) => !s.event || s.event.type === 'holiday')
+        .map((s) => ({ user: s.user, event: s.event }));
+    } else {
+      const typeMap: Record<KpiType, string> = {
+        working: '',
+        vacation: 'vacation',
+        refinement: 'refinement',
+        planning: 'planning',
+        'sprint-review': 'sprint-review',
+      };
+      activeMembers = summary
+        .filter((s) => s.event?.type === typeMap[type])
+        .map((s) => ({ user: s.user, event: s.event }));
+    }
+
+    this.dialog.open(KpiDetailDialogComponent, {
+      data: {
+        type,
+        activeMembers,
+        summary: {
+          working: this.working,
+          onVacation: this.onVacation,
+          onRefinement: this.onRefinement,
+          onPlanning: this.onPlanning,
+          onSprintReview: this.onSprintReview,
+          total: members.length,
+        },
+        asOf: new Date(),
+      },
+      panelClass: 'kpi-dialog-panel',
+      backdropClass: 'kpi-dialog-backdrop',
+      maxWidth: '95vw',
+    });
+  }
+
+  openEventsDialog(): void {
+    const members = this.allMembers();
+    const rawEvents = this.allMonthEvents();
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+
+    const ACCENT_COLORS: Record<string, string> = {
+      refinement: '#8b5cf6',
+      planning: '#06b6d4',
+      'sprint-review': '#f97316',
+      activity: '#f59e0b',
+      vacation: '#6366f1',
+    };
+    const TYPE_LABELS: Record<string, string> = {
+      refinement: 'Refinement',
+      planning: 'Planning',
+      'sprint-review': 'Sprint Review',
+      activity: 'Activity',
+      vacation: 'Vacation',
+    };
+    const TYPE_CATEGORY: Record<string, string> = {
+      refinement: 'Sprint',
+      planning: 'Sprint',
+      'sprint-review': 'Review',
+      activity: 'Activity',
+      vacation: 'Vacation',
+    };
+    const AVATAR_PALETTE = [
+      '#6366f1',
+      '#8b5cf6',
+      '#ec4899',
+      '#f59e0b',
+      '#10b981',
+      '#06b6d4',
+      '#ef4444',
+    ];
+
+    const map = new Map<string, UpcomingEventRow>();
+    rawEvents
+      .filter((e) => e.date >= todayStr && e.type !== 'holiday')
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .forEach((e) => {
+        const key = `${e.date}__${e.type}`;
+        if (!map.has(key)) {
+          const d = parseISO(e.date);
+          const daysAway = differenceInCalendarDays(d, today);
+          map.set(key, {
+            key,
+            date: e.date,
+            type: e.type,
+            typeLabel: TYPE_LABELS[e.type] ?? e.type,
+            category: TYPE_CATEGORY[e.type] ?? e.type,
+            accentColor: ACCENT_COLORS[e.type] ?? '#6366f1',
+            displayDate: format(d, 'EEE, MMM d'),
+            isToday: daysAway === 0,
+            daysAway,
+            daysLabel:
+              daysAway === 0
+                ? 'Today'
+                : daysAway === 1
+                  ? 'Tomorrow'
+                  : `In ${daysAway}d`,
+            memberAvatars: [],
+          });
+        }
+        const group = map.get(key)!;
+        const m = members.find((x) => x.uid === e.userId);
+        if (m) {
+          const hash = m.uid
+            .split('')
+            .reduce((acc, c) => acc + c.charCodeAt(0), 0);
+          const av: MemberAvatar = {
+            initials: this.getInitials(m.displayName),
+            color: AVATAR_PALETTE[hash % AVATAR_PALETTE.length],
+            name: m.displayName,
+          };
+          group.memberAvatars.push(av);
+        }
+      });
+
+    this.dialog.open(UpcomingEventsDialogComponent, {
+      data: {
+        rows: Array.from(map.values()),
+        sprintNumber: this.sprintInfo.sprintNumber,
+        currentMonth: this.currentMonthYear,
+      },
+      panelClass: 'kpi-dialog-panel',
+      backdropClass: 'kpi-dialog-backdrop',
+      maxWidth: '95vw',
+      width: '560px',
+    });
   }
 
   getInitials(name: string): string {

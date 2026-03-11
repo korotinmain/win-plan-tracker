@@ -72,6 +72,26 @@
       <span class="legend-dot ld-weekend"></span
       ><span class="legend-txt">Weekend</span>
     </div>
+    <span class="legend-spacer"></span>
+    <!-- Public holiday country indicator -->
+    <a
+      *ngIf="holidayCountryCode()"
+      routerLink="/teams"
+      class="cal-country-chip"
+      matTooltip="Public holidays: {{ holidayCountryCode() }}. Click to change."
+    >
+      <mat-icon>public</mat-icon>
+      <span>{{ holidayCountryCode() }}</span>
+    </a>
+    <a
+      *ngIf="!holidayCountryCode() && !loading()"
+      routerLink="/teams"
+      class="cal-country-chip cal-country-chip-unset"
+      matTooltip="No public holidays configured. Click to set up."
+    >
+      <mat-icon>add_circle_outline</mat-icon>
+      <span>Set holidays</span>
+    </a>
   </div>
 
   <!-- ── Loading ──────────────────────────────── -->
@@ -121,8 +141,23 @@
             [class.is-weekend]="day.isWeekend"
             [class.is-holiday]="day.isHoliday"
             [class.is-today]="day.date === todayStr"
+            [class.is-clickable-hdr]="day.isHoliday"
+            [matTooltip]="
+              day.isHoliday ? day.holidayName || 'Public Holiday' : null
+            "
+            (click)="day.isHoliday && openHolidayInfo(day)"
           >
             <div class="day-hdr">
+              <mat-icon
+                class="day-hdr-badge day-hdr-badge-holiday"
+                *ngIf="day.isHoliday"
+                >celebration</mat-icon
+              >
+              <mat-icon
+                class="day-hdr-badge day-hdr-badge-weekend"
+                *ngIf="day.isWeekend && !day.isHoliday"
+                >bedtime</mat-icon
+              >
               <span class="day-hdr-dow">{{ day.display | slice: 0 : 3 }}</span>
               <span class="day-hdr-num">{{ day.display | slice: 5 }}</span>
             </div>
@@ -167,6 +202,23 @@
               ></span>
               {{ getShortLabel(row, day) }}
             </span>
+            <!-- Holiday icon in empty holiday cell -->
+            <button
+              class="cell-icon-btn cell-icon-holiday-btn"
+              *ngIf="!getShortLabel(row, day) && day.isHoliday"
+              (click)="openHolidayInfo(day)"
+              [matTooltip]="day.holidayName || 'Public Holiday'"
+            >
+              <mat-icon>celebration</mat-icon>
+            </button>
+            <!-- Weekend indicator in empty weekend cell -->
+            <mat-icon
+              class="cell-icon-weekend"
+              *ngIf="
+                !getShortLabel(row, day) && day.isWeekend && !day.isHoliday
+              "
+              >bedtime</mat-icon
+            >
             <span
               class="cell-empty-dot"
               *ngIf="

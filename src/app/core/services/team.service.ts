@@ -6,6 +6,7 @@ import {
   updateDoc,
   getDoc,
   getDocs,
+  deleteField,
   query,
   where,
   onSnapshot,
@@ -122,5 +123,20 @@ export class TeamService {
     const updated = currentMemberIds.filter((id) => id !== userId);
     await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
     await updateDoc(doc(db, `users/${userId}`), { teamId: '' });
+  }
+
+  async getTeam(teamId: string): Promise<Team | null> {
+    if (!teamId) return null;
+    const snap = await getDoc(doc(db, `teams/${teamId}`));
+    return snap.exists() ? (snap.data() as Team) : null;
+  }
+
+  async updateHolidayCountry(
+    teamId: string,
+    countryCode: string,
+  ): Promise<void> {
+    await updateDoc(doc(db, `teams/${teamId}`), {
+      holidayCountryCode: countryCode || deleteField(),
+    });
   }
 }

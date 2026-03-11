@@ -1,0 +1,615 @@
+.kpi-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #0d1117;
+  border-radius: 20px;
+  min-width: 520px;
+  max-width: 580px;
+  font-family: "Inter", "Roboto", sans-serif;
+  color: #e2e8f0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+
+  @media (max-width: 600px) {
+    min-width: unset;
+  }
+}
+
+/* ── Accent header band ─────────────────────── */
+.kd-accent-band {
+  height: 3px;
+  background: var(--kd-gradient, linear-gradient(90deg, #6366f1, #818cf8));
+  flex-shrink: 0;
+}
+
+/* ── Header ─────────────────────────────────── */
+.kd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 0;
+}
+
+.kd-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.025em;
+}
+
+.kd-subtitle {
+  margin: 5px 0 0;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.kd-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #f1f5f9;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ── Body scroll area ───────────────────────── */
+.kd-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  max-height: 75vh;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+}
+
+/* ── Summary card ───────────────────────────── */
+.kd-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--kd-accent-20, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 10% 50%,
+      var(--kd-accent-10, rgba(99, 102, 241, 0.07)) 0%,
+      transparent 65%
+    );
+    pointer-events: none;
+  }
+}
+
+.kds-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.kds-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  z-index: 1;
+}
+
+.kds-count {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -3px;
+}
+
+.kds-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.kds-asof {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  position: relative;
+  z-index: 1;
+}
+
+.kds-asof-label {
+  font-size: 0.67rem;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.kds-asof-date {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ── Section ────────────────────────────────── */
+.kd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kd-section-title {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #334155;
+}
+
+/* ── Active Members ─────────────────────────── */
+.kd-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kd-member-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 13px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.kd-member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+}
+
+.kd-member-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kd-member-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.kd-member-note {
+  font-size: 0.76rem;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kd-member-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #475569;
+  font-size: 0.76rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.kd-time-icon {
+  font-size: 13px !important;
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.kd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px;
+  color: #1e293b;
+
+  mat-icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.82rem;
+  }
+}
+
+/* ── Full Team Overview ─────────────────────── */
+.kd-overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.kd-ov-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kd-ov-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  min-width: 108px;
+  flex-shrink: 0;
+}
+
+.kd-ov-track {
+  flex: 1;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.kd-ov-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+  min-width: 0;
+}
+
+.kd-ov-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  min-width: 20px;
+  text-align: right;
+}
+
+/* ── Header ─────────────────────────────────── */
+.kd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kd-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.02em;
+}
+
+.kd-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.kd-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Summary card ───────────────────────────── */
+.kd-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.kds-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.kds-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kds-count {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.kds-meta {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.kds-asof {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.kds-asof-label {
+  font-size: 0.72rem;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.kds-asof-date {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+/* ── Section ────────────────────────────────── */
+.kd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kd-section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+}
+
+/* ── Active Members ─────────────────────────── */
+.kd-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kd-member-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.kd-member-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.kd-member-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kd-member-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.kd-member-note {
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kd-member-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.kd-time-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.kd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px;
+  color: #334155;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+}
+
+/* ── Full Team Overview ─────────────────────── */
+.kd-overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kd-ov-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kd-ov-label {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.kd-ov-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kd-ov-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+}
+
+.kd-ov-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  min-width: 20px;
+  text-align: right;
+}

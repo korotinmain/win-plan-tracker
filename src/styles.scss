@@ -129,3 +129,36 @@ a {
     box-shadow: none;
   }
 }
+
+// ── KPI Detail Dialog ─────────────────────────────────────────────────────────
+.kpi-dialog-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.kpi-dialog-panel .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+}
+
+// ── Holiday Info Dialog ───────────────────────────────────────────────────────
+.holiday-info-dialog-overlay .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 20px;
+    overflow: visible;
+  }
+}

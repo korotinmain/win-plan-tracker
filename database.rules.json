@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "presence": {
+      // Any authenticated user can read the full presence list
+      ".read": "auth != null",
+      "$uid": {
+        // Only the owner can write/delete their own presence node
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}

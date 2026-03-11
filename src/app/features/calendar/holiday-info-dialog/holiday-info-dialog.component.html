@@ -1,0 +1,42 @@
+<div class="hid-wrap">
+  <!-- Glow accent -->
+  <div class="hid-glow"></div>
+
+  <!-- Close button -->
+  <button class="hid-close" (click)="close()" matTooltip="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <!-- Icon ring -->
+  <div class="hid-icon-ring">
+    <mat-icon class="hid-main-icon">celebration</mat-icon>
+  </div>
+
+  <!-- Content -->
+  <div class="hid-body">
+    <p class="hid-eyebrow">Public Holiday</p>
+    <h2 class="hid-name">{{ data.holidayName }}</h2>
+    <p class="hid-date">{{ formattedDate }}</p>
+  </div>
+
+  <!-- Meta chips -->
+  <div class="hid-chips">
+    <span class="hid-chip hid-chip-country" *ngIf="data.countryCode">
+      <mat-icon>public</mat-icon>
+      {{ data.countryCode }}
+    </span>
+    <span class="hid-chip hid-chip-weekend" *ngIf="data.isWeekend">
+      <mat-icon>weekend</mat-icon>
+      Weekend
+    </span>
+    <span class="hid-chip hid-chip-day">
+      <mat-icon>event</mat-icon>
+      Non-working day
+    </span>
+  </div>
+
+  <!-- Footer -->
+  <div class="hid-footer">
+    <button class="hid-btn" (click)="close()">Got it</button>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,7 +9,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { Team } from '../../../core/models/team.model';
+import { AppUser } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-settings',
@@ -30,35 +32,51 @@ export class SettingsComponent {
   private authService = inject(AuthService);
   private teamService = inject(TeamService);
   private snackBar = inject(MatSnackBar);
+  private destroyRef = inject(DestroyRef);
+  themeService = inject(ThemeService);
 
-  get currentUser() {
-    return this.authService.currentUser;
-  }
+  currentUser = signal<AppUser | null>(this.authService.currentUser);
 
   teams = signal<Team[]>([]);
   teamsLoading = signal(true);
   actingTeamId = signal<string | null>(null);
   teamError = signal<string | null>(null);
 
+  initials = computed(() => {
+    return (
+      (this.currentUser()?.displayName ?? '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase() || '?'
+    );
+  });
+
   myTeam = computed(() => {
-    const tid = this.currentUser?.teamId;
+    const tid = this.currentUser()?.teamId;
     if (!tid) return null;
     return (
       this.teams().find(
-        (t) => t.id === tid || t.memberIds.includes(this.currentUser!.uid),
+        (t) => t.id === tid || t.memberIds.includes(this.currentUser()!.uid),
       ) ?? null
     );
   });
 
   availableTeams = computed(() => {
-    const uid = this.currentUser?.uid ?? '';
+    const uid = this.currentUser()?.uid ?? '';
     return this.teams().filter((t) => !t.memberIds.includes(uid));
   });
 
   constructor() {
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((u) => this.currentUser.set(u));
+
     this.teamService
       .getAllTeams()
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((teams) => {
         this.teams.set(teams);
         this.teamsLoading.set(false);
@@ -66,7 +84,7 @@ export class SettingsComponent {
   }
 
   async joinTeam(team: Team): Promise<void> {
-    const user = this.authService.currentUser;
+    const user = this.currentUser();
     if (!user) return;
     this.actingTeamId.set(team.id);
     this.teamError.set(null);
@@ -82,7 +100,7 @@ export class SettingsComponent {
   }
 
   async leaveTeam(team: Team): Promise<void> {
-    const user = this.authService.currentUser;
+    const user = this.currentUser();
     if (!user) return;
     this.actingTeamId.set(team.id);
     this.teamError.set(null);

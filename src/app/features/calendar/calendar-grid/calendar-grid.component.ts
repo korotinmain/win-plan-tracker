@@ -17,6 +17,10 @@ import {
   AddEventDialogComponent,
   AddEventDialogData,
 } from '../add-event-dialog/add-event-dialog.component';
+import {
+  HolidayInfoDialogComponent,
+  HolidayInfoDialogData,
+} from '../holiday-info-dialog/holiday-info-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
@@ -39,6 +43,10 @@ import {
 import { CalendarService } from '../../../core/services/calendar.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
+import {
+  HolidayService,
+  PublicHoliday,
+} from '../../../core/services/holiday.service';
 import { CalendarEvent, Holiday } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest, map } from 'rxjs';
@@ -87,6 +95,7 @@ export class CalendarGridComponent implements OnInit {
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
   private teamService = inject(TeamService);
+  private holidayService = inject(HolidayService);
   private dialog = inject(MatDialog);
 
   @ViewChild('tableWrap', { static: false })
@@ -98,6 +107,7 @@ export class CalendarGridComponent implements OnInit {
   members = signal<AppUser[]>([]);
   memberRows = signal<MemberRow[]>([]);
   holidays = signal<Holiday[]>([]);
+  holidayCountryCode = signal<string | null>(null);
   loading = signal(true);
 
   sprintGroups = computed(() => {
@@ -210,6 +220,27 @@ export class CalendarGridComponent implements OnInit {
         this.members.set(members);
         this.holidays.set(holidays);
 
+        // Fetch public holidays from nager.at if team has a country configured
+        let publicHolidays: PublicHoliday[] = [];
+        const team = await this.teamService.getTeam(teamId);
+        this.holidayCountryCode.set(team?.holidayCountryCode ?? null);
+        if (team?.holidayCountryCode) {
+          try {
+            publicHolidays = await this.holidayService.getPublicHolidays(
+              year,
+              team.holidayCountryCode,
+            );
+            console.log(
+              `[Calendar] Loaded ${publicHolidays.length} public holidays for ${team.holidayCountryCode}/${year}`,
+            );
+          } catch (err) {
+            console.error(
+              `[Calendar] Failed to load public holidays for ${team.holidayCountryCode}/${year}:`,
+              err,
+            );
+          }
+        }
+
         const allDays =
           this.view() === 'week'
             ? eachDayOfInterval({
@@ -223,6 +254,17 @@ export class CalendarGridComponent implements OnInit {
 
         const holidayDates = new Set(holidays.map((h) => h.date));
         const holidayMap = new Map(holidays.map((h) => [h.date, h.name]));
+
+        // Merge public holidays: mark observed weekday (Mon after Sat/Sun holiday)
+        for (const ph of publicHolidays) {
+          holidayDates.add(ph.observed);
+          if (!holidayMap.has(ph.observed)) {
+            holidayMap.set(
+              ph.observed,
+              ph.observed !== ph.date ? `${ph.name} (observed)` : ph.name,
+            );
+          }
+        }
 
         // Build week groupings for rowspan
         const weekMap = new Map<number, number>();
@@ -369,6 +411,20 @@ export class CalendarGridComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  openHolidayInfo(day: CalendarDay): void {
+    this.dialog.open(HolidayInfoDialogComponent, {
+      data: {
+        holidayName: day.holidayName ?? 'Public Holiday',
+        date: day.date,
+        countryCode: this.holidayCountryCode(),
+        isWeekend: day.isWeekend,
+      } as HolidayInfoDialogData,
+      panelClass: 'holiday-info-dialog-overlay',
+      width: '400px',
+      maxWidth: '96vw',
+    });
   }
 
   openAddEventDialog(): void {

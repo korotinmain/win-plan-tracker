@@ -9,6 +9,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
+import { PresenceService } from '../../../core/services/presence.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { AppUser } from '../../../core/models/user.model';
 
 interface NavItem {
@@ -35,11 +37,15 @@ interface NavItem {
 })
 export class ShellComponent {
   private authService = inject(AuthService);
+  // Eagerly instantiate PresenceService so online tracking starts immediately
+  // for the entire authenticated session, not just when Teams page is visited.
+  private _presence = inject(PresenceService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
 
   currentUser: AppUser | null = null;
   sidenavOpen = signal(true);
-  isDark = signal(true);
+  isDark = this.themeService.isDark;
 
   today = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -50,7 +56,7 @@ export class ShellComponent {
   workspaceNav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Calendar', icon: 'calendar_month', route: '/calendar' },
-    { label: 'Teams', icon: 'groups', route: '/teams', roles: ['admin'] },
+    { label: 'Team', icon: 'groups', route: '/teams', roles: ['admin'] },
   ];
 
   accountNav: NavItem[] = [
@@ -71,8 +77,6 @@ export class ShellComponent {
     this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user ?? null;
     });
-    // Apply dark theme by default
-    document.documentElement.setAttribute('data-theme', 'dark');
   }
 
   isVisible(item: NavItem): boolean {
@@ -85,9 +89,7 @@ export class ShellComponent {
   }
 
   toggleTheme(): void {
-    const next = this.isDark() ? 'light' : 'dark';
-    this.isDark.set(!this.isDark());
-    document.documentElement.setAttribute('data-theme', next);
+    this.themeService.toggle();
   }
 
   async logout(): Promise<void> {

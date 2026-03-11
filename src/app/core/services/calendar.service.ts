@@ -49,7 +49,10 @@ export class CalendarService {
   /** Set (add or overwrite) a single-day event */
   async setEvent(event: Omit<CalendarEvent, 'id'>): Promise<void> {
     const id = `${event.userId}_${event.date}`;
-    await setDoc(doc(db, `events/${id}`), { ...event, id });
+    const data = Object.fromEntries(
+      Object.entries({ ...event, id }).filter(([, v]) => v !== undefined),
+    );
+    await setDoc(doc(db, `events/${id}`), data);
   }
 
   /** Remove a single-day event */
@@ -70,5 +73,11 @@ export class CalendarService {
 
   async deleteHoliday(id: string): Promise<void> {
     await deleteDoc(doc(db, `holidays/${id}`));
+  }
+
+  /** All events for a team across all time (no month filter) */
+  getTeamAllEvents(teamId: string): Observable<CalendarEvent[]> {
+    const q = query(collection(db, 'events'), where('teamId', '==', teamId));
+    return snapObservable<CalendarEvent>(q);
   }
 }
