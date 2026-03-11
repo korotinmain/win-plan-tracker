@@ -8,7 +8,7 @@ import {
   serverTimestamp,
   Unsubscribe,
 } from 'firebase/database';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { rtdb } from '../../firebase';
 import { AuthService } from './auth.service';
 
@@ -65,5 +65,35 @@ export class PresenceService {
         }
       }
     });
+  }
+
+  /** Watch presence state for a single user. */
+  watchMemberPresence(
+    userId: string,
+  ): Observable<'online' | 'away' | 'offline'> {
+    return new Observable((observer) => {
+      const presRef = ref(rtdb, `presence/${userId}`);
+      const unsub: Unsubscribe = onValue(
+        presRef,
+        (snap) => observer.next(snap.exists() ? 'online' : 'offline'),
+        () => observer.next('offline'),
+      );
+      return () => unsub();
+    });
+  }
+
+  /** Watch presence state for a set of member UIDs, emitting a Map on each change. */
+  watchTeamPresence(
+    memberIds: string[],
+  ): Observable<Map<string, 'online' | 'away' | 'offline'>> {
+    return this.onlineUids$.pipe(
+      map((onlineSet) => {
+        const result = new Map<string, 'online' | 'away' | 'offline'>();
+        for (const uid of memberIds) {
+          result.set(uid, onlineSet.has(uid) ? 'online' : 'offline');
+        }
+        return result;
+      }),
+    );
   }
 }

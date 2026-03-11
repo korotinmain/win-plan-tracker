@@ -12,15 +12,26 @@
         </p>
       </div>
     </div>
-    <button
-      *ngIf="isAdminOrManager() && hasTeam()"
-      class="btn-add-member"
-      (click)="openAddMember()"
-      type="button"
-    >
-      <mat-icon>add</mat-icon>
-      Add Member
-    </button>
+    <div class="tm-header-actions" *ngIf="hasTeam()">
+      <button
+        *ngIf="isAdminOrManager()"
+        class="btn-manage-team"
+        (click)="openManageTeam()"
+        type="button"
+        matTooltip="Team Settings"
+      >
+        <mat-icon>settings</mat-icon>
+      </button>
+      <button
+        *ngIf="isAdminOrManager()"
+        class="btn-add-member"
+        (click)="openAddMember()"
+        type="button"
+      >
+        <mat-icon>add</mat-icon>
+        Add Member
+      </button>
+    </div>
   </div>
 
   <!-- ── Stats row ── -->
@@ -36,7 +47,7 @@
     </div>
     <div class="tm-stat-card">
       <div class="tm-stat-icon tm-stat-icon--online">
-        <mat-icon>show_chart</mat-icon>
+        <mat-icon>wifi</mat-icon>
       </div>
       <div class="tm-stat-info">
         <div class="tm-stat-value">{{ onlineCount() }}</div>
@@ -63,7 +74,7 @@
     </div>
   </div>
 
-  <!-- ── No-team onboarding banner (any user without a team) ── -->
+  <!-- ── No-team onboarding banner ── -->
   <div class="tm-join-banner" *ngIf="!loading() && !hasTeam()">
     <div class="tm-join-banner-glow"></div>
     <div class="tm-join-banner-inner">
@@ -85,7 +96,6 @@
     </div>
 
     <div class="tm-join-list" *ngIf="teams().length > 0; else noTeamsYet">
-      <!-- Search -->
       <div class="tm-join-search-wrap">
         <mat-icon class="tm-join-search-icon">search</mat-icon>
         <input
@@ -166,27 +176,178 @@
     </ng-template>
   </div>
 
-  <!-- ── Search ── -->
-  <div class="tm-search-wrap" *ngIf="hasTeam()">
-    <mat-icon class="tm-search-icon">search</mat-icon>
-    <input
-      class="tm-search-input"
-      type="text"
-      placeholder="Search members by name or role..."
-      [ngModel]="searchQuery()"
-      (ngModelChange)="searchQuery.set($event)"
-    />
-  </div>
-
   <!-- ── Loading ── -->
   <div *ngIf="loading()" class="tm-loading">
     <mat-spinner diameter="36"></mat-spinner>
   </div>
 
+  <!-- ── Filters bar ── -->
+  <div class="tm-filters-bar" *ngIf="!loading() && hasTeam()">
+    <!-- Search -->
+    <div class="tm-search-wrap">
+      <mat-icon class="tm-search-icon">search</mat-icon>
+      <input
+        class="tm-search-input"
+        type="text"
+        placeholder="Search by name, email, or role…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        autocomplete="off"
+      />
+      <button
+        *ngIf="searchQuery()"
+        class="tm-search-clear"
+        (click)="searchQuery.set('')"
+        type="button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Role filter -->
+    <div class="tm-filter-wrap">
+      <mat-icon class="tm-filter-icon">badge</mat-icon>
+      <select
+        class="tm-filter-select"
+        [ngModel]="selectedRole()"
+        (ngModelChange)="selectedRole.set($event)"
+      >
+        <option *ngFor="let r of roleOptions" [value]="r.value">
+          {{ r.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Status filter -->
+    <div class="tm-filter-wrap">
+      <mat-icon class="tm-filter-icon">circle</mat-icon>
+      <select
+        class="tm-filter-select"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+      >
+        <option *ngFor="let s of statusOptions" [value]="s.value">
+          {{ s.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Sort -->
+    <div class="tm-filter-wrap">
+      <mat-icon class="tm-filter-icon">sort</mat-icon>
+      <select
+        class="tm-filter-select"
+        [ngModel]="sortBy()"
+        (ngModelChange)="sortBy.set($event)"
+      >
+        <option *ngFor="let s of sortOptions" [value]="s.value">
+          {{ s.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Clear filters -->
+    <button
+      *ngIf="hasActiveFilters()"
+      class="tm-clear-filters"
+      (click)="clearFilters()"
+      type="button"
+      matTooltip="Clear all filters"
+    >
+      <mat-icon>filter_list_off</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Empty state (no members at all) ── -->
+  <div
+    class="tm-empty-state"
+    *ngIf="!loading() && hasTeam() && members().length === 0"
+  >
+    <div class="tm-empty-icon">
+      <mat-icon>people_outline</mat-icon>
+    </div>
+    <h3 class="tm-empty-title">No team members yet</h3>
+    <p class="tm-empty-sub">
+      Start collaborating by adding your first team member
+    </p>
+    <button
+      *ngIf="isAdminOrManager()"
+      class="btn-add-member"
+      (click)="openAddMember()"
+      type="button"
+    >
+      <mat-icon>person_add</mat-icon>
+      Add First Member
+    </button>
+  </div>
+
+  <!-- ── Filtered empty state ── -->
+  <div
+    class="tm-empty-state tm-empty-state--filtered"
+    *ngIf="
+      !loading() &&
+      hasTeam() &&
+      members().length > 0 &&
+      filteredMembers().length === 0
+    "
+  >
+    <div class="tm-empty-icon">
+      <mat-icon>search_off</mat-icon>
+    </div>
+    <h3 class="tm-empty-title">No members match your filters</h3>
+    <p class="tm-empty-sub">Try adjusting your search or filter criteria</p>
+    <button class="tm-clear-filters-btn" (click)="clearFilters()" type="button">
+      <mat-icon>filter_list_off</mat-icon>
+      Clear Filters
+    </button>
+  </div>
+
   <!-- ── Members grid ── -->
-  <div class="tm-members-grid tm-animate-in" *ngIf="!loading() && hasTeam()">
-    <div class="tm-member-card" *ngFor="let member of filteredMembers()">
-      <!-- Avatar -->
+  <div
+    class="tm-members-grid tm-animate-in"
+    *ngIf="!loading() && hasTeam() && members().length > 0"
+  >
+    <!-- Member cards -->
+    <div
+      class="tm-member-card"
+      *ngFor="let member of filteredMembers()"
+      (click)="openEditMember(member)"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openEditMember(member)"
+    >
+      <!-- Quick actions menu -->
+      <div class="tm-card-actions" *ngIf="isAdminOrManager()">
+        <button
+          class="tm-menu-trigger"
+          [matMenuTriggerFor]="memberMenu"
+          (click)="$event.stopPropagation()"
+          type="button"
+          matTooltip="Options"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #memberMenu="matMenu" class="tm-member-menu">
+          <button mat-menu-item (click)="openEditMember(member, $event)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit member</span>
+          </button>
+          <button mat-menu-item (click)="openEditMember(member, $event)">
+            <mat-icon>person</mat-icon>
+            <span>View details</span>
+          </button>
+          <button
+            mat-menu-item
+            class="tm-menu-danger"
+            (click)="openEditMember(member, $event)"
+          >
+            <mat-icon>person_remove</mat-icon>
+            <span>Remove</span>
+          </button>
+        </mat-menu>
+      </div>
+
+      <!-- Avatar with presence indicator -->
       <div class="tm-avatar-wrap">
         <div class="tm-avatar" [style.background]="avatarColor(member.uid)">
           <img
@@ -200,7 +361,9 @@
         </div>
         <div
           class="tm-online-dot"
-          [class.tm-online-dot--offline]="!isOnline(member.uid)"
+          [class.tm-online-dot--online]="member.onlineState === 'online'"
+          [class.tm-online-dot--offline]="member.onlineState !== 'online'"
+          [matTooltip]="member.onlineState === 'online' ? 'Online' : 'Offline'"
         ></div>
       </div>
 
@@ -208,39 +371,59 @@
       <div class="tm-member-name">{{ member.displayName }}</div>
 
       <!-- Role badge -->
-      <div class="tm-role-badge tm-role-badge--{{ member.role }}">
-        {{ member.role | titlecase }}
+      <div class="tm-role-badge tm-role-badge--{{ effectiveRole(member) }}">
+        {{ effectiveRole(member) | titlecase }}
       </div>
 
-      <!-- Status -->
+      <!-- Email -->
+      <div class="tm-member-email">
+        <mat-icon>mail_outline</mat-icon>
+        <span>{{ member.email }}</span>
+      </div>
+
+      <!-- Online status line -->
       <div class="tm-member-status">
         <span
           class="tm-status-dot"
-          [class.tm-status-dot--offline]="!isOnline(member.uid)"
+          [class.tm-status-dot--online]="member.onlineState === 'online'"
+          [class.tm-status-dot--offline]="member.onlineState !== 'online'"
         ></span>
-        {{ isOnline(member.uid) ? "Online" : "Offline" }} &middot; Since
-        {{ sinceLabel(member) }}
+        {{ member.onlineState | titlecase }}
+      </div>
+
+      <!-- Capacity + timezone -->
+      <div class="tm-member-meta">
+        <div class="tm-meta-item">
+          <mat-icon>speed</mat-icon>
+          <span>{{ member.capacityPoints }} pts</span>
+        </div>
+        <div class="tm-meta-divider"></div>
+        <div class="tm-meta-item">
+          <mat-icon>schedule</mat-icon>
+          <span>{{ tzShort(member.timezone) }}</span>
+        </div>
       </div>
 
       <!-- Stats -->
       <div class="tm-member-stats">
         <div class="tm-member-stat">
-          <span class="tm-member-stat-value">{{
-            memberEventCount(member.uid)
-          }}</span>
+          <span class="tm-member-stat-value">{{ member.eventCount }}</span>
           <span class="tm-member-stat-label">EVENTS</span>
         </div>
         <div class="tm-member-stat-divider"></div>
         <div class="tm-member-stat">
-          <span class="tm-member-stat-value">{{
-            memberSprintCount(member.uid)
-          }}</span>
+          <span class="tm-member-stat-value">{{ member.sprintCount }}</span>
           <span class="tm-member-stat-label">SPRINTS</span>
+        </div>
+        <div class="tm-member-stat-divider"></div>
+        <div class="tm-member-stat">
+          <span class="tm-member-stat-value">{{ member.capacityPoints }}</span>
+          <span class="tm-member-stat-label">CAPACITY</span>
         </div>
       </div>
     </div>
 
-    <!-- Ghost add card -->
+    <!-- "Add Team Member" ghost card -->
     <button
       *ngIf="isAdminOrManager()"
       class="tm-add-card"
@@ -252,7 +435,7 @@
           <mat-icon>add</mat-icon>
         </div>
         <div class="tm-add-label">Add Team Member</div>
-        <div class="tm-add-sub">Click to add a new member</div>
+        <div class="tm-add-sub">Click to invite a new member</div>
       </div>
     </button>
   </div>

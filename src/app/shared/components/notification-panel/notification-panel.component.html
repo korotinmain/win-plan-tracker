@@ -1,0 +1,194 @@
+<div class="np-wrap" (click)="onPanelClick($event)">
+  <!-- ── Bell trigger ── -->
+  <button
+    class="np-bell"
+    [class.np-bell--active]="isOpen()"
+    [class.np-bell--has-new]="hasNew()"
+    (click)="togglePanel($event)"
+    type="button"
+    aria-label="Notifications"
+  >
+    <mat-icon>notifications_none</mat-icon>
+    <span
+      class="np-badge"
+      *ngIf="unreadCount() > 0"
+      [class.np-badge--pulse]="hasNew()"
+      >{{ unreadCount() > 9 ? "9+" : unreadCount() }}</span
+    >
+  </button>
+
+  <!-- ── Panel ── -->
+  <div
+    class="np-panel"
+    *ngIf="isOpen()"
+    role="dialog"
+    aria-label="Notifications panel"
+  >
+    <!-- Header -->
+    <div class="np-header">
+      <div class="np-header-left">
+        <div class="np-header-icon">
+          <mat-icon>notifications</mat-icon>
+        </div>
+        <div>
+          <h3 class="np-title">Notifications</h3>
+          <p class="np-subtitle" *ngIf="unreadCount() > 0">
+            {{ unreadCount() }} unread
+          </p>
+          <p class="np-subtitle" *ngIf="unreadCount() === 0">
+            You're all caught up
+          </p>
+        </div>
+      </div>
+      <button
+        class="np-mark-all"
+        *ngIf="unreadCount() > 0"
+        (click)="markAllRead()"
+        [disabled]="markingAll()"
+        type="button"
+      >
+        <mat-icon>done_all</mat-icon>
+        Mark all read
+      </button>
+    </div>
+
+    <!-- Glow separator -->
+    <div class="np-header-sep"></div>
+
+    <!-- Notification list -->
+    <div class="np-list">
+      <!-- Empty state -->
+      <div class="np-empty" *ngIf="notifications().length === 0">
+        <div class="np-empty-ring">
+          <mat-icon>notifications_none</mat-icon>
+        </div>
+        <p class="np-empty-title">No notifications yet</p>
+        <p class="np-empty-sub">You'll see team vacation alerts here</p>
+      </div>
+
+      <!-- Today -->
+      <ng-container *ngIf="todayNotifs().length > 0">
+        <div class="np-group-label">Today</div>
+        <div
+          class="np-item"
+          *ngFor="let n of todayNotifs()"
+          [class.np-item--unread]="!n.read"
+          [class.np-item--vacation]="n.type === 'vacation'"
+          [class.np-item--dayoff]="n.type === 'day-off'"
+          (click)="onItemClick(n)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="onItemClick(n)"
+        >
+          <!-- Type accent bar -->
+          <div class="np-item-bar"></div>
+
+          <!-- Avatar -->
+          <div class="np-avatar-wrap">
+            <div
+              class="np-avatar"
+              [style.background]="avatarGradient(n.actorUid)"
+            >
+              <img
+                *ngIf="n.actorPhotoURL"
+                [src]="n.actorPhotoURL"
+                [alt]="n.actorName"
+              />
+              <span *ngIf="!n.actorPhotoURL">{{ initials(n.actorName) }}</span>
+            </div>
+            <div class="np-type-icon np-type-icon--{{ n.type }}">
+              <mat-icon>{{
+                n.type === "vacation" ? "beach_access" : "event_busy"
+              }}</mat-icon>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="np-item-content">
+            <p class="np-item-text">
+              <span class="np-actor">{{ n.actorName }}</span>
+              <span class="np-verb">{{
+                n.type === "vacation"
+                  ? " is going on vacation"
+                  : " is taking a day off"
+              }}</span>
+            </p>
+            <p class="np-item-dates">
+              <mat-icon>date_range</mat-icon>
+              {{ dateRangeLabel(n) }}
+            </p>
+            <p class="np-item-note" *ngIf="n.note">
+              <mat-icon>notes</mat-icon>
+              {{ n.note }}
+            </p>
+            <span class="np-item-time">{{ timeAgo(n.createdAt) }}</span>
+          </div>
+
+          <!-- Unread dot -->
+          <span class="np-unread-dot" *ngIf="!n.read"></span>
+        </div>
+      </ng-container>
+
+      <!-- Earlier -->
+      <ng-container *ngIf="earlierNotifs().length > 0">
+        <div
+          class="np-group-label"
+          [style.margin-top]="todayNotifs().length > 0 ? '8px' : '0'"
+        >
+          Earlier
+        </div>
+        <div
+          class="np-item"
+          *ngFor="let n of earlierNotifs()"
+          [class.np-item--unread]="!n.read"
+          [class.np-item--vacation]="n.type === 'vacation'"
+          [class.np-item--dayoff]="n.type === 'day-off'"
+          (click)="onItemClick(n)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="onItemClick(n)"
+        >
+          <div class="np-item-bar"></div>
+          <div class="np-avatar-wrap">
+            <div
+              class="np-avatar"
+              [style.background]="avatarGradient(n.actorUid)"
+            >
+              <img
+                *ngIf="n.actorPhotoURL"
+                [src]="n.actorPhotoURL"
+                [alt]="n.actorName"
+              />
+              <span *ngIf="!n.actorPhotoURL">{{ initials(n.actorName) }}</span>
+            </div>
+            <div class="np-type-icon np-type-icon--{{ n.type }}">
+              <mat-icon>{{
+                n.type === "vacation" ? "beach_access" : "event_busy"
+              }}</mat-icon>
+            </div>
+          </div>
+          <div class="np-item-content">
+            <p class="np-item-text">
+              <span class="np-actor">{{ n.actorName }}</span>
+              <span class="np-verb">{{
+                n.type === "vacation"
+                  ? " is going on vacation"
+                  : " is taking a day off"
+              }}</span>
+            </p>
+            <p class="np-item-dates">
+              <mat-icon>date_range</mat-icon>
+              {{ dateRangeLabel(n) }}
+            </p>
+            <p class="np-item-note" *ngIf="n.note">
+              <mat-icon>notes</mat-icon>
+              {{ n.note }}
+            </p>
+            <span class="np-item-time">{{ timeAgo(n.createdAt) }}</span>
+          </div>
+          <span class="np-unread-dot" *ngIf="!n.read"></span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

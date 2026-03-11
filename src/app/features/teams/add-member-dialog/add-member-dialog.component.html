@@ -1,0 +1,225 @@
+<div class="amd-wrap">
+  <!-- Header -->
+  <div class="amd-header">
+    <div class="amd-header-icon">
+      <mat-icon>person_add</mat-icon>
+    </div>
+    <div class="amd-header-text">
+      <h2 class="amd-title">Add Team Member</h2>
+      <p class="amd-sub">{{ data.team.name }}</p>
+    </div>
+    <button class="amd-close" (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Step indicators -->
+  <div class="amd-steps">
+    <div
+      class="amd-step"
+      [class.amd-step--active]="step() === 1"
+      [class.amd-step--done]="step() > 1"
+    >
+      <div class="amd-step-num">
+        <mat-icon *ngIf="step() > 1; else num1">check</mat-icon>
+        <ng-template #num1>1</ng-template>
+      </div>
+      <span>Choose Member</span>
+    </div>
+    <div class="amd-step-line"></div>
+    <div class="amd-step" [class.amd-step--active]="step() === 2">
+      <div class="amd-step-num">2</div>
+      <span>Configure</span>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="amd-body">
+    <!-- Error banner -->
+    <div class="amd-error" *ngIf="error()">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+
+    <!-- ── STEP 1: User selection ── -->
+    <ng-container *ngIf="step() === 1">
+      <div class="amd-search-wrap">
+        <mat-icon class="amd-search-icon">search</mat-icon>
+        <input
+          class="amd-search-input"
+          type="text"
+          placeholder="Search by name or email…"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          autocomplete="off"
+        />
+        <button
+          *ngIf="search()"
+          class="amd-search-clear"
+          (click)="search.set('')"
+          type="button"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="amd-loading" *ngIf="loading()">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading users…</span>
+      </div>
+
+      <div class="amd-user-list" *ngIf="!loading()">
+        <div class="amd-empty-list" *ngIf="availableUsers().length === 0">
+          <mat-icon>person_search</mat-icon>
+          <span>{{
+            search()
+              ? 'No users match "' + search() + '"'
+              : "All users are already on this team"
+          }}</span>
+        </div>
+        <div
+          class="amd-user-row"
+          *ngFor="let user of availableUsers()"
+          (click)="selectUser(user)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="selectUser(user)"
+        >
+          <div
+            class="amd-user-avatar"
+            [style.background]="avatarColor(user.uid)"
+          >
+            <img
+              *ngIf="user.photoURL"
+              [src]="user.photoURL"
+              [alt]="user.displayName"
+            />
+            <span *ngIf="!user.photoURL">{{ initials(user.displayName) }}</span>
+          </div>
+          <div class="amd-user-info">
+            <span class="amd-user-name">{{ user.displayName }}</span>
+            <span class="amd-user-email">{{ user.email }}</span>
+          </div>
+          <span class="amd-user-role amd-user-role--{{ user.role }}">{{
+            user.role | titlecase
+          }}</span>
+          <mat-icon class="amd-user-arrow">chevron_right</mat-icon>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── STEP 2: Configuration ── -->
+    <ng-container *ngIf="step() === 2 && selectedUser()">
+      <!-- Selected user preview -->
+      <div class="amd-selected-preview">
+        <div
+          class="amd-sel-avatar"
+          [style.background]="avatarColor(selectedUser()!.uid)"
+        >
+          <img
+            *ngIf="selectedUser()!.photoURL"
+            [src]="selectedUser()!.photoURL"
+            [alt]="selectedUser()!.displayName"
+          />
+          <span *ngIf="!selectedUser()!.photoURL">{{
+            initials(selectedUser()!.displayName)
+          }}</span>
+        </div>
+        <div class="amd-sel-info">
+          <span class="amd-sel-name">{{ selectedUser()!.displayName }}</span>
+          <span class="amd-sel-email">{{ selectedUser()!.email }}</span>
+        </div>
+        <div class="amd-sel-check">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+      </div>
+
+      <!-- Fields -->
+      <div class="amd-fields">
+        <!-- Team Role -->
+        <div class="amd-field">
+          <label class="amd-label">Team Role</label>
+          <div class="amd-role-grid">
+            <button
+              *ngFor="let r of memberRoles"
+              class="amd-role-btn"
+              [class.amd-role-btn--selected]="role() === r.value"
+              (click)="role.set(r.value)"
+              type="button"
+            >
+              <span class="amd-role-btn-name">{{ r.label }}</span>
+              <span class="amd-role-btn-desc">{{ r.description }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Capacity Points -->
+        <div class="amd-field">
+          <label class="amd-label">Capacity Points</label>
+          <div class="amd-capacity-wrap">
+            <button
+              class="amd-capacity-btn"
+              (click)="decreaseCapacity()"
+              type="button"
+            >
+              <mat-icon>remove</mat-icon>
+            </button>
+            <input
+              class="amd-capacity-input"
+              type="number"
+              min="1"
+              max="50"
+              [ngModel]="capacityPoints()"
+              (ngModelChange)="capacityPoints.set(+$event)"
+            />
+            <button
+              class="amd-capacity-btn"
+              (click)="increaseCapacity()"
+              type="button"
+            >
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          <span class="amd-field-hint">Story points per sprint (1–50)</span>
+        </div>
+
+        <!-- Timezone -->
+        <div class="amd-field">
+          <label class="amd-label">Timezone</label>
+          <select
+            class="amd-select"
+            [ngModel]="timezone()"
+            (ngModelChange)="timezone.set($event)"
+          >
+            <option *ngFor="let tz of timezones" [value]="tz.value">
+              {{ tz.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Footer -->
+  <div class="amd-footer">
+    <button
+      class="amd-btn amd-btn--ghost"
+      (click)="step() === 1 ? close() : back()"
+      type="button"
+    >
+      <mat-icon>{{ step() === 1 ? "close" : "arrow_back" }}</mat-icon>
+      {{ step() === 1 ? "Cancel" : "Back" }}
+    </button>
+    <button
+      *ngIf="step() === 2"
+      class="amd-btn amd-btn--primary"
+      [disabled]="saving()"
+      (click)="submit()"
+      type="button"
+    >
+      <mat-spinner *ngIf="saving()" diameter="16"></mat-spinner>
+      <mat-icon *ngIf="!saving()">person_add</mat-icon>
+      {{ saving() ? "Adding…" : "Add Member" }}
+    </button>
+  </div>
+</div>

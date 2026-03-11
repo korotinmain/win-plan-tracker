@@ -12,6 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AppUser } from '../../../core/models/user.model';
+import { NotificationPanelComponent } from '../notification-panel/notification-panel.component';
 
 interface NavItem {
   label: string;
@@ -31,6 +32,7 @@ interface NavItem {
     MatMenuModule,
     MatDividerModule,
     MatTooltipModule,
+    NotificationPanelComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.scss'],

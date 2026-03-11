@@ -127,9 +127,15 @@
           <span>{{ today }}</span>
         </div>
 
-        <button class="icon-btn" aria-label="Notifications">
+        <button
+          class="icon-btn"
+          aria-label="Notifications"
+          style="display: none"
+        >
           <mat-icon>notifications_none</mat-icon>
         </button>
+
+        <app-notification-panel></app-notification-panel>
 
         <button
           class="icon-btn"

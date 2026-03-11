@@ -4,7 +4,6 @@
 
 .st-page {
   padding: 28px;
-  max-width: 700px;
   background: var(--c-bg);
   min-height: 100%;
 }
@@ -54,6 +53,21 @@
 }
 
 /* ── Cards layout ── */
+.st-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  max-width: 1100px;
+}
+
+.st-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* keep for backward-compat if referenced elsewhere */
 .st-cards {
   display: flex;
   flex-direction: column;
@@ -414,7 +428,13 @@
   color: var(--c-text-2);
 }
 
-/* ── Toggle ── */
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .st-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .st-toggle {
   width: 52px;
   height: 28px;

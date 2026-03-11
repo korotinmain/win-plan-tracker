@@ -81,6 +81,18 @@ service cloud.firestore {
                     && request.resource.data.managerId == request.auth.uid;
       allow update: if isManager(teamId) || isSelfJoin() || isSelfLeave();
       allow delete: if isManager(teamId) || isAdminOrManager();
+
+      // ─── team member enrichments ────────────────────────────────────────
+      // Team members can read enrichments for their own team.
+      // Only the team manager (or an admin/manager role) can write them.
+      match /members/{memberId} {
+        allow read:   if signedIn() && isMember(teamId);
+        allow create,
+              update: if signedIn()
+                      && (isManager(teamId) || isAdminOrManager());
+        allow delete: if signedIn()
+                      && (isManager(teamId) || isAdminOrManager());
+      }
     }
 
     // ─── events ────────────────────────────────────────────────────────────
@@ -106,6 +118,17 @@ service cloud.firestore {
       allow create: if signedIn() && isManager(request.resource.data.teamId);
       allow update,
             delete: if isManager(resource.data.teamId);
+    }
+
+    // ─── notifications ─────────────────────────────────────────────────────
+    // Each notification belongs to one recipient.
+    // Any authenticated user can create notifications for teammates.
+    // Only the recipient can read/update (mark read) their own docs.
+    match /notifications/{notifId} {
+      allow read,
+            update: if signedIn()
+                    && request.auth.uid == resource.data.recipientUid;
+      allow create: if signedIn();
     }
   }
 }

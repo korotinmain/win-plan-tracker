@@ -176,3 +176,17 @@ a {
     overflow: hidden;
   }
 }
+
+// ── Team Member Dialogs (Add / Edit) ─────────────────────────────────────────
+.team-member-dialog .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 20px;
+    overflow: visible;
+  }
+}

@@ -15,6 +15,7 @@ import {
 } from '@firebase/firestore';
 import { Observable, combineLatest, map } from 'rxjs';
 import { Team, SprintCeremonyConfig } from '../models/team.model';
+import { TeamMember } from '../models/team-member.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
 
@@ -145,5 +146,63 @@ export class TeamService {
     config: SprintCeremonyConfig,
   ): Promise<void> {
     await updateDoc(doc(db, `teams/${teamId}`), { ceremonyConfig: config });
+  }
+
+  /** Real-time listener on teams/{teamId}/members subcollection. */
+  getTeamMembersEnrichments(teamId: string): Observable<TeamMember[]> {
+    return snapObservable<TeamMember>(
+      query(collection(db, `teams/${teamId}/members`)),
+    );
+  }
+
+  /** Create or merge-update a member enrichment document. */
+  async saveTeamMemberEnrichment(
+    teamId: string,
+    memberId: string,
+    data: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<void> {
+    await setDoc(
+      doc(db, `teams/${teamId}/members/${memberId}`),
+      { ...data, id: memberId, createdAt: new Date(), updatedAt: new Date() },
+      { merge: true },
+    );
+  }
+
+  /** Partial update of a member enrichment document. */
+  async updateTeamMemberEnrichment(
+    teamId: string,
+    memberId: string,
+    data: Partial<Omit<TeamMember, 'id' | 'createdAt'>>,
+  ): Promise<void> {
+    try {
+      await updateDoc(doc(db, `teams/${teamId}/members/${memberId}`), {
+        ...data,
+        updatedAt: new Date(),
+      });
+    } catch {
+      // Doc may not exist yet — fall back to setDoc
+      await setDoc(
+        doc(db, `teams/${teamId}/members/${memberId}`),
+        { ...data, id: memberId, createdAt: new Date(), updatedAt: new Date() },
+        { merge: true },
+      );
+    }
+  }
+
+  /** Remove member from team memberIds list and mark enrichment as inactive. */
+  async removeTeamMember(
+    teamId: string,
+    userId: string,
+    currentMemberIds: string[],
+  ): Promise<void> {
+    await this.removeMember(teamId, userId, currentMemberIds);
+    try {
+      await updateDoc(doc(db, `teams/${teamId}/members/${userId}`), {
+        isActive: false,
+        updatedAt: new Date(),
+      });
+    } catch {
+      // Enrichment doc may not exist — no-op
+    }
   }
 }

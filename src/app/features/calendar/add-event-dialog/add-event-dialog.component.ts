@@ -11,6 +11,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { format, parseISO, eachDayOfInterval, isWeekend } from 'date-fns';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { EventType } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 
@@ -48,6 +49,7 @@ export class AddEventDialogComponent implements OnInit {
   private data: AddEventDialogData = inject(MAT_DIALOG_DATA);
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
+  private notifService = inject(NotificationService);
 
   members = this.data.members;
   teamId = this.data.teamId;
@@ -220,6 +222,24 @@ export class AddEventDialogComponent implements OnInit {
         }
       }
       await Promise.all(writes);
+
+      // Fan-out notifications to all team members for vacation / day-off
+      if (
+        (type === 'vacation' || type === 'day-off') &&
+        currentUser &&
+        this.members.length > 1
+      ) {
+        await this.notifService.createForTeam(
+          currentUser,
+          this.teamId,
+          type,
+          this.startDate(),
+          this.startDate() !== this.endDate() ? this.endDate() : undefined,
+          note,
+          this.members,
+        );
+      }
+
       this.dialogRef.close(true);
     } finally {
       this.saving.set(false);

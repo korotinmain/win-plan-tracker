@@ -1,0 +1,223 @@
+<div class="emd-wrap">
+  <!-- Header -->
+  <div class="emd-header">
+    <div class="emd-avatar" [style.background]="avatarColor(data.member.uid)">
+      <img
+        *ngIf="data.member.photoURL"
+        [src]="data.member.photoURL"
+        [alt]="data.member.displayName"
+      />
+      <span *ngIf="!data.member.photoURL">{{
+        initials(data.member.displayName)
+      }}</span>
+      <div
+        class="emd-online-dot"
+        [class.emd-online-dot--online]="data.member.onlineState === 'online'"
+        [class.emd-online-dot--offline]="data.member.onlineState !== 'online'"
+      ></div>
+    </div>
+    <div class="emd-header-info">
+      <h2 class="emd-name">{{ data.member.displayName }}</h2>
+      <p class="emd-email">{{ data.member.email }}</p>
+      <div class="emd-badges">
+        <span
+          class="emd-role-badge emd-role-badge--{{ data.member.appRole }}"
+          >{{ data.member.appRole | titlecase }}</span
+        >
+        <span
+          class="emd-status-badge"
+          [class.emd-status-badge--online]="
+            data.member.onlineState === 'online'
+          "
+        >
+          <span class="emd-status-dot"></span>
+          {{ data.member.onlineState | titlecase }}
+        </span>
+      </div>
+    </div>
+    <button class="emd-close" (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="emd-stats">
+    <div class="emd-stat">
+      <span class="emd-stat-value">{{ data.member.eventCount }}</span>
+      <span class="emd-stat-label">Events</span>
+    </div>
+    <div class="emd-stat-divider"></div>
+    <div class="emd-stat">
+      <span class="emd-stat-value">{{ data.member.sprintCount }}</span>
+      <span class="emd-stat-label">Sprints</span>
+    </div>
+    <div class="emd-stat-divider"></div>
+    <div class="emd-stat">
+      <span class="emd-stat-value">{{ data.member.capacityPoints }}</span>
+      <span class="emd-stat-label">Capacity</span>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="emd-body">
+    <!-- Error -->
+    <div class="emd-error" *ngIf="error()">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+
+    <!-- ── Confirm Remove Section ── -->
+    <div class="emd-confirm-remove" *ngIf="confirmRemove()">
+      <div class="emd-confirm-icon">
+        <mat-icon>person_remove</mat-icon>
+      </div>
+      <p class="emd-confirm-text">
+        Remove <strong>{{ data.member.displayName }}</strong> from the team?
+        This will revoke their team access.
+      </p>
+      <div class="emd-confirm-actions">
+        <button
+          class="emd-btn emd-btn--ghost"
+          (click)="confirmRemove.set(false)"
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          class="emd-btn emd-btn--danger"
+          [disabled]="removing()"
+          (click)="removeMember()"
+          type="button"
+        >
+          <mat-spinner *ngIf="removing()" diameter="16"></mat-spinner>
+          <mat-icon *ngIf="!removing()">delete_outline</mat-icon>
+          {{ removing() ? "Removing…" : "Yes, Remove" }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Edit Fields ── -->
+    <ng-container *ngIf="!confirmRemove()">
+      <!-- Team Role -->
+      <div class="emd-field">
+        <label class="emd-label">Team Role</label>
+        <div class="emd-role-grid">
+          <button
+            *ngFor="let r of memberRoles"
+            class="emd-role-btn"
+            [class.emd-role-btn--selected]="role() === r.value"
+            (click)="role.set(r.value)"
+            type="button"
+          >
+            <span class="emd-role-btn-name">{{ r.label }}</span>
+            <span class="emd-role-btn-desc">{{ r.description }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Capacity Points -->
+      <div class="emd-field">
+        <label class="emd-label">Capacity Points</label>
+        <div class="emd-capacity-wrap">
+          <button
+            class="emd-capacity-btn"
+            (click)="decreaseCapacity()"
+            type="button"
+          >
+            <mat-icon>remove</mat-icon>
+          </button>
+          <input
+            class="emd-capacity-input"
+            type="number"
+            min="1"
+            max="50"
+            [ngModel]="capacityPoints()"
+            (ngModelChange)="capacityPoints.set(+$event)"
+          />
+          <button
+            class="emd-capacity-btn"
+            (click)="increaseCapacity()"
+            type="button"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        <span class="emd-field-hint">Story points per sprint (1–50)</span>
+      </div>
+
+      <!-- Timezone -->
+      <div class="emd-field">
+        <label class="emd-label">Timezone</label>
+        <select
+          class="emd-select"
+          [ngModel]="timezone()"
+          (ngModelChange)="timezone.set($event)"
+        >
+          <option *ngFor="let tz of timezones" [value]="tz.value">
+            {{ tz.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Active toggle -->
+      <div class="emd-field emd-field--row">
+        <div class="emd-field-info">
+          <label class="emd-label">Active Member</label>
+          <span class="emd-field-hint"
+            >Inactive members remain in the roster but can't access team
+            data</span
+          >
+        </div>
+        <button
+          class="emd-toggle"
+          [class.emd-toggle--on]="isActive()"
+          (click)="isActive.set(!isActive())"
+          type="button"
+          role="switch"
+          [attr.aria-checked]="isActive()"
+        >
+          <span class="emd-toggle-thumb"></span>
+        </button>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="emd-danger-zone">
+        <div class="emd-danger-label">Danger Zone</div>
+        <div class="emd-danger-row">
+          <div class="emd-danger-info">
+            <span class="emd-danger-title">Remove from team</span>
+            <span class="emd-danger-desc"
+              >This member will lose all team access</span
+            >
+          </div>
+          <button
+            class="emd-btn emd-btn--danger-outline"
+            (click)="confirmRemove.set(true)"
+            type="button"
+          >
+            <mat-icon>person_remove</mat-icon>
+            Remove
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Footer -->
+  <div class="emd-footer" *ngIf="!confirmRemove()">
+    <button class="emd-btn emd-btn--ghost" (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+      Cancel
+    </button>
+    <button
+      class="emd-btn emd-btn--primary"
+      [disabled]="saving()"
+      (click)="save()"
+      type="button"
+    >
+      <mat-spinner *ngIf="saving()" diameter="16"></mat-spinner>
+      <mat-icon *ngIf="!saving()">check</mat-icon>
+      {{ saving() ? "Saving…" : "Save Changes" }}
+    </button>
+  </div>
+</div>

@@ -7,293 +7,303 @@
     </div>
   </div>
 
-  <div class="st-cards" *ngIf="currentUser()">
-    <!-- PROFILE -->
-    <div class="st-card">
-      <div class="st-section-label">Profile</div>
-      <div class="st-profile-row">
-        <div class="st-avatar">
-          <img
-            *ngIf="currentUser()!.photoURL"
-            [src]="currentUser()!.photoURL"
-            [alt]="currentUser()!.displayName"
-          />
-          <span *ngIf="!currentUser()!.photoURL">{{ initials() }}</span>
-        </div>
-        <div class="st-profile-info">
-          <div class="st-profile-name">{{ currentUser()!.displayName }}</div>
-          <div class="st-profile-email">{{ currentUser()!.email }}</div>
-          <span
-            class="st-role-badge st-role-badge--{{ currentUser()!.role }}"
-            >{{ currentUser()!.role | titlecase }}</span
-          >
-        </div>
-      </div>
-    </div>
-
-    <!-- ACCOUNT INFO -->
-    <div class="st-card">
-      <div class="st-section-label">Account Info</div>
-      <div class="st-info-grid">
-        <div class="st-info-item">
-          <span class="st-info-label">Role</span>
-          <span class="st-info-value">{{
-            currentUser()!.role | titlecase
-          }}</span>
-        </div>
-        <div class="st-info-item">
-          <span class="st-info-label">Team ID</span>
-          <span class="st-info-value st-mono">{{
-            currentUser()!.teamId || "—"
-          }}</span>
-        </div>
-        <div class="st-info-item st-info-item--full">
-          <span class="st-info-label">UID</span>
-          <span class="st-info-value st-mono">{{ currentUser()!.uid }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- MY TEAM -->
-    <div class="st-card">
-      <div class="st-section-label">My Team</div>
-
-      <div class="st-error-banner" *ngIf="teamError()">
-        <mat-icon>error_outline</mat-icon>
-        <span>{{ teamError() }}</span>
-        <button
-          (click)="teamError.set(null)"
-          type="button"
-          class="st-error-dismiss"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-
-      <div class="st-loading" *ngIf="teamsLoading()">
-        <mat-spinner diameter="28"></mat-spinner>
-      </div>
-
-      <ng-container *ngIf="!teamsLoading()">
-        <div class="st-current-team" *ngIf="myTeam(); else noTeamBlock">
-          <div class="st-team-icon">
-            <mat-icon>{{ myTeam()!.icon || "groups" }}</mat-icon>
+  <div class="st-layout" *ngIf="currentUser()">
+    <!-- LEFT COLUMN -->
+    <div class="st-col">
+      <!-- PROFILE -->
+      <div class="st-card">
+        <div class="st-section-label">Profile</div>
+        <div class="st-profile-row">
+          <div class="st-avatar">
+            <img
+              *ngIf="currentUser()!.photoURL"
+              [src]="currentUser()!.photoURL"
+              [alt]="currentUser()!.displayName"
+            />
+            <span *ngIf="!currentUser()!.photoURL">{{ initials() }}</span>
           </div>
-          <div class="st-team-info">
-            <span class="st-team-name">{{ myTeam()!.name }}</span>
-            <span class="st-team-label">Current team</span>
+          <div class="st-profile-info">
+            <div class="st-profile-name">{{ currentUser()!.displayName }}</div>
+            <div class="st-profile-email">{{ currentUser()!.email }}</div>
+            <span
+              class="st-role-badge st-role-badge--{{ currentUser()!.role }}"
+              >{{ currentUser()!.role | titlecase }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT INFO -->
+      <div class="st-card">
+        <div class="st-section-label">Account Info</div>
+        <div class="st-info-grid">
+          <div class="st-info-item">
+            <span class="st-info-label">Role</span>
+            <span class="st-info-value">{{
+              currentUser()!.role | titlecase
+            }}</span>
+          </div>
+          <div class="st-info-item">
+            <span class="st-info-label">Team ID</span>
+            <span class="st-info-value st-mono">{{
+              currentUser()!.teamId || "—"
+            }}</span>
+          </div>
+          <div class="st-info-item st-info-item--full">
+            <span class="st-info-label">UID</span>
+            <span class="st-info-value st-mono">{{ currentUser()!.uid }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="st-card">
+        <div class="st-section-label">Appearance</div>
+        <div class="st-appearance-row">
+          <div class="st-appearance-left">
+            <div class="st-appearance-icon">
+              <mat-icon>{{
+                themeService.isDark() ? "dark_mode" : "light_mode"
+              }}</mat-icon>
+            </div>
+            <div class="st-appearance-text">
+              <div class="st-appearance-title">
+                {{ themeService.isDark() ? "Dark mode" : "Light mode" }}
+              </div>
+              <div class="st-appearance-sub">
+                Toggle between dark and light interface
+              </div>
+            </div>
           </div>
           <button
-            class="st-btn-leave"
-            (click)="leaveTeam(myTeam()!)"
-            [disabled]="actingTeamId() === myTeam()!.id"
+            class="st-toggle"
+            [class.st-toggle--on]="themeService.isDark()"
+            (click)="themeService.toggle()"
             type="button"
           >
-            <mat-spinner
-              *ngIf="actingTeamId() === myTeam()!.id"
-              diameter="14"
-            ></mat-spinner>
-            <mat-icon *ngIf="actingTeamId() !== myTeam()!.id">logout</mat-icon>
-            {{ actingTeamId() === myTeam()!.id ? "Leaving…" : "Leave" }}
+            <span class="st-toggle-thumb"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- /st-col left -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="st-col">
+      <!-- MY TEAM -->
+      <div class="st-card">
+        <div class="st-section-label">My Team</div>
+
+        <div class="st-error-banner" *ngIf="teamError()">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ teamError() }}</span>
+          <button
+            (click)="teamError.set(null)"
+            type="button"
+            class="st-error-dismiss"
+          >
+            <mat-icon>close</mat-icon>
           </button>
         </div>
 
-        <ng-template #noTeamBlock>
-          <p class="st-no-team">You are not in a team yet. Join one below.</p>
-          <div *ngIf="availableTeams().length === 0" class="st-no-teams">
-            No teams available to join.
-          </div>
-          <div class="st-teams-list" *ngIf="availableTeams().length > 0">
-            <div *ngFor="let team of availableTeams()" class="st-team-row">
-              <div class="st-team-icon">
-                <mat-icon>{{ team.icon || "groups" }}</mat-icon>
-              </div>
-              <div class="st-team-info">
-                <span class="st-team-name">{{ team.name }}</span>
-                <span class="st-team-label"
-                  >{{ team.memberIds.length }} member{{
-                    team.memberIds.length === 1 ? "" : "s"
-                  }}</span
-                >
-              </div>
-              <button
-                class="st-btn-join"
-                (click)="joinTeam(team)"
-                [disabled]="actingTeamId() !== null"
-                type="button"
+        <div class="st-loading" *ngIf="teamsLoading()">
+          <mat-spinner diameter="28"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!teamsLoading()">
+          <div class="st-current-team" *ngIf="myTeam(); else noTeamBlock">
+            <div class="st-team-icon">
+              <mat-icon>{{ myTeam()!.icon || "groups" }}</mat-icon>
+            </div>
+            <div class="st-team-info">
+              <span class="st-team-name">{{ myTeam()!.name }}</span>
+              <span class="st-team-label">Current team</span>
+            </div>
+            <button
+              class="st-btn-leave"
+              (click)="leaveTeam(myTeam()!)"
+              [disabled]="actingTeamId() === myTeam()!.id"
+              type="button"
+            >
+              <mat-spinner
+                *ngIf="actingTeamId() === myTeam()!.id"
+                diameter="14"
+              ></mat-spinner>
+              <mat-icon *ngIf="actingTeamId() !== myTeam()!.id"
+                >logout</mat-icon
               >
-                <mat-spinner
-                  *ngIf="actingTeamId() === team.id"
-                  diameter="14"
-                ></mat-spinner>
-                <mat-icon *ngIf="actingTeamId() !== team.id"
-                  >person_add</mat-icon
+              {{ actingTeamId() === myTeam()!.id ? "Leaving…" : "Leave" }}
+            </button>
+          </div>
+
+          <ng-template #noTeamBlock>
+            <p class="st-no-team">You are not in a team yet. Join one below.</p>
+            <div *ngIf="availableTeams().length === 0" class="st-no-teams">
+              No teams available to join.
+            </div>
+            <div class="st-teams-list" *ngIf="availableTeams().length > 0">
+              <div *ngFor="let team of availableTeams()" class="st-team-row">
+                <div class="st-team-icon">
+                  <mat-icon>{{ team.icon || "groups" }}</mat-icon>
+                </div>
+                <div class="st-team-info">
+                  <span class="st-team-name">{{ team.name }}</span>
+                  <span class="st-team-label"
+                    >{{ team.memberIds.length }} member{{
+                      team.memberIds.length === 1 ? "" : "s"
+                    }}</span
+                  >
+                </div>
+                <button
+                  class="st-btn-join"
+                  (click)="joinTeam(team)"
+                  [disabled]="actingTeamId() !== null"
+                  type="button"
                 >
-                {{ actingTeamId() === team.id ? "Joining…" : "Join" }}
-              </button>
+                  <mat-spinner
+                    *ngIf="actingTeamId() === team.id"
+                    diameter="14"
+                  ></mat-spinner>
+                  <mat-icon *ngIf="actingTeamId() !== team.id"
+                    >person_add</mat-icon
+                  >
+                  {{ actingTeamId() === team.id ? "Joining…" : "Join" }}
+                </button>
+              </div>
             </div>
+          </ng-template>
+        </ng-container>
+      </div>
+
+      <!-- SPRINT CEREMONIES -->
+      <div class="st-card" *ngIf="myTeam()">
+        <div class="st-section-label">Sprint Ceremonies</div>
+
+        <!-- Sprint length toggle -->
+        <div class="st-ceremony-sprint-len">
+          <div class="st-ceremony-len-label">
+            <mat-icon>speed</mat-icon>
+            <span>Sprint length</span>
           </div>
-        </ng-template>
-      </ng-container>
-    </div>
-
-    <!-- SPRINT CEREMONIES -->
-    <div class="st-card" *ngIf="myTeam()">
-      <div class="st-section-label">Sprint Ceremonies</div>
-
-      <!-- Sprint length toggle -->
-      <div class="st-ceremony-sprint-len">
-        <div class="st-ceremony-len-label">
-          <mat-icon>speed</mat-icon>
-          <span>Sprint length</span>
+          <div class="st-len-btns">
+            <button
+              class="st-len-btn"
+              [class.active]="ceremonyConfig().sprintLengthWeeks === 1"
+              (click)="isTeamAdmin() && updateSprintLength(1)"
+              [disabled]="!isTeamAdmin()"
+              type="button"
+            >
+              1 week
+            </button>
+            <button
+              class="st-len-btn"
+              [class.active]="ceremonyConfig().sprintLengthWeeks === 2"
+              (click)="isTeamAdmin() && updateSprintLength(2)"
+              [disabled]="!isTeamAdmin()"
+              type="button"
+            >
+              2 weeks
+            </button>
+          </div>
         </div>
-        <div class="st-len-btns">
+
+        <!-- Ceremony rows -->
+        <div class="st-ceremony-list">
+          <div class="st-ceremony-item">
+            <span class="st-cer-badge st-cer-badge--planning">PLAN</span>
+            <span class="st-cer-name">Planning</span>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().planningDow"
+              (ngModelChange)="patchCeremony({ planningDow: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+                {{ d.label }}
+              </option>
+            </select>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().planningWeek"
+              (ngModelChange)="patchCeremony({ planningWeek: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+                {{ w.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="st-ceremony-item">
+            <span class="st-cer-badge st-cer-badge--refinement">REF</span>
+            <span class="st-cer-name">Refinement</span>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().refinementDow"
+              (ngModelChange)="patchCeremony({ refinementDow: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+                {{ d.label }}
+              </option>
+            </select>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().refinementWeek"
+              (ngModelChange)="patchCeremony({ refinementWeek: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+                {{ w.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="st-ceremony-item">
+            <span class="st-cer-badge st-cer-badge--sprint-review">REV</span>
+            <span class="st-cer-name">Sprint Review</span>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().sprintReviewDow"
+              (ngModelChange)="patchCeremony({ sprintReviewDow: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let d of dowOptions" [ngValue]="d.value">
+                {{ d.label }}
+              </option>
+            </select>
+            <select
+              class="st-select"
+              [ngModel]="ceremonyConfig().sprintReviewWeek"
+              (ngModelChange)="patchCeremony({ sprintReviewWeek: $event })"
+              [disabled]="!isTeamAdmin()"
+            >
+              <option *ngFor="let w of weekOptions" [ngValue]="w.value">
+                {{ w.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <p class="st-ceremony-hint" *ngIf="!isTeamAdmin()">
+          <mat-icon>info_outline</mat-icon>
+          Only admins and managers can change ceremony settings.
+        </p>
+
+        <div class="st-ceremony-footer" *ngIf="isTeamAdmin()">
           <button
-            class="st-len-btn"
-            [class.active]="ceremonyConfig().sprintLengthWeeks === 1"
-            (click)="isTeamAdmin() && updateSprintLength(1)"
-            [disabled]="!isTeamAdmin()"
+            class="st-btn-save"
+            (click)="saveCeremonyConfig()"
+            [disabled]="savingCeremony()"
             type="button"
           >
-            1 week
-          </button>
-          <button
-            class="st-len-btn"
-            [class.active]="ceremonyConfig().sprintLengthWeeks === 2"
-            (click)="isTeamAdmin() && updateSprintLength(2)"
-            [disabled]="!isTeamAdmin()"
-            type="button"
-          >
-            2 weeks
+            <mat-spinner *ngIf="savingCeremony()" diameter="14"></mat-spinner>
+            <mat-icon *ngIf="!savingCeremony()">save</mat-icon>
+            {{ savingCeremony() ? "Saving…" : "Save" }}
           </button>
         </div>
       </div>
-
-      <!-- Ceremony rows -->
-      <div class="st-ceremony-list">
-        <div class="st-ceremony-item">
-          <span class="st-cer-badge st-cer-badge--planning">PLAN</span>
-          <span class="st-cer-name">Planning</span>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().planningDow"
-            (ngModelChange)="patchCeremony({ planningDow: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
-              {{ d.label }}
-            </option>
-          </select>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().planningWeek"
-            (ngModelChange)="patchCeremony({ planningWeek: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
-              {{ w.label }}
-            </option>
-          </select>
-        </div>
-
-        <div class="st-ceremony-item">
-          <span class="st-cer-badge st-cer-badge--refinement">REF</span>
-          <span class="st-cer-name">Refinement</span>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().refinementDow"
-            (ngModelChange)="patchCeremony({ refinementDow: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
-              {{ d.label }}
-            </option>
-          </select>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().refinementWeek"
-            (ngModelChange)="patchCeremony({ refinementWeek: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
-              {{ w.label }}
-            </option>
-          </select>
-        </div>
-
-        <div class="st-ceremony-item">
-          <span class="st-cer-badge st-cer-badge--sprint-review">REV</span>
-          <span class="st-cer-name">Sprint Review</span>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().sprintReviewDow"
-            (ngModelChange)="patchCeremony({ sprintReviewDow: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let d of dowOptions" [ngValue]="d.value">
-              {{ d.label }}
-            </option>
-          </select>
-          <select
-            class="st-select"
-            [ngModel]="ceremonyConfig().sprintReviewWeek"
-            (ngModelChange)="patchCeremony({ sprintReviewWeek: $event })"
-            [disabled]="!isTeamAdmin()"
-          >
-            <option *ngFor="let w of weekOptions" [ngValue]="w.value">
-              {{ w.label }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <p class="st-ceremony-hint" *ngIf="!isTeamAdmin()">
-        <mat-icon>info_outline</mat-icon>
-        Only admins and managers can change ceremony settings.
-      </p>
-
-      <div class="st-ceremony-footer" *ngIf="isTeamAdmin()">
-        <button
-          class="st-btn-save"
-          (click)="saveCeremonyConfig()"
-          [disabled]="savingCeremony()"
-          type="button"
-        >
-          <mat-spinner *ngIf="savingCeremony()" diameter="14"></mat-spinner>
-          <mat-icon *ngIf="!savingCeremony()">save</mat-icon>
-          {{ savingCeremony() ? "Saving…" : "Save" }}
-        </button>
-      </div>
     </div>
-
-    <!-- APPEARANCE -->
-    <div class="st-card">
-      <div class="st-section-label">Appearance</div>
-      <div class="st-appearance-row">
-        <div class="st-appearance-left">
-          <div class="st-appearance-icon">
-            <mat-icon>{{
-              themeService.isDark() ? "dark_mode" : "light_mode"
-            }}</mat-icon>
-          </div>
-          <div class="st-appearance-text">
-            <div class="st-appearance-title">
-              {{ themeService.isDark() ? "Dark mode" : "Light mode" }}
-            </div>
-            <div class="st-appearance-sub">
-              Toggle between dark and light interface
-            </div>
-          </div>
-        </div>
-        <button
-          class="st-toggle"
-          [class.st-toggle--on]="themeService.isDark()"
-          (click)="themeService.toggle()"
-          type="button"
-        >
-          <span class="st-toggle-thumb"></span>
-        </button>
-      </div>
-    </div>
+    <!-- /st-col right -->
   </div>
 </div>
