@@ -53,7 +53,7 @@ import {
   PublicHoliday,
 } from '../../../core/services/holiday.service';
 import { CalendarEvent, Holiday } from '../../../core/models/event.model';
-import { DEFAULT_CEREMONY_CONFIG } from '../../../core/models/team.model';
+import { DEFAULT_CEREMONY_CONFIG } from '../../../core/models/team.model'; // only sprintLengthWeeks used
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest, map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -67,16 +67,22 @@ interface CalendarDay {
   holidayName?: string;
   isFirstOfWeek: boolean;
   weekRowspan: number; // how many days share this week number
-  sprintNumber: number; // sprint N = ISO weeks 2N-1 and 2N
+  sprintNumber: number;
   isFirstOfSprint: boolean;
   sprintDateRange: string; // e.g. "Mar 9 – Mar 22" (only when isFirstOfSprint)
-  /** Fixed team ceremony computed from sprint structure — never stored in Firestore */
-  sprintEvent?: 'planning' | 'refinement' | 'sprint-review';
+}
+
+interface RowSegment {
+  days: CalendarDay[];
+  type: 'vacation' | 'weekend' | 'holiday' | 'workday';
+  event?: CalendarEvent;
+  colspan: number;
+  isToday: boolean;
 }
 
 interface MemberRow {
   user: AppUser;
-  cells: Map<string, CalendarEvent | null>; // date -> event
+  segments: RowSegment[];
 }
 
 @Component({
@@ -303,7 +309,6 @@ export class CalendarGridComponent implements OnInit {
           const dateStr = format(d, 'yyyy-MM-dd');
           const week = getISOWeek(d);
           const sprint = Math.ceil(week / cfg.sprintLengthWeeks);
-          const weekWithinSprint = week - (sprint - 1) * cfg.sprintLengthWeeks;
           const isFirstW = !seenWeeks.has(week);
           const isFirstS = !seenSprints.has(sprint);
           if (isFirstW) seenWeeks.add(week);
@@ -314,26 +319,6 @@ export class CalendarGridComponent implements OnInit {
             const end = sprintLastDate.get(sprint)!;
             sprintDateRange = `${format(start, 'MMM d')} – ${format(end, 'MMM d')}`;
           }
-          // Compute sprint ceremonies from team config
-          const dow = d.getDay();
-          let sprintEvent:
-            | 'planning'
-            | 'refinement'
-            | 'sprint-review'
-            | undefined;
-          if (dow === cfg.planningDow && weekWithinSprint === cfg.planningWeek)
-            sprintEvent = 'planning';
-          else if (
-            dow === cfg.refinementDow &&
-            weekWithinSprint === cfg.refinementWeek
-          )
-            sprintEvent = 'refinement';
-          else if (
-            dow === cfg.sprintReviewDow &&
-            weekWithinSprint === cfg.sprintReviewWeek
-          )
-            sprintEvent = 'sprint-review';
-
           calDays.push({
             date: dateStr,
             display: format(d, 'EEE, MMM d'),
@@ -346,19 +331,18 @@ export class CalendarGridComponent implements OnInit {
             sprintNumber: sprint,
             isFirstOfSprint: isFirstS,
             sprintDateRange,
-            sprintEvent,
           });
         });
         this.days.set(calDays);
 
-        // Build member rows with event cells
+        // Build member rows with spanning segments
         const rows: MemberRow[] = members.map((user) => {
-          const cells = new Map<string, CalendarEvent | null>();
-          calDays.forEach((d) => cells.set(d.date, null));
+          const eventMap = new Map<string, CalendarEvent | null>();
+          calDays.forEach((d) => eventMap.set(d.date, null));
           events
             .filter((e) => e.userId === user.uid)
-            .forEach((e) => cells.set(e.date, e));
-          return { user, cells };
+            .forEach((e) => eventMap.set(e.date, e));
+          return { user, segments: this.buildSegments(calDays, eventMap) };
         });
         this.memberRows.set(rows);
         this.loading.set(false);
@@ -383,52 +367,65 @@ export class CalendarGridComponent implements OnInit {
     wrap.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
   }
 
-  getEvent(row: MemberRow, date: string): CalendarEvent | null {
-    return row.cells.get(date) ?? null;
-  }
-
-  getCellClass(row: MemberRow, day: CalendarDay): string {
-    if (day.isWeekend) return 'cell-weekend';
-    if (day.isHoliday) return 'cell-holiday';
-    const evt = this.getEvent(row, day.date);
-    // Vacation takes priority over ceremony
-    if (evt?.type === 'vacation') return 'cell-vacation';
-    // Fixed sprint ceremonies apply team-wide
-    if (day.sprintEvent) return `cell-${day.sprintEvent}`;
-    if (!evt) return 'cell-workday';
-    switch (evt.type) {
-      case 'refinement':
-        return 'cell-refinement';
-      case 'planning':
-        return 'cell-planning';
-      case 'sprint-review':
-        return 'cell-sprint-review';
-      default:
-        return 'cell-workday';
+  private buildSegments(
+    allDays: CalendarDay[],
+    eventMap: Map<string, CalendarEvent | null>,
+  ): RowSegment[] {
+    const segments: RowSegment[] = [];
+    let i = 0;
+    while (i < allDays.length) {
+      const day = allDays[i];
+      const event = eventMap.get(day.date) ?? null;
+      const eventType = event?.type as string | undefined;
+      if (eventType === 'vacation' || eventType === 'day-off') {
+        // Merge all directly adjacent vacation events into one bar
+        let mergeEnd = event!.endDate ?? event!.date;
+        let j = i;
+        while (true) {
+          // Advance j past the current merged end date
+          while (j < allDays.length && allDays[j].date <= mergeEnd) {
+            j++;
+          }
+          // If the very next calendar day also starts a vacation, extend
+          if (j < allDays.length) {
+            const nextEvent = eventMap.get(allDays[j].date);
+            const nextType = nextEvent?.type as string | undefined;
+            if (nextType === 'vacation' || nextType === 'day-off') {
+              const nextEnd = nextEvent!.endDate ?? nextEvent!.date;
+              if (nextEnd > mergeEnd) mergeEnd = nextEnd;
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+        const spanDays = allDays.slice(i, j);
+        segments.push({
+          days: spanDays,
+          type: 'vacation',
+          event: event ?? undefined,
+          colspan: spanDays.length,
+          isToday: spanDays.some((d) => d.date === this.todayStr),
+        });
+        i = j;
+      } else {
+        const type: RowSegment['type'] = day.isHoliday
+          ? 'holiday'
+          : day.isWeekend
+            ? 'weekend'
+            : 'workday';
+        segments.push({
+          days: [day],
+          type,
+          event: event ?? undefined,
+          colspan: 1,
+          isToday: day.date === this.todayStr,
+        });
+        i++;
+      }
     }
-  }
-
-  getCellLabel(row: MemberRow, day: CalendarDay): string {
-    if (day.isWeekend) return 'weekend';
-    if (day.isHoliday) return day.holidayName ?? 'Holiday';
-    const evt = this.getEvent(row, day.date);
-    // Vacation overrides ceremony label
-    if (evt?.type === 'vacation') return 'Vacation';
-    // Fixed sprint ceremonies
-    if (day.sprintEvent === 'planning') return 'Planning';
-    if (day.sprintEvent === 'refinement') return 'Refinement';
-    if (day.sprintEvent === 'sprint-review') return 'Sprint Review';
-    if (!evt) return '';
-    switch (evt.type) {
-      case 'refinement':
-        return 'Refinement';
-      case 'planning':
-        return 'Planning';
-      case 'sprint-review':
-        return 'Sprint Review';
-      default:
-        return '';
-    }
+    return segments;
   }
 
   openHolidayInfo(day: CalendarDay): void {
@@ -445,13 +442,12 @@ export class CalendarGridComponent implements OnInit {
     });
   }
 
-  openAddEventDialog(defaultDate?: string, defaultMemberUid?: string): void {
+  openAddEventDialog(defaultDate?: string): void {
     const ref = this.dialog.open(AddEventDialogComponent, {
       data: {
         members: this.members(),
         teamId: this.currentUser?.teamId ?? '',
         defaultDate,
-        defaultMemberUid,
       } as AddEventDialogData,
       panelClass: 'add-event-dialog-overlay',
       width: '580px',
@@ -463,41 +459,22 @@ export class CalendarGridComponent implements OnInit {
     });
   }
 
-  getCellEventType(row: MemberRow, day: CalendarDay): string {
-    if (day.isWeekend || day.isHoliday) return '';
-    const evt = this.getEvent(row, day.date);
-    if (evt?.type === 'vacation') return 'vacation';
-    if (evt?.type === 'day-off') return 'day-off';
-    if (evt?.type === 'standup' || evt?.type === 'activity') return 'standup';
-    if (day.sprintEvent) return day.sprintEvent;
-    return evt?.type ?? '';
-  }
-
-  openCellEvent(row: MemberRow, day: CalendarDay): void {
-    const evt = this.getEvent(row, day.date);
-    const type = this.getCellEventType(row, day);
+  openSegmentEvent(seg: RowSegment, row: MemberRow): void {
+    if (!seg.event) return;
+    const type = 'vacation';
+    const day = seg.days[0];
     const sprintGroup = this.sprintGroups().find(
       (g) => g.sprintNumber === day.sprintNumber,
     );
     const timeDisplay =
-      evt?.startTime && evt?.endTime
-        ? `${evt.startTime} – ${evt.endTime}`
+      seg.event.startTime && seg.event.endTime
+        ? `${seg.event.startTime} – ${seg.event.endTime}`
         : 'All day';
     const titleMap: Record<string, string> = {
-      standup: 'Standup',
-      activity: 'Standup',
-      refinement: 'Refinement',
-      planning: 'Planning',
-      'sprint-review': 'Sprint Review',
       vacation: 'Vacation',
       'day-off': 'Day Off',
     };
     const badgeMap: Record<string, string> = {
-      standup: 'STAN',
-      activity: 'STAN',
-      refinement: 'REF',
-      planning: 'PLAN',
-      'sprint-review': 'REV',
       vacation: 'VAC',
       'day-off': 'OFF',
     };
@@ -512,7 +489,7 @@ export class CalendarGridComponent implements OnInit {
           user: row.user,
           sprintNumber: day.sprintNumber,
           sprintIsDone: sprintGroup?.isDone ?? false,
-          event: evt,
+          event: seg.event,
           teamId: this.currentUser?.teamId ?? '',
         } as EventInfoDialogData,
         panelClass: 'event-info-dialog-overlay',
@@ -541,24 +518,15 @@ export class CalendarGridComponent implements OnInit {
     return `linear-gradient(135deg, ${c1}, ${c2})`;
   }
 
-  getShortLabel(row: MemberRow, day: CalendarDay): string {
-    if (day.isWeekend || day.isHoliday) return '';
-    const evt = this.getEvent(row, day.date);
-    if (evt?.type === 'vacation') return 'Vac';
-    if (evt?.type === 'day-off') return 'Off';
-    if (evt?.type === 'standup' || evt?.type === 'activity') return 'Stan';
-    if (day.sprintEvent === 'planning') return 'Plan';
-    if (day.sprintEvent === 'refinement') return 'Ref';
-    if (day.sprintEvent === 'sprint-review') return 'Rev';
-    if (!evt) return '';
-    const map: Record<string, string> = {
-      refinement: 'Ref',
-      planning: 'Plan',
-      'sprint-review': 'Rev',
-      standup: 'Stan',
-      activity: 'Stan',
-    };
-    return map[evt.type] ?? '';
+  trackBySegment(_: number, seg: RowSegment): string {
+    return seg.days[0].date + '_' + seg.type;
+  }
+
+  getVacBarTooltip(seg: RowSegment): string {
+    if (!seg.event) return '';
+    const start = format(parseISO(seg.days[0].date), 'MMM d');
+    const end = format(parseISO(seg.days[seg.days.length - 1].date), 'MMM d');
+    return start === end ? `Vacation: ${start}` : `Vacation: ${start} – ${end}`;
   }
 
   trackByDate(_: number, day: CalendarDay): string {

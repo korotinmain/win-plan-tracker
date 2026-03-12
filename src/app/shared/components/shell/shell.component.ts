@@ -111,6 +111,7 @@ export class ShellComponent {
   }
 
   private titleFromUrl(url: string): string {
+    if (/^\/teams\/[^/]+\/settings/.test(url)) return 'Team Settings';
     const match = this.allNavItems.find((i) => url.startsWith(i.route));
     return match?.label ?? 'Dashboard';
   }

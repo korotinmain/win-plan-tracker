@@ -1,0 +1,283 @@
+<div class="ts-page">
+  <!-- ══ Hero ══ -->
+  <div class="ts-hero">
+    <div class="ts-hero-inner">
+      <button
+        class="ts-back-btn"
+        (click)="goBack()"
+        type="button"
+        matTooltip="Back to Team"
+      >
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
+      <div class="ts-hero-icon" *ngIf="!loading()">
+        <mat-icon>{{ team()?.icon || "settings" }}</mat-icon>
+      </div>
+
+      <div class="ts-hero-text">
+        <h1 class="ts-hero-title">{{ team()?.name ?? "Team Settings" }}</h1>
+        <p class="ts-hero-sub">
+          Manage members, roles &amp; team configuration
+        </p>
+      </div>
+
+      <div class="ts-hero-pills" *ngIf="!loading() && team()">
+        <div class="ts-hero-pill">
+          <mat-icon>people</mat-icon>
+          <span
+            >{{ members().length }} member{{
+              members().length !== 1 ? "s" : ""
+            }}</span
+          >
+        </div>
+        <div
+          class="ts-hero-pill ts-hero-pill--accent"
+          *ngIf="team()!.holidayCountryCode"
+        >
+          <mat-icon>public</mat-icon>
+          <span>{{ team()!.holidayCountryCode }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div *ngIf="loading()" class="ts-loading">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Loading team settings…</span>
+  </div>
+
+  <!-- ── No team ──────────────────────────────── -->
+  <div *ngIf="!loading() && !team()" class="ts-no-team">
+    <mat-icon>group_off</mat-icon>
+    <p>You are not currently part of any team.</p>
+    <button class="ts-btn-primary" (click)="goBack()" type="button">
+      Go to Teams
+    </button>
+  </div>
+
+  <!-- ══ Main Grid ══ -->
+  <div *ngIf="!loading() && team()" class="ts-grid">
+    <!-- ── Left column: People management ── -->
+    <div class="ts-col">
+      <!-- Current Members -->
+      <div class="ts-card">
+        <div class="ts-card-hd">
+          <span class="ts-card-hd-icon"><mat-icon>people</mat-icon></span>
+          <span class="ts-card-hd-title">Current Members</span>
+          <span class="ts-count-badge">{{ members().length }}</span>
+        </div>
+        <div class="ts-card-body">
+          <div *ngIf="members().length === 0" class="ts-empty">
+            <mat-icon>person_off</mat-icon>
+            <span>No members yet. Add people below.</span>
+          </div>
+          <ul class="ts-list" *ngIf="members().length > 0">
+            <li class="ts-row" *ngFor="let m of members()">
+              <div class="ts-avatar">{{ initials(m.displayName) }}</div>
+              <div class="ts-user-info">
+                <span class="ts-name">{{ m.displayName }}</span>
+                <span class="ts-email">{{ m.email }}</span>
+              </div>
+              <span class="ts-role-pill" [attr.data-role]="m.role">{{
+                m.role
+              }}</span>
+              <button
+                class="ts-icon-btn ts-icon-btn--danger"
+                (click)="remove(m)"
+                [disabled]="!!saving()"
+                matTooltip="Remove from team"
+                type="button"
+              >
+                <mat-spinner
+                  *ngIf="saving() === m.uid"
+                  diameter="16"
+                ></mat-spinner>
+                <mat-icon *ngIf="saving() !== m.uid">person_remove</mat-icon>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Add People -->
+      <div class="ts-card">
+        <div class="ts-card-hd">
+          <span class="ts-card-hd-icon"><mat-icon>person_add</mat-icon></span>
+          <span class="ts-card-hd-title">Add People</span>
+        </div>
+        <div class="ts-card-body">
+          <div class="ts-search">
+            <mat-icon class="ts-search-ico">search</mat-icon>
+            <input
+              class="ts-search-inp"
+              type="text"
+              placeholder="Search by name or email…"
+              [ngModel]="search()"
+              (ngModelChange)="search.set($event)"
+            />
+          </div>
+          <div *ngIf="filteredUsers().length === 0" class="ts-empty">
+            <mat-icon>search_off</mat-icon>
+            <span>{{
+              search()
+                ? "No matching users found"
+                : "All company users are already in this team"
+            }}</span>
+          </div>
+          <ul
+            class="ts-list ts-list--scroll"
+            *ngIf="filteredUsers().length > 0"
+          >
+            <li class="ts-row" *ngFor="let u of filteredUsers()">
+              <div class="ts-avatar ts-avatar--dim">
+                {{ initials(u.displayName) }}
+              </div>
+              <div class="ts-user-info">
+                <span class="ts-name">{{ u.displayName }}</span>
+                <span class="ts-email">{{ u.email }}</span>
+              </div>
+              <span class="ts-role-pill" [attr.data-role]="u.role">{{
+                u.role
+              }}</span>
+              <button
+                class="ts-add-btn"
+                (click)="add(u)"
+                [disabled]="!!saving()"
+                type="button"
+              >
+                <mat-spinner
+                  *ngIf="saving() === u.uid"
+                  diameter="14"
+                ></mat-spinner>
+                <mat-icon *ngIf="saving() !== u.uid">add</mat-icon>
+                <span *ngIf="saving() !== u.uid">Add</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- /ts-col -->
+
+    <!-- ── Right column: Configuration ── -->
+    <div class="ts-col ts-col--side">
+      <!-- Public Holidays -->
+      <div class="ts-card">
+        <div class="ts-card-hd">
+          <span class="ts-card-hd-icon"><mat-icon>event_busy</mat-icon></span>
+          <span class="ts-card-hd-title">Public Holidays</span>
+        </div>
+        <div class="ts-card-body">
+          <p class="ts-desc">
+            Team calendar will show official public holidays for the selected
+            country. Holidays falling on weekends are observed on the following
+            Monday.
+          </p>
+
+          <!-- Country dropdown -->
+          <div
+            class="ts-country-row"
+            *ngIf="!countriesError() && countries().length > 0"
+          >
+            <select
+              class="ts-select"
+              [ngModel]="selectedCountry()"
+              (ngModelChange)="selectedCountry.set($event)"
+              [disabled]="countrySaving()"
+            >
+              <option value="">— None —</option>
+              <option *ngFor="let c of countries()" [value]="c.countryCode">
+                {{ c.name }} ({{ c.countryCode }})
+              </option>
+            </select>
+            <button
+              type="button"
+              class="ts-save-btn"
+              (click)="saveCountry()"
+              [disabled]="countrySaving()"
+            >
+              <mat-spinner *ngIf="countrySaving()" diameter="14"></mat-spinner>
+              <mat-icon *ngIf="!countrySaving() && !countrySaved()"
+                >save</mat-icon
+              >
+              <mat-icon *ngIf="!countrySaving() && countrySaved()"
+                >check</mat-icon
+              >
+              {{
+                countrySaving() ? "Saving…" : countrySaved() ? "Saved!" : "Save"
+              }}
+            </button>
+          </div>
+
+          <!-- Loading countries -->
+          <div
+            class="ts-inline-loading"
+            *ngIf="!countriesError() && countries().length === 0"
+          >
+            <mat-spinner diameter="16"></mat-spinner>
+            <span>Loading countries…</span>
+          </div>
+
+          <!-- Fallback manual input -->
+          <div *ngIf="countriesError()">
+            <p class="ts-warning">
+              <mat-icon>warning_amber</mat-icon>
+              Could not load country list. Enter a code manually (e.g.
+              <strong>UA</strong>, <strong>DE</strong>, <strong>US</strong>).
+            </p>
+            <div class="ts-country-row">
+              <input
+                class="ts-code-input"
+                type="text"
+                placeholder="e.g. UA"
+                maxlength="2"
+                [ngModel]="selectedCountry()"
+                (ngModelChange)="selectedCountry.set($event)"
+                [disabled]="countrySaving()"
+              />
+              <button
+                type="button"
+                class="ts-save-btn"
+                (click)="saveCountry()"
+                [disabled]="countrySaving()"
+              >
+                <mat-spinner
+                  *ngIf="countrySaving()"
+                  diameter="14"
+                ></mat-spinner>
+                <mat-icon *ngIf="!countrySaving() && !countrySaved()"
+                  >save</mat-icon
+                >
+                <mat-icon *ngIf="!countrySaving() && countrySaved()"
+                  >check</mat-icon
+                >
+                {{
+                  countrySaving()
+                    ? "Saving…"
+                    : countrySaved()
+                      ? "Saved!"
+                      : "Save"
+                }}
+              </button>
+            </div>
+          </div>
+
+          <p class="ts-save-error" *ngIf="countrySaveError()">
+            <mat-icon>error_outline</mat-icon> {{ countrySaveError() }}
+          </p>
+
+          <div *ngIf="team()!.holidayCountryCode" class="ts-current-country">
+            <mat-icon>check_circle</mat-icon>
+            Currently set to <strong>{{ team()!.holidayCountryCode }}</strong>
+          </div>
+        </div>
+        <!-- /ts-card-body -->
+      </div>
+      <!-- /ts-card Public Holidays -->
+    </div>
+    <!-- /ts-col--side -->
+  </div>
+  <!-- /ts-grid -->
+</div>

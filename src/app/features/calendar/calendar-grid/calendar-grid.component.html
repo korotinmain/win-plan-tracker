@@ -38,8 +38,8 @@
         <mat-icon class="expand-icon">expand_more</mat-icon>
       </button>
       <button class="cal-add-btn" (click)="openAddEventDialog()">
-        <mat-icon>add</mat-icon>
-        <span>Add Event</span>
+        <mat-icon>beach_access</mat-icon>
+        <span>Add Vacation</span>
       </button>
     </div>
   </div>
@@ -47,18 +47,6 @@
   <!-- ── Legend bar ─────────────────────────────────────────── -->
   <div class="cal-legend">
     <span class="legend-label">LEGEND</span>
-    <div class="legend-entry">
-      <span class="legend-dot ld-refinement"></span
-      ><span class="legend-txt">Refinement</span>
-    </div>
-    <div class="legend-entry">
-      <span class="legend-dot ld-planning"></span
-      ><span class="legend-txt">Planning</span>
-    </div>
-    <div class="legend-entry">
-      <span class="legend-dot ld-sprint-review"></span
-      ><span class="legend-txt">Sprint Review</span>
-    </div>
     <div class="legend-entry">
       <span class="legend-dot ld-vacation"></span
       ><span class="legend-txt">Vacation</span>
@@ -196,40 +184,53 @@
             </div>
           </td>
 
-          <!-- Day cells -->
-          <td
-            *ngFor="let day of days(); trackBy: trackByDate"
-            class="td-cell"
-            [class.is-weekend]="day.isWeekend"
-            [class.is-holiday]="day.isHoliday"
-            [class.is-today-col]="day.date === todayStr"
+          <!-- Segments: vacation spans or individual day cells -->
+          <ng-container
+            *ngFor="let seg of row.segments; trackBy: trackBySegment"
           >
-            <button
-              class="cell-chip chip-{{ getCellEventType(row, day) }}"
-              *ngIf="getShortLabel(row, day)"
-              (click)="openCellEvent(row, day)"
-              type="button"
+            <!-- Vacation bar spanning N columns -->
+            <td
+              *ngIf="seg.type === 'vacation'"
+              [attr.colspan]="seg.colspan > 1 ? seg.colspan : null"
+              class="td-vac-span"
+              [class.is-today-span]="seg.isToday"
             >
-              + {{ getShortLabel(row, day) }}
-            </button>
-            <!-- Holiday icon in empty holiday cell -->
-            <button
-              class="cell-icon-btn cell-icon-holiday-btn"
-              *ngIf="!getShortLabel(row, day) && day.isHoliday"
-              (click)="openHolidayInfo(day)"
-              [matTooltip]="day.holidayName || 'Public Holiday'"
+              <div
+                class="vac-bar"
+                [class.vac-bar-single]="seg.colspan === 1"
+                (click)="openSegmentEvent(seg, row)"
+                [matTooltip]="getVacBarTooltip(seg)"
+              >
+                <mat-icon class="vac-bar-icon">beach_access</mat-icon>
+                <span class="vac-bar-label" *ngIf="seg.colspan >= 2"
+                  >Vacation</span
+                >
+              </div>
+            </td>
+
+            <!-- Normal cell: holiday / weekend / workday -->
+            <td
+              *ngIf="seg.type !== 'vacation'"
+              class="td-cell"
+              [class.is-weekend]="seg.days[0].isWeekend"
+              [class.is-holiday]="seg.days[0].isHoliday"
+              [class.is-today-col]="seg.isToday"
             >
-              <mat-icon>celebration</mat-icon>
-            </button>
-            <!-- Weekend indicator in empty weekend cell -->
-            <mat-icon
-              class="cell-icon-weekend"
-              *ngIf="
-                !getShortLabel(row, day) && day.isWeekend && !day.isHoliday
-              "
-              >bedtime</mat-icon
-            >
-          </td>
+              <!-- Holiday icon -->
+              <button
+                class="cell-icon-btn cell-icon-holiday-btn"
+                *ngIf="seg.type === 'holiday'"
+                (click)="openHolidayInfo(seg.days[0])"
+                [matTooltip]="seg.days[0].holidayName || 'Public Holiday'"
+              >
+                <mat-icon>celebration</mat-icon>
+              </button>
+              <!-- Weekend indicator -->
+              <mat-icon class="cell-icon-weekend" *ngIf="seg.type === 'weekend'"
+                >bedtime</mat-icon
+              >
+            </td>
+          </ng-container>
         </tr>
       </tbody>
     </table>

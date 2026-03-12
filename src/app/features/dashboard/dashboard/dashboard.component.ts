@@ -115,21 +115,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .length;
   }
 
-  get onRefinement(): number {
-    return this.todaySummary().filter((s) => s.event?.type === 'refinement')
-      .length;
-  }
-
-  get onPlanning(): number {
-    return this.todaySummary().filter((s) => s.event?.type === 'planning')
-      .length;
-  }
-
-  get onSprintReview(): number {
-    return this.todaySummary().filter((s) => s.event?.type === 'sprint-review')
-      .length;
-  }
-
   // ── ECharts options ──────────────────────────────────────────
   readonly sprintGaugeOpts = computed((): EChartsOption => {
     const dark = this.isDark();
@@ -223,8 +208,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           let html = `<b>${d.label}, ${d.dayNum}</b><br/>`;
           if (d.working > 0)
             html += `<span style="color:#10b981">●</span> Available: ${d.working}<br/>`;
-          if (d.onCeremony > 0)
-            html += `<span style="color:#a78bfa">●</span> Partial: ${d.onCeremony}<br/>`;
           if (d.onVacation > 0)
             html += `<span style="color:#7c3aed">●</span> Vacation: ${d.onVacation}<br/>`;
           return html;
@@ -272,17 +255,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           })),
         },
         {
-          name: 'Partial',
-          type: 'bar',
-          stack: 'total',
-          barMaxWidth: 40,
-          itemStyle: { color: '#a78bfa' },
-          data: days.map((d) => ({
-            value: d.onCeremony,
-            itemStyle: d.weekend ? { color: 'transparent' } : {},
-          })),
-        },
-        {
           name: 'Vacation',
           type: 'bar',
           stack: 'total',
@@ -324,13 +296,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const dateStr = format(d, 'yyyy-MM-dd');
       const dayEvts = events.filter((e) => e.date === dateStr);
       const unavail = members.filter((m) =>
-        dayEvts.some(
-          (e) =>
-            e.userId === m.uid &&
-            ['vacation', 'refinement', 'planning', 'sprint-review'].includes(
-              e.type,
-            ),
-        ),
+        dayEvts.some((e) => e.userId === m.uid && e.type === 'vacation'),
       ).length;
       if (!weeks.has(wk))
         weeks.set(wk, { label: `W${wk}`, available: 0, days: 0 });
@@ -370,19 +336,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const vac = members.filter((m) =>
         dayEvts.some((e) => e.userId === m.uid && e.type === 'vacation'),
       ).length;
-      const ceremony = members.filter((m) =>
-        dayEvts.some(
-          (e) =>
-            e.userId === m.uid &&
-            ['planning', 'refinement', 'sprint-review'].includes(e.type),
-        ),
-      ).length;
-      const working = Math.max(0, total - vac - ceremony);
+      const working = Math.max(0, total - vac);
       return {
         dateStr,
         label: format(d, 'EEE d'),
         working,
-        ceremony,
         vacation: vac,
       };
     });
@@ -532,8 +490,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           let html = `<b>${d.label}</b><br/>`;
           if (d.working > 0)
             html += `<span style="color:#10b981">●</span> Working: ${d.working}<br/>`;
-          if (d.ceremony > 0)
-            html += `<span style="color:#6366f1">●</span> Ceremony: ${d.ceremony}<br/>`;
           if (d.vacation > 0)
             html += `<span style="color:#7c3aed">●</span> Vacation: ${d.vacation}<br/>`;
           return html;
@@ -564,14 +520,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           data: cap.days.map((d) => d.working),
         },
         {
-          name: 'Ceremony',
-          type: 'bar',
-          stack: 'cap',
-          barMaxWidth: 44,
-          itemStyle: { color: '#6366f1' },
-          data: cap.days.map((d) => d.ceremony),
-        },
-        {
           name: 'Vacation',
           type: 'bar',
           stack: 'cap',
@@ -591,7 +539,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const today = format(new Date(), 'yyyy-MM-dd');
     const summary = this.todaySummary();
     const members = this.allMembers();
-    const events = this.allMonthEvents();
 
     let activeMembers: { user: AppUser; event: CalendarEvent | null }[];
     if (type === 'working') {
@@ -602,9 +549,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const typeMap: Record<KpiType, string> = {
         working: '',
         vacation: 'vacation',
-        refinement: 'refinement',
-        planning: 'planning',
-        'sprint-review': 'sprint-review',
       };
       activeMembers = summary
         .filter((s) => s.event?.type === typeMap[type])
@@ -618,9 +562,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         summary: {
           working: this.working,
           onVacation: this.onVacation,
-          onRefinement: this.onRefinement,
-          onPlanning: this.onPlanning,
-          onSprintReview: this.onSprintReview,
           total: members.length,
         },
         asOf: new Date(),
@@ -638,24 +579,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const todayStr = format(today, 'yyyy-MM-dd');
 
     const ACCENT_COLORS: Record<string, string> = {
-      refinement: '#8b5cf6',
-      planning: '#06b6d4',
-      'sprint-review': '#f97316',
-      activity: '#f59e0b',
       vacation: '#6366f1',
     };
     const TYPE_LABELS: Record<string, string> = {
-      refinement: 'Refinement',
-      planning: 'Planning',
-      'sprint-review': 'Sprint Review',
-      activity: 'Activity',
       vacation: 'Vacation',
     };
     const TYPE_CATEGORY: Record<string, string> = {
-      refinement: 'Sprint',
-      planning: 'Sprint',
-      'sprint-review': 'Review',
-      activity: 'Activity',
       vacation: 'Vacation',
     };
     const AVATAR_PALETTE = [
@@ -670,7 +599,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const map = new Map<string, UpcomingEventRow>();
     rawEvents
-      .filter((e) => e.date >= todayStr && e.type !== 'holiday')
+      .filter((e) => e.date >= todayStr && e.type === 'vacation')
       .sort((a, b) => a.date.localeCompare(b.date))
       .forEach((e) => {
         const key = `${e.date}__${e.type}`;
@@ -761,17 +690,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ? Math.min(100, Math.round((elapsedDays.length / workDays.length) * 100))
       : 0;
     const remaining = workDays.length - elapsedDays.length;
-    const ceremonies = [
-      { label: 'Planning', d: sprintStart },
-      { label: 'Refinement', d: addDays(sprintStart, 7) },
-      { label: 'Sprint Review', d: addDays(sprintStart, 11) },
-    ]
-      .map((c) => ({
-        label: c.label,
-        date: format(c.d, 'MMM d'),
-        daysAway: differenceInCalendarDays(c.d, today),
-      }))
-      .filter((c) => c.daysAway >= 0);
     return {
       sprintNumber,
       percent,
@@ -780,7 +698,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       remaining,
       startDate: format(sprintStart, 'MMM d'),
       endDate: format(sprintEnd, 'MMM d'),
-      nextCeremony: ceremonies[0] ?? null,
     };
   }
 
@@ -805,17 +722,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             dayEvts.some((e) => e.userId === m.uid && e.type === 'vacation'),
           ).length
         : 0;
-      const ceremony = !weekend
-        ? members.filter((m) =>
-            dayEvts.some(
-              (e) =>
-                e.userId === m.uid &&
-                ['planning', 'refinement', 'sprint-review'].includes(e.type),
-            ),
-          ).length
-        : 0;
-      const working =
-        !weekend && total > 0 ? Math.max(0, total - vac - ceremony) : 0;
+      const working = !weekend && total > 0 ? Math.max(0, total - vac) : 0;
       const availPct =
         !weekend && total > 0 ? Math.round((working / total) * 100) : 0;
       return {
@@ -827,7 +734,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         total,
         working,
         onVacation: vac,
-        onCeremony: ceremony,
         availPct,
       };
     });
@@ -840,36 +746,87 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (e) => e.date >= todayStr && e.type !== 'holiday',
     );
     const members = this.allMembers();
-    const map = new Map<
-      string,
-      { date: string; type: string; names: string[]; count: number }
-    >();
+
+    // Group events by userId
+    const byUser = new Map<string, CalendarEvent[]>();
     events.forEach((e) => {
-      const key = `${e.date}__${e.type}`;
-      if (!map.has(key))
-        map.set(key, { date: e.date, type: e.type, names: [], count: 0 });
-      const g = map.get(key)!;
-      g.count++;
-      const m = members.find((x) => x.uid === e.userId);
-      if (m) g.names.push(m.displayName.split(' ')[0]);
+      if (!byUser.has(e.userId)) byUser.set(e.userId, []);
+      byUser.get(e.userId)!.push(e);
     });
-    const typeLabels: Record<string, string> = {
-      refinement: 'Refinement',
-      planning: 'Planning',
-      'sprint-review': 'Sprint Review',
-      vacation: 'Vacation',
-    };
-    return Array.from(map.values())
-      .sort((a, b) => a.date.localeCompare(b.date))
+
+    // Find consecutive runs per user
+    interface Block {
+      userId: string;
+      type: string;
+      startDate: string;
+      endDate: string;
+      days: number;
+    }
+    const blocks: Block[] = [];
+    byUser.forEach((userEvents, userId) => {
+      const sorted = [...userEvents].sort((a, b) =>
+        a.date.localeCompare(b.date),
+      );
+      let runStart = sorted[0];
+      let runEnd = sorted[0];
+      let runDays = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = parseISO(runEnd.date);
+        const curr = parseISO(sorted[i].date);
+        const gapStart = addDays(prev, 1);
+        const gapEnd = addDays(curr, -1);
+        const workdaysBetween =
+          gapStart <= gapEnd
+            ? eachDayOfInterval({ start: gapStart, end: gapEnd }).filter(
+                (d) => !isWeekend(d),
+              ).length
+            : 0;
+        if (workdaysBetween === 0 && sorted[i].type === runStart.type) {
+          runEnd = sorted[i];
+          runDays++;
+        } else {
+          blocks.push({
+            userId,
+            type: runStart.type,
+            startDate: runStart.date,
+            endDate: runEnd.date,
+            days: runDays,
+          });
+          runStart = sorted[i];
+          runEnd = sorted[i];
+          runDays = 1;
+        }
+      }
+      blocks.push({
+        userId,
+        type: runStart.type,
+        startDate: runStart.date,
+        endDate: runEnd.date,
+        days: runDays,
+      });
+    });
+
+    const typeLabels: Record<string, string> = { vacation: 'Vacation' };
+    return blocks
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))
       .slice(0, 8)
-      .map((g) => {
-        const d = parseISO(g.date);
+      .map((block) => {
+        const d = parseISO(block.startDate);
         const daysAway = differenceInCalendarDays(d, new Date());
+        const member = members.find((m) => m.uid === block.userId);
+        const firstName = member?.displayName.split(' ')[0] ?? '';
+        const multiDay = block.startDate !== block.endDate;
+        const endFmt = multiDay
+          ? format(parseISO(block.endDate), 'd MMM')
+          : null;
         return {
-          ...g,
-          typeLabel: typeLabels[g.type] ?? g.type,
-          displayDate: format(d, 'EEE, MMM d'),
-          isToday: g.date === todayStr,
+          date: block.startDate,
+          type: block.type,
+          typeLabel: typeLabels[block.type] ?? block.type,
+          displayDate: multiDay
+            ? `${format(d, 'EEE, d MMM')} – ${endFmt}`
+            : format(d, 'EEE, d MMM'),
+          isToday: block.startDate === todayStr,
           daysAway,
           daysLabel:
             daysAway === 0
@@ -877,6 +834,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
               : daysAway === 1
                 ? 'Tomorrow'
                 : `in ${daysAway}d`,
+          names: firstName ? [firstName] : [],
+          count: block.days,
         };
       });
   });

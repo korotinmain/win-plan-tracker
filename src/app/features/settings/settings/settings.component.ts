@@ -48,21 +48,6 @@ export class SettingsComponent {
   ceremonyConfig = signal<SprintCeremonyConfig>({ ...DEFAULT_CEREMONY_CONFIG });
   savingCeremony = signal(false);
 
-  readonly dowOptions = [
-    { value: 1, label: 'Monday' },
-    { value: 2, label: 'Tuesday' },
-    { value: 3, label: 'Wednesday' },
-    { value: 4, label: 'Thursday' },
-    { value: 5, label: 'Friday' },
-  ];
-
-  get weekOptions(): { value: number; label: string }[] {
-    return Array.from(
-      { length: this.ceremonyConfig().sprintLengthWeeks },
-      (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }),
-    );
-  }
-
   initials = computed(() => {
     return (
       (this.currentUser()?.displayName ?? '')
@@ -155,19 +140,12 @@ export class SettingsComponent {
     }
   }
 
-  patchCeremony(patch: Partial<SprintCeremonyConfig>): void {
-    this.ceremonyConfig.set({ ...this.ceremonyConfig(), ...patch });
-  }
+  patchCeremony(_patch: Partial<SprintCeremonyConfig>): void {}
 
   updateSprintLength(weeks: number): void {
-    const cfg = this.ceremonyConfig();
-    const clamp = (v: number) => Math.min(v, weeks);
     this.ceremonyConfig.set({
-      ...cfg,
+      ...this.ceremonyConfig(),
       sprintLengthWeeks: weeks,
-      planningWeek: clamp(cfg.planningWeek),
-      refinementWeek: clamp(cfg.refinementWeek),
-      sprintReviewWeek: clamp(cfg.sprintReviewWeek),
     });
   }
 

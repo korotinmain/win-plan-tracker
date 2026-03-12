@@ -52,6 +52,15 @@ export class EventInfoDialogComponent {
     }
   }
 
+  get vacationRangeLabel(): string | null {
+    const evt = this.data.event;
+    if (this.data.eventType !== 'vacation' || !evt) return null;
+    const start = format(parseISO(evt.date), 'MMM d, yyyy');
+    if (!evt.endDate || evt.endDate === evt.date) return start;
+    const end = format(parseISO(evt.endDate), 'MMM d, yyyy');
+    return `${start} – ${end}`;
+  }
+
   private readonly avatarPalette = [
     ['#6366f1', '#8b5cf6'],
     ['#0ea5e9', '#6366f1'],

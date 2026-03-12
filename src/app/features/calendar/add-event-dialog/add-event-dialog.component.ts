@@ -1,33 +1,41 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import {
   MatDialogRef,
   MAT_DIALOG_DATA,
   MatDialogModule,
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatRippleModule } from '@angular/material/core';
+import {
+  MatDatepickerModule,
+  DateRange,
+  DefaultMatCalendarRangeStrategy,
+  MAT_DATE_RANGE_SELECTION_STRATEGY,
+  MatCalendarCellClassFunction,
+} from '@angular/material/datepicker';
+import {
+  NativeDateAdapter,
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_NATIVE_DATE_FORMATS,
+} from '@angular/material/core';
 import { format, parseISO, eachDayOfInterval, isWeekend } from 'date-fns';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { EventType } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
+
+class MondayFirstDateAdapter extends NativeDateAdapter {
+  override getFirstDayOfWeek(): number {
+    return 1;
+  }
+}
 
 export interface AddEventDialogData {
   members: AppUser[];
   teamId: string;
   defaultDate?: string;
-  defaultMemberUid?: string;
-}
-
-interface EventTypeOption {
-  type: EventType;
-  label: string;
-  shortLabel: string;
-  color: string;
-  bg: string;
 }
 
 @Component({
@@ -36,205 +44,138 @@ interface EventTypeOption {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    MatRippleModule,
+    MatDatepickerModule,
+  ],
+  providers: [
+    { provide: DateAdapter, useClass: MondayFirstDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: MAT_NATIVE_DATE_FORMATS },
+    DefaultMatCalendarRangeStrategy,
+    {
+      provide: MAT_DATE_RANGE_SELECTION_STRATEGY,
+      useExisting: DefaultMatCalendarRangeStrategy,
+    },
   ],
   templateUrl: './add-event-dialog.component.html',
   styleUrls: ['./add-event-dialog.component.scss'],
 })
-export class AddEventDialogComponent implements OnInit {
+export class AddEventDialogComponent {
   private dialogRef = inject(MatDialogRef<AddEventDialogComponent>);
   private data: AddEventDialogData = inject(MAT_DIALOG_DATA);
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
   private notifService = inject(NotificationService);
+  private rangeStrategy = inject<DefaultMatCalendarRangeStrategy<Date>>(
+    DefaultMatCalendarRangeStrategy,
+  );
 
   members = this.data.members;
   teamId = this.data.teamId;
 
-  selectedType = signal<EventType>('refinement');
-  selectedMemberUids = signal<Set<string>>(new Set());
-  startDate = signal(this.data.defaultDate ?? format(new Date(), 'yyyy-MM-dd'));
-  endDate = signal(this.data.defaultDate ?? format(new Date(), 'yyyy-MM-dd'));
+  private readonly _defaultDate = this.data.defaultDate
+    ? parseISO(this.data.defaultDate)
+    : new Date();
+
+  selectedRange: DateRange<Date> = new DateRange<Date>(
+    this._defaultDate,
+    this._defaultDate,
+  );
+
   note = signal('');
   saving = signal(false);
 
-  readonly eventTypes: EventTypeOption[] = [
-    {
-      type: 'standup',
-      label: 'Standup',
-      shortLabel: 'Stan',
-      color: '#2dd4bf',
-      bg: 'rgba(20,184,166,0.18)',
-    },
-    {
-      type: 'refinement',
-      label: 'Refinement',
-      shortLabel: 'Ref',
-      color: '#a5b4fc',
-      bg: 'rgba(99,102,241,0.18)',
-    },
-    {
-      type: 'planning',
-      label: 'Planning',
-      shortLabel: 'Plan',
-      color: '#6ee7b7',
-      bg: 'rgba(16,185,129,0.18)',
-    },
-    {
-      type: 'sprint-review',
-      label: 'Sprint Review',
-      shortLabel: 'SR',
-      color: '#fdba74',
-      bg: 'rgba(249,115,22,0.18)',
-    },
-    {
-      type: 'vacation',
-      label: 'Vacation',
-      shortLabel: 'Vac',
-      color: '#facc15',
-      bg: 'rgba(234,179,8,0.18)',
-    },
-    {
-      type: 'day-off',
-      label: 'Day Off',
-      shortLabel: 'Off',
-      color: '#94a3b8',
-      bg: 'rgba(100,116,139,0.18)',
-    },
-  ];
-
-  get selectedTypeOption(): EventTypeOption {
-    return this.eventTypes.find((e) => e.type === this.selectedType())!;
+  get isSelectingEnd(): boolean {
+    return !!this.selectedRange.start && !this.selectedRange.end;
   }
 
   get dateRangeValid(): boolean {
-    return this.startDate() <= this.endDate();
+    return !!(this.selectedRange.start && this.selectedRange.end);
   }
 
   get totalDays(): number {
-    if (!this.dateRangeValid) return 0;
+    const { start, end } = this.selectedRange;
+    if (!start || !end) return 0;
     try {
-      const days = eachDayOfInterval({
-        start: parseISO(this.startDate()),
-        end: parseISO(this.endDate()),
-      }).filter((d) => !isWeekend(d));
-      return days.length;
+      return eachDayOfInterval({ start, end }).filter((d) => !isWeekend(d))
+        .length;
     } catch {
       return 0;
     }
   }
 
-  ngOnInit(): void {
-    if (this.data.defaultMemberUid) {
-      this.selectedMemberUids.set(new Set([this.data.defaultMemberUid]));
-    } else {
-      this.selectedMemberUids.set(new Set(this.members.map((m) => m.uid)));
-    }
+  get hasNoWorkdays(): boolean {
+    return this.dateRangeValid && this.totalDays === 0;
   }
 
-  toggleMember(uid: string): void {
-    const s = new Set(this.selectedMemberUids());
-    if (s.has(uid)) {
-      s.delete(uid);
-    } else {
-      s.add(uid);
-    }
-    this.selectedMemberUids.set(s);
+  get startDateStr(): string | null {
+    return this.selectedRange.start
+      ? format(this.selectedRange.start, 'yyyy-MM-dd')
+      : null;
   }
 
-  isMemberSelected(uid: string): boolean {
-    return this.selectedMemberUids().has(uid);
+  get endDateStr(): string | null {
+    return this.selectedRange.end
+      ? format(this.selectedRange.end, 'yyyy-MM-dd')
+      : null;
   }
 
-  selectAllMembers(): void {
-    this.selectedMemberUids.set(new Set(this.members.map((m) => m.uid)));
-  }
+  readonly dateClass: MatCalendarCellClassFunction<Date> = (
+    date: Date,
+    view: 'month' | 'year' | 'multi-year',
+  ) => {
+    if (view !== 'month') return '';
+    const day = date.getDay();
+    return day === 0 || day === 6 ? 'cal-weekend' : '';
+  };
 
-  clearMembers(): void {
-    this.selectedMemberUids.set(new Set());
-  }
-
-  getInitials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
+  onDateSelected(date: Date | null): void {
+    if (!date) return;
+    this.selectedRange = this.rangeStrategy.selectionFinished(
+      date,
+      this.selectedRange,
     );
   }
 
-  private readonly avatarPalette = [
-    ['#6366f1', '#8b5cf6'],
-    ['#0ea5e9', '#6366f1'],
-    ['#14b8a6', '#0ea5e9'],
-    ['#f43f5e', '#ec4899'],
-    ['#22c55e', '#16a34a'],
-    ['#f97316', '#ef4444'],
-  ];
-
-  getAvatarGradient(uid: string): string {
-    const hash = uid.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const [c1, c2] = this.avatarPalette[hash % this.avatarPalette.length];
-    return `linear-gradient(135deg, ${c1}, ${c2})`;
-  }
-
   async save(): Promise<void> {
-    if (this.saving()) return;
-    if (!this.dateRangeValid || this.selectedMemberUids().size === 0) return;
+    if (this.saving() || !this.dateRangeValid || this.totalDays === 0) return;
+    const currentUser = this.authService.currentUser;
+    if (!currentUser) return;
 
     this.saving.set(true);
-    const currentUser = this.authService.currentUser;
-    const type = this.selectedType();
     const note = this.note().trim() || undefined;
+    const startStr = this.startDateStr!;
+    const endStr = this.endDateStr!;
 
     try {
       const workDays = eachDayOfInterval({
-        start: parseISO(this.startDate()),
-        end: parseISO(this.endDate()),
+        start: this.selectedRange.start!,
+        end: this.selectedRange.end!,
       }).filter((d) => !isWeekend(d));
 
-      const writes: Promise<void>[] = [];
-      for (const uid of this.selectedMemberUids()) {
-        for (const day of workDays) {
-          const dateStr = format(day, 'yyyy-MM-dd');
-          writes.push(
-            this.calendarService.setEvent({
-              userId: uid,
-              teamId: this.teamId,
-              type,
-              date: dateStr,
-              endDate:
-                this.startDate() !== this.endDate()
-                  ? this.endDate()
-                  : undefined,
-              status: 'approved',
-              note,
-              createdBy: currentUser!.uid,
-              createdAt: new Date(),
-            }),
-          );
-        }
-      }
-      await Promise.all(writes);
+      await Promise.all(
+        workDays.map((day) =>
+          this.calendarService.setEvent({
+            userId: currentUser.uid,
+            teamId: this.teamId,
+            type: 'vacation',
+            date: format(day, 'yyyy-MM-dd'),
+            endDate: startStr !== endStr ? endStr : undefined,
+            status: 'approved',
+            note,
+            createdBy: currentUser.uid,
+            createdAt: new Date(),
+          }),
+        ),
+      );
 
-      // Fan-out notifications to all team members for vacation / day-off
-      if (
-        (type === 'vacation' || type === 'day-off') &&
-        currentUser &&
-        this.members.length > 1
-      ) {
+      if (this.members.length > 1) {
         await this.notifService.createForTeam(
           currentUser,
           this.teamId,
-          type,
-          this.startDate(),
-          this.startDate() !== this.endDate() ? this.endDate() : undefined,
+          'vacation',
+          startStr,
+          startStr !== endStr ? endStr : undefined,
           note,
           this.members,
         );

@@ -44,6 +44,12 @@ $theme: mat.m2-define-light-theme(
   --c-header-border: #e8ecf0;
   --c-pill-bg: #f1f5f9;
   --c-pill-text: #475569;
+  --c-today-col-bg: rgba(79, 70, 229, 0.04);
+  --c-menu-bg: #ffffff;
+  --c-menu-border: #e2e8f0;
+  --c-menu-item-text: #334155;
+  --c-menu-item-icon-bg: #f1f5f9;
+  --c-menu-divider: #e2e8f0;
 }
 
 [data-theme="dark"] {

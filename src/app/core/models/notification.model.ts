@@ -1,4 +1,4 @@
-export type NotificationEventType = 'vacation' | 'day-off';
+export type NotificationEventType = 'vacation';
 
 export interface AppNotification {
   id: string;

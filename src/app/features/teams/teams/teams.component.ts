@@ -2,6 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -26,7 +27,6 @@ import {
   EditMemberDialogData,
   RichMember,
 } from '../edit-member-dialog/edit-member-dialog.component';
-import { ManageTeamDialogComponent } from '../manage-team-dialog/manage-team-dialog.component';
 import { CreateTeamDialogComponent } from '../create-team-dialog/create-team-dialog.component';
 
 const AVATAR_COLORS = [
@@ -62,6 +62,7 @@ export class TeamsComponent {
   private calendarService = inject(CalendarService);
   private presenceService = inject(PresenceService);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
 
@@ -106,7 +107,6 @@ export class TeamsComponent {
     { value: 'name', label: 'Name A–Z' },
     { value: 'online', label: 'Online First' },
     { value: 'events', label: 'Most Events' },
-    { value: 'sprints', label: 'Most Sprints' },
     { value: 'capacity', label: 'Capacity' },
   ];
 
@@ -135,9 +135,7 @@ export class TeamsComponent {
           : ('offline' as const),
         eventCount: evts.filter((e) => e.userId === u.uid).length,
         sprintCount: evts.filter(
-          (e) =>
-            e.userId === u.uid &&
-            (e.type === 'planning' || e.type === 'sprint-review'),
+          (e) => e.userId === u.uid && e.type === 'vacation',
         ).length,
       };
     });
@@ -192,10 +190,7 @@ export class TeamsComponent {
   );
   totalEvents = computed(() => this.events().length);
   totalSprints = computed(
-    () =>
-      this.events().filter(
-        (e) => e.type === 'planning' || e.type === 'sprint-review',
-      ).length,
+    () => this.events().filter((e) => e.type === 'vacation').length,
   );
   filteredJoinTeams = computed(() => {
     const q = this.joinSearchQuery().toLowerCase().trim();
@@ -339,12 +334,7 @@ export class TeamsComponent {
   openManageTeam(): void {
     const team = this.currentTeam();
     if (!team) return;
-    this.dialog.open(ManageTeamDialogComponent, {
-      width: '640px',
-      maxHeight: '90vh',
-      panelClass: 'premium-dialog',
-      data: { team },
-    });
+    this.router.navigate(['/teams', team.id, 'settings']);
   }
 
   openCreateTeam(): void {

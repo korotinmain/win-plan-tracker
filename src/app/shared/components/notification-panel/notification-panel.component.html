@@ -74,7 +74,6 @@
           *ngFor="let n of todayNotifs()"
           [class.np-item--unread]="!n.read"
           [class.np-item--vacation]="n.type === 'vacation'"
-          [class.np-item--dayoff]="n.type === 'day-off'"
           (click)="onItemClick(n)"
           role="button"
           tabindex="0"
@@ -97,9 +96,7 @@
               <span *ngIf="!n.actorPhotoURL">{{ initials(n.actorName) }}</span>
             </div>
             <div class="np-type-icon np-type-icon--{{ n.type }}">
-              <mat-icon>{{
-                n.type === "vacation" ? "beach_access" : "event_busy"
-              }}</mat-icon>
+              <mat-icon>beach_access</mat-icon>
             </div>
           </div>
 
@@ -107,11 +104,7 @@
           <div class="np-item-content">
             <p class="np-item-text">
               <span class="np-actor">{{ n.actorName }}</span>
-              <span class="np-verb">{{
-                n.type === "vacation"
-                  ? " is going on vacation"
-                  : " is taking a day off"
-              }}</span>
+              <span class="np-verb"> is going on vacation</span>
             </p>
             <p class="np-item-dates">
               <mat-icon>date_range</mat-icon>
@@ -142,7 +135,6 @@
           *ngFor="let n of earlierNotifs()"
           [class.np-item--unread]="!n.read"
           [class.np-item--vacation]="n.type === 'vacation'"
-          [class.np-item--dayoff]="n.type === 'day-off'"
           (click)="onItemClick(n)"
           role="button"
           tabindex="0"
@@ -162,19 +154,13 @@
               <span *ngIf="!n.actorPhotoURL">{{ initials(n.actorName) }}</span>
             </div>
             <div class="np-type-icon np-type-icon--{{ n.type }}">
-              <mat-icon>{{
-                n.type === "vacation" ? "beach_access" : "event_busy"
-              }}</mat-icon>
+              <mat-icon>beach_access</mat-icon>
             </div>
           </div>
           <div class="np-item-content">
             <p class="np-item-text">
               <span class="np-actor">{{ n.actorName }}</span>
-              <span class="np-verb">{{
-                n.type === "vacation"
-                  ? " is going on vacation"
-                  : " is taking a day off"
-              }}</span>
+              <span class="np-verb"> is going on vacation</span>
             </p>
             <p class="np-item-dates">
               <mat-icon>date_range</mat-icon>

@@ -56,6 +56,14 @@ export const routes: Routes = [
             (m) => m.TeamsComponent,
           ),
       },
+      {
+        path: 'teams/:id/settings',
+        canActivate: [roleGuard(['admin'])],
+        loadComponent: () =>
+          import('./features/teams/team-settings/team-settings.component').then(
+            (m) => m.TeamSettingsComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

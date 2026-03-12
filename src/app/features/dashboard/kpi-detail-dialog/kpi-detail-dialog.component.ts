@@ -10,12 +10,7 @@ import { format } from 'date-fns';
 import { CalendarEvent } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 
-export type KpiType =
-  | 'working'
-  | 'vacation'
-  | 'refinement'
-  | 'planning'
-  | 'sprint-review';
+export type KpiType = 'working' | 'vacation';
 
 export interface KpiDetailDialogData {
   type: KpiType;
@@ -23,9 +18,6 @@ export interface KpiDetailDialogData {
   summary: {
     working: number;
     onVacation: number;
-    onRefinement: number;
-    onPlanning: number;
-    onSprintReview: number;
     total: number;
   };
   asOf: Date;
@@ -71,33 +63,6 @@ export class KpiDetailDialogComponent {
       gradient: 'linear-gradient(90deg, #7c3aed, #a78bfa)',
       defaultNote: 'On vacation',
     },
-    refinement: {
-      title: 'Refinement',
-      subtitle: 'Team members in refinement sessions',
-      icon: 'assignment_turned_in',
-      accentColor: '#f59e0b',
-      accentBg: 'rgba(245,158,11,0.18)',
-      gradient: 'linear-gradient(90deg, #d97706, #fcd34d)',
-      defaultNote: 'Refining Sprint backlog items',
-    },
-    planning: {
-      title: 'Planning',
-      subtitle: 'Team members in planning sessions',
-      icon: 'event_note',
-      accentColor: '#06b6d4',
-      accentBg: 'rgba(6,182,212,0.18)',
-      gradient: 'linear-gradient(90deg, #0891b2, #67e8f9)',
-      defaultNote: 'Planning sprint tasks',
-    },
-    'sprint-review': {
-      title: 'Sprint Review',
-      subtitle: 'Team members in sprint review',
-      icon: 'rate_review',
-      accentColor: '#f97316',
-      accentBg: 'rgba(249,115,22,0.18)',
-      gradient: 'linear-gradient(90deg, #ea580c, #fdba74)',
-      defaultNote: 'Reviewing sprint deliverables',
-    },
   };
 
   get config(): KpiConfig {
@@ -125,9 +90,6 @@ export class KpiDetailDialogComponent {
     const labels: Record<KpiType, string> = {
       working: 'Working',
       vacation: 'On Vacation',
-      refinement: 'Refinement',
-      planning: 'Planning',
-      'sprint-review': 'Sprint Review',
     };
     return labels[this.data.type];
   }
@@ -151,24 +113,6 @@ export class KpiDetailDialogComponent {
         value: s.onVacation,
         pct: (s.onVacation / t) * 100,
         color: '#a78bfa',
-      },
-      {
-        label: 'Refinement',
-        value: s.onRefinement,
-        pct: (s.onRefinement / t) * 100,
-        color: '#f59e0b',
-      },
-      {
-        label: 'Planning',
-        value: s.onPlanning,
-        pct: (s.onPlanning / t) * 100,
-        color: '#10b981',
-      },
-      {
-        label: 'Sprint Review',
-        value: s.onSprintReview,
-        pct: (s.onSprintReview / t) * 100,
-        color: '#fb923c',
       },
     ];
   });

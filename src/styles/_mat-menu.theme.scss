@@ -226,3 +226,69 @@
     }
   }
 }
+
+// ─── Dark theme overrides ─────────────────────────────────────────────────────
+[data-theme="dark"] {
+  .user-dropdown.mat-mdc-menu-panel {
+    --mat-menu-container-color: #1e293b;
+    background: #1e293b;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 8px 30px rgba(0, 0, 0, 0.55),
+      0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .udp-divider {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .udp-item.mat-mdc-menu-item {
+    --mat-menu-item-label-text-color: #e2e8f0;
+
+    .mdc-list-item__primary-text {
+      color: #e2e8f0;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+
+      .mdc-list-item__primary-text {
+        color: #a5b4fc;
+      }
+
+      .udp-item-icon {
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+      }
+    }
+  }
+
+  .udp-item-icon {
+    background: rgba(255, 255, 255, 0.07);
+    color: #94a3b8;
+  }
+
+  .udp-item-danger.mat-mdc-menu-item {
+    .mdc-list-item__primary-text {
+      color: #f87171;
+    }
+
+    .udp-item-icon {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+    }
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.08);
+
+      .mdc-list-item__primary-text {
+        color: #fca5a5;
+      }
+
+      .udp-item-icon {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+      }
+    }
+  }
+}

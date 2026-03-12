@@ -54,54 +54,27 @@
       </div>
     </div>
 
-    <div
-      class="kpi-card kpi-refinement"
-      (click)="openKpiDialog('refinement')"
-      role="button"
-      tabindex="0"
-    >
+    <div class="kpi-card kpi-planning" role="button" tabindex="0">
       <div class="kpi-shine"></div>
       <div class="kpi-top">
-        <div class="kpi-icon"><mat-icon>assignment_turned_in</mat-icon></div>
+        <div class="kpi-icon"><mat-icon>group</mat-icon></div>
         <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
       </div>
       <div class="kpi-body">
-        <div class="kpi-value">{{ onRefinement }}</div>
-        <div class="kpi-label">Refinement</div>
+        <div class="kpi-value">{{ allMembers().length }}</div>
+        <div class="kpi-label">Team Size</div>
       </div>
     </div>
 
-    <div
-      class="kpi-card kpi-planning"
-      (click)="openKpiDialog('planning')"
-      role="button"
-      tabindex="0"
-    >
+    <div class="kpi-card kpi-refinement" role="button" tabindex="0">
       <div class="kpi-shine"></div>
       <div class="kpi-top">
-        <div class="kpi-icon"><mat-icon>event_note</mat-icon></div>
+        <div class="kpi-icon"><mat-icon>timer</mat-icon></div>
         <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
       </div>
       <div class="kpi-body">
-        <div class="kpi-value">{{ onPlanning }}</div>
-        <div class="kpi-label">Planning</div>
-      </div>
-    </div>
-
-    <div
-      class="kpi-card kpi-sprint-review"
-      (click)="openKpiDialog('sprint-review')"
-      role="button"
-      tabindex="0"
-    >
-      <div class="kpi-shine"></div>
-      <div class="kpi-top">
-        <div class="kpi-icon"><mat-icon>rate_review</mat-icon></div>
-        <mat-icon class="kpi-arrow">arrow_forward</mat-icon>
-      </div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ onSprintReview }}</div>
-        <div class="kpi-label">Sprint Review</div>
+        <div class="kpi-value">{{ sprintInfo.remaining }}</div>
+        <div class="kpi-label">Sprint Days Left</div>
       </div>
     </div>
   </div>
@@ -164,21 +137,6 @@
           <span class="sds-label">remaining</span>
         </div>
       </div>
-
-      <div class="sprint-ceremony" *ngIf="sprintInfo.nextCeremony">
-        <mat-icon class="sc-icon">event</mat-icon>
-        <span class="sc-label">{{ sprintInfo.nextCeremony.label }}</span>
-        <span class="sc-date">{{ sprintInfo.nextCeremony.date }}</span>
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 0"
-          >Today</span
-        >
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway === 1"
-          >Tomorrow</span
-        >
-        <span class="sc-chip" *ngIf="sprintInfo.nextCeremony.daysAway > 1"
-          >in {{ sprintInfo.nextCeremony.daysAway }}d</span
-        >
-      </div>
     </div>
 
     <!-- Weekly Heatmap -->
@@ -199,8 +157,6 @@
       <div class="week-chart-legend">
         <span class="wl-dot wl-available"></span>
         <span class="wl-label">Available</span>
-        <span class="wl-dot wl-partial"></span>
-        <span class="wl-label">Partial</span>
       </div>
 
       <div echarts [options]="weekBarOpts()" class="week-bar-chart"></div>
@@ -238,9 +194,9 @@
               <mat-icon class="evt-cal-icon">calendar_today</mat-icon>
               <span class="evt-date">{{ evt.displayDate }}</span>
               <span class="evt-sep">·</span>
-              <span class="evt-members"
-                >{{ evt.count }}
-                {{ evt.count === 1 ? "member" : "members" }}</span
+              <span class="evt-members">{{ evt.names[0] }}</span>
+              <span class="evt-days-pill" *ngIf="evt.count > 1"
+                >{{ evt.count }}d</span
               >
             </div>
           </div>

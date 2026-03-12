@@ -4,15 +4,12 @@
   <!-- Header -->
   <div class="aed-header">
     <div class="aed-header-left">
-      <div class="aed-icon-wrap" [style.background]="selectedTypeOption.bg">
-        <span
-          class="aed-type-dot"
-          [style.background]="selectedTypeOption.color"
-        ></span>
+      <div class="aed-icon-wrap">
+        <mat-icon>beach_access</mat-icon>
       </div>
       <div>
-        <h2 class="aed-title">Add Event</h2>
-        <p class="aed-subtitle">Schedule for team members</p>
+        <h2 class="aed-title">Add Vacation</h2>
+        <p class="aed-subtitle">Schedule your time off</p>
       </div>
     </div>
     <button class="aed-close" (click)="close()">
@@ -22,143 +19,90 @@
 
   <!-- Body -->
   <div class="aed-body">
-    <!-- Event type -->
-    <div class="aed-section">
-      <label class="aed-label">Event Type</label>
-      <div class="aed-type-grid">
-        <button
-          *ngFor="let et of eventTypes"
-          class="aed-type-btn"
-          [class.selected]="selectedType() === et.type"
-          [style.--type-color]="et.color"
-          [style.--type-bg]="et.bg"
-          (click)="selectedType.set(et.type)"
-        >
-          <span class="aed-type-dot-sm" [style.background]="et.color"></span>
-          <span class="aed-type-label">{{ et.label }}</span>
-          <span class="aed-type-badge" *ngIf="selectedType() === et.type">
-            <mat-icon>check</mat-icon>
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Date range -->
-    <div class="aed-section">
-      <label class="aed-label">Date Range</label>
-      <div class="aed-date-row">
-        <div class="aed-date-field">
-          <mat-icon class="aed-field-icon">calendar_today</mat-icon>
-          <div class="aed-field-inner">
-            <span class="aed-field-lbl">Start</span>
-            <input
-              class="aed-date-input"
-              type="date"
-              [ngModel]="startDate()"
-              (ngModelChange)="startDate.set($event)"
-            />
-          </div>
-        </div>
-        <mat-icon class="aed-date-arrow">arrow_forward</mat-icon>
-        <div class="aed-date-field" [class.invalid]="!dateRangeValid">
-          <mat-icon class="aed-field-icon">event</mat-icon>
-          <div class="aed-field-inner">
-            <span class="aed-field-lbl">End</span>
-            <input
-              class="aed-date-input"
-              type="date"
-              [ngModel]="endDate()"
-              (ngModelChange)="endDate.set($event)"
-            />
-          </div>
-        </div>
-        <div class="aed-days-badge" *ngIf="dateRangeValid && totalDays > 0">
-          <mat-icon>wb_sunny</mat-icon>
-          {{ totalDays }} workday{{ totalDays !== 1 ? "s" : "" }}
-        </div>
-      </div>
-      <p class="aed-range-err" *ngIf="!dateRangeValid">
-        End date must be after start date
-      </p>
-    </div>
-
-    <!-- Members -->
-    <div class="aed-section">
-      <div class="aed-label-row">
-        <label class="aed-label">Team Members</label>
-        <div class="aed-label-actions">
-          <button class="aed-text-btn" (click)="selectAllMembers()">All</button>
-          <span class="aed-dot-sep">·</span>
-          <button class="aed-text-btn" (click)="clearMembers()">None</button>
-        </div>
-      </div>
-      <div class="aed-member-list">
-        <button
-          *ngFor="let m of members"
-          class="aed-member-btn"
-          [class.selected]="isMemberSelected(m.uid)"
-          (click)="toggleMember(m.uid)"
-        >
-          <span
-            class="aed-member-avatar"
-            [style.background]="getAvatarGradient(m.uid)"
-          >
-            {{ getInitials(m.displayName) }}
-          </span>
-          <div class="aed-member-info">
-            <span class="aed-member-name">{{ m.displayName }}</span>
-            <span class="aed-member-role">{{ m.role }}</span>
-          </div>
-          <span class="aed-member-check" *ngIf="isMemberSelected(m.uid)">
-            <mat-icon>check_circle</mat-icon>
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Note -->
-    <div class="aed-section">
-      <label class="aed-label"
-        >Note <span class="aed-label-opt">(optional)</span></label
+    <!-- Phase Cards: FROM → TO -->
+    <div class="aed-phase-row">
+      <div
+        class="aed-phase-card"
+        [class.aed-phase-card--active]="!isSelectingEnd && !dateRangeValid"
+        [class.aed-phase-card--set]="!!selectedRange.start"
       >
-      <textarea
-        class="aed-note"
-        placeholder="Add a note about this event…"
-        rows="2"
-        [ngModel]="note()"
-        (ngModelChange)="note.set($event)"
-      ></textarea>
+        <span class="aed-phase-tag">FROM</span>
+        <span class="aed-phase-date">{{
+          selectedRange.start ? (selectedRange.start | date: "d MMM") : "—"
+        }}</span>
+        <span class="aed-phase-year">{{
+          selectedRange.start ? (selectedRange.start | date: "yyyy") : ""
+        }}</span>
+      </div>
+
+      <div class="aed-phase-sep">
+        <div class="aed-phase-line"></div>
+        <mat-icon class="aed-phase-arrow-icon">arrow_forward</mat-icon>
+        <div class="aed-phase-line"></div>
+      </div>
+
+      <div
+        class="aed-phase-card"
+        [class.aed-phase-card--active]="isSelectingEnd"
+        [class.aed-phase-card--set]="!!selectedRange.end"
+      >
+        <span class="aed-phase-tag">TO</span>
+        <span class="aed-phase-date">{{
+          selectedRange.end ? (selectedRange.end | date: "d MMM") : "—"
+        }}</span>
+        <span class="aed-phase-year">{{
+          selectedRange.end ? (selectedRange.end | date: "yyyy") : ""
+        }}</span>
+      </div>
+
+      <div class="aed-workdays-badge" *ngIf="dateRangeValid && totalDays > 0">
+        <mat-icon>wb_sunny</mat-icon>
+        {{ totalDays }}&nbsp;day{{ totalDays !== 1 ? "s" : "" }}
+      </div>
     </div>
+
+    <!-- Hint -->
+    <p class="aed-hint" [class.aed-hint--active]="isSelectingEnd">
+      <mat-icon>{{ isSelectingEnd ? "touch_app" : "calendar_month" }}</mat-icon>
+      {{
+        isSelectingEnd
+          ? "Now select the end date"
+          : dateRangeValid
+            ? "Tap any date to change range"
+            : "Select start date"
+      }}
+    </p>
+
+    <!-- Material Calendar -->
+    <div class="aed-calendar-wrap">
+      <mat-calendar
+        [selected]="selectedRange"
+        [startAt]="selectedRange.start"
+        [dateClass]="dateClass"
+        (selectedChange)="onDateSelected($event)"
+      ></mat-calendar>
+    </div>
+
+    <!-- No workdays warning -->
+    <p class="aed-warn" *ngIf="hasNoWorkdays">
+      <mat-icon>warning_amber</mat-icon>
+      Selected range contains no working days (weekend only)
+    </p>
   </div>
 
   <!-- Footer -->
   <div class="aed-footer">
-    <div
-      class="aed-summary"
-      *ngIf="selectedMemberUids().size > 0 && dateRangeValid && totalDays > 0"
-    >
-      <mat-icon>info_outline</mat-icon>
-      Creating
-      <strong>{{ totalDays * selectedMemberUids().size }}</strong> event{{
-        totalDays * selectedMemberUids().size !== 1 ? "s" : ""
-      }}
-      across <strong>{{ selectedMemberUids().size }}</strong> member{{
-        selectedMemberUids().size !== 1 ? "s" : ""
-      }}
-    </div>
     <div class="aed-footer-actions">
       <button class="aed-btn-cancel" (click)="close()">Cancel</button>
       <button
         class="aed-btn-save"
         [class.loading]="saving()"
-        [disabled]="
-          saving() || !dateRangeValid || selectedMemberUids().size === 0
-        "
+        [disabled]="saving() || !dateRangeValid || totalDays === 0"
         (click)="save()"
       >
-        <mat-icon *ngIf="!saving()">add_circle</mat-icon>
+        <mat-icon *ngIf="!saving()">beach_access</mat-icon>
         <span class="aed-spinner" *ngIf="saving()"></span>
-        {{ saving() ? "Saving…" : "Add Event" }}
+        {{ saving() ? "Saving…" : "Add Vacation" }}
       </button>
     </div>
   </div>

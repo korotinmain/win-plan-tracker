@@ -17,6 +17,17 @@
 
   <!-- Body card -->
   <div class="eid-body">
+    <!-- Date range (vacation only) -->
+    <div class="eid-row" *ngIf="vacationRangeLabel">
+      <mat-icon class="eid-row-icon">date_range</mat-icon>
+      <div class="eid-row-content">
+        <div class="eid-row-label">Date Range</div>
+        <div class="eid-row-value eid-row-value--accent">
+          {{ vacationRangeLabel }}
+        </div>
+      </div>
+    </div>
+
     <!-- Time -->
     <div class="eid-row">
       <mat-icon class="eid-row-icon">schedule</mat-icon>

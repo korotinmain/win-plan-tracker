@@ -1,12 +1,4 @@
-export type EventType =
-  | 'standup'
-  | 'activity' // legacy alias, treated as standup
-  | 'refinement'
-  | 'planning'
-  | 'sprint-review'
-  | 'vacation'
-  | 'day-off'
-  | 'holiday';
+export type EventType = 'vacation' | 'holiday';
 export type EventStatus = 'pending' | 'approved' | 'rejected';
 
 export interface CalendarEvent {

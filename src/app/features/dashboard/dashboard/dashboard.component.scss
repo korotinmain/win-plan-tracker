@@ -211,9 +211,17 @@
 /* ── KPI Cards ──────────────────────────────── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 36px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 @keyframes shimmer {
@@ -984,6 +992,17 @@
 
 .evt-members {
   font-weight: 500;
+}
+
+.evt-days-pill {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--c-accent, #818cf8);
+  background: rgba(129, 140, 248, 0.12);
+  border-radius: 6px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .events-empty {
