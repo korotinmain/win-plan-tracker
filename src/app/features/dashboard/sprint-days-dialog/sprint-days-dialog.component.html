@@ -1,0 +1,133 @@
+<div class="spd">
+  <!-- Gradient top band -->
+  <div class="spd-band"></div>
+
+  <!-- Header -->
+  <div class="spd-header">
+    <div class="spd-header-left">
+      <div class="spd-header-icon">
+        <mat-icon>timer</mat-icon>
+      </div>
+      <div>
+        <h2 class="spd-title">Sprint {{ data.sprintNumber }}</h2>
+        <p class="spd-subtitle">{{ data.startDate }} – {{ data.endDate }}</p>
+      </div>
+    </div>
+    <button class="spd-close" (click)="close()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="spd-body">
+    <!-- Hero: ring + stat cluster -->
+    <div class="spd-hero">
+      <!-- SVG ring gauge -->
+      <div class="spd-ring-wrap">
+        <svg viewBox="0 0 100 100" class="spd-ring-svg">
+          <circle cx="50" cy="50" r="44" class="spd-ring-track" />
+          <circle
+            cx="50"
+            cy="50"
+            r="44"
+            class="spd-ring-fill"
+            [attr.stroke]="ringColor"
+            [attr.stroke-dasharray]="ringDash"
+            stroke-dashoffset="0"
+            transform="rotate(-90 50 50)"
+          />
+        </svg>
+        <div class="spd-ring-center">
+          <span class="spd-ring-pct">{{ data.percent }}%</span>
+          <span class="spd-ring-pct-label">done</span>
+        </div>
+      </div>
+
+      <!-- Stat cluster -->
+      <div class="spd-stat-cluster">
+        <div class="spd-stat-row">
+          <div
+            class="spd-stat-item spd-stat-remaining"
+            [class.urgent]="urgencyClass === 'urgent'"
+          >
+            <span class="spd-stat-num">{{ data.remaining }}</span>
+            <span class="spd-stat-lbl">days left</span>
+          </div>
+          <div class="spd-stat-divider"></div>
+          <div class="spd-stat-item">
+            <span class="spd-stat-num spd-num-muted">{{ data.elapsed }}</span>
+            <span class="spd-stat-lbl">elapsed</span>
+          </div>
+          <div class="spd-stat-divider"></div>
+          <div class="spd-stat-item">
+            <span class="spd-stat-num spd-num-muted">{{ data.total }}</span>
+            <span class="spd-stat-lbl">total</span>
+          </div>
+        </div>
+        <div class="spd-status-pill" [ngClass]="urgencyClass">
+          <span class="spd-status-dot"></span>
+          {{ statusLabel }}
+        </div>
+        <div class="spd-asof">Updated {{ asOfFormatted }}</div>
+      </div>
+    </div>
+
+    <!-- Progress track bar -->
+    <div class="spd-track-section">
+      <div class="spd-track-label">
+        <span>Sprint progress</span>
+        <span>{{ data.elapsed }}/{{ data.total }} work days</span>
+      </div>
+      <div class="spd-track">
+        <div
+          class="spd-track-fill"
+          [style.width.%]="data.percent"
+          [style.background]="ringColor"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Calendar heatmap -->
+    <div class="spd-section">
+      <h3 class="spd-section-title">Sprint Calendar</h3>
+      <div class="spd-calendar">
+        <div
+          *ngFor="let d of days"
+          class="spd-day"
+          [class.spd-day-weekend]="d.isWeekend"
+          [class.spd-day-past]="d.isPast && !d.isToday"
+          [class.spd-day-today]="d.isToday"
+          [class.spd-day-future]="!d.isPast && !d.isToday && !d.isWeekend"
+        >
+          <span class="spd-day-label">{{ d.label }}</span>
+          <span class="spd-day-num">{{ d.dayNum }}</span>
+          <span class="spd-day-dot" *ngIf="d.isToday"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Work-day checklist -->
+    <div class="spd-section">
+      <h3 class="spd-section-title">Work Days</h3>
+      <div class="spd-checklist">
+        <div
+          *ngFor="let d of workDays(); let i = index"
+          class="spd-check-row"
+          [class.spd-check-done]="d.isPast"
+          [class.spd-check-today]="d.isToday"
+        >
+          <div class="spd-check-icon">
+            <mat-icon *ngIf="d.isPast">check_circle</mat-icon>
+            <mat-icon *ngIf="d.isToday">radio_button_checked</mat-icon>
+            <mat-icon *ngIf="!d.isPast && !d.isToday"
+              >radio_button_unchecked</mat-icon
+            >
+          </div>
+          <span class="spd-check-label">{{ d.label }}, {{ d.dayNum }}</span>
+          <span class="spd-check-badge" *ngIf="d.isToday">Today</span>
+          <span class="spd-check-day-num">Day {{ i + 1 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

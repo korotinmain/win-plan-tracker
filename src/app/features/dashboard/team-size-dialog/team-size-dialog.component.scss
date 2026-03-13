@@ -1,0 +1,344 @@
+:host {
+  display: block;
+}
+
+/* ─── Shell ─────────────────────────────────────────────────── */
+.tsd {
+  display: flex;
+  flex-direction: column;
+  background: #0b0f19;
+  border-radius: 22px;
+  min-width: 520px;
+  max-width: 580px;
+  font-family: "Inter", "Roboto", sans-serif;
+  color: #e2e8f0;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(20, 184, 166, 0.14),
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+
+  @media (max-width: 600px) {
+    min-width: unset;
+  }
+}
+
+/* ─── Top gradient band ─────────────────────────────────────── */
+.tsd-band {
+  height: 3px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #14b8a6, #06b6d4, #6366f1);
+}
+
+/* ─── Header ────────────────────────────────────────────────── */
+.tsd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 0;
+}
+
+.tsd-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tsd-header-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(20, 184, 166, 0.14);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    color: #2dd4bf;
+  }
+}
+
+.tsd-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.025em;
+}
+
+.tsd-subtitle {
+  margin: 3px 0 0;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.tsd-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ─── Scrollable body ───────────────────────────────────────── */
+.tsd-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 26px;
+  overflow-y: auto;
+  max-height: 74vh;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+}
+
+/* ─── Hero stat card ────────────────────────────────────────── */
+.tsd-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 22px;
+  background: rgba(20, 184, 166, 0.05);
+  border: 1px solid rgba(20, 184, 166, 0.14);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 0% 50%,
+      rgba(20, 184, 166, 0.1) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+}
+
+.tsd-hero-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.tsd-hero-num {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #2dd4bf;
+  line-height: 1;
+  letter-spacing: -4px;
+}
+
+.tsd-hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tsd-hero-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tsd-hero-asof {
+  font-size: 0.7rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.tsd-avail-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.tsd-avail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tsd-avail-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tsd-avail-label {
+  font-size: 0.74rem;
+  color: #64748b;
+  min-width: 56px;
+  font-weight: 600;
+}
+
+.tsd-avail-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tsd-avail-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+}
+
+.tsd-avail-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: right;
+}
+
+/* ─── Role sections ─────────────────────────────────────────── */
+.tsd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tsd-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tsd-role-pill {
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+.tsd-section-count {
+  font-size: 0.72rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+/* ─── Member rows ───────────────────────────────────────────── */
+.tsd-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tsd-member-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 13px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.048);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.tsd-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.3);
+}
+
+.tsd-member-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tsd-member-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tsd-member-email {
+  font-size: 0.72rem;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tsd-member-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 9px;
+  border-radius: 7px;
+  border: 1px solid;
+  background: transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

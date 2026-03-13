@@ -295,18 +295,49 @@
 }
 
 .tm-filter-select {
+  // Strip all appearance from the host element
   background: none;
   border: none;
   outline: none;
   font-size: 0.85rem;
-  color: var(--c-text);
   font-family: inherit;
   cursor: pointer;
-  padding-right: 4px;
+  min-width: 110px;
+  max-width: 160px;
 
-  option {
-    background: var(--c-surface);
-    color: var(--c-text);
+  // Style mat-select internal elements via ::ng-deep (standalone, no form-field)
+  ::ng-deep {
+    .mat-mdc-select-trigger {
+      height: auto;
+      min-height: unset;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mat-mdc-select-value {
+      color: var(--c-text);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    .mat-mdc-select-min-line {
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    .mat-mdc-select-arrow-wrapper {
+      height: 18px;
+      transform: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .mat-mdc-select-arrow {
+      color: var(--c-text-3);
+      width: 10px;
+      height: 10px;
+    }
   }
 }
 

@@ -9,6 +9,8 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { switchMap, combineLatest, of, map, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
@@ -52,6 +54,8 @@ const AVATAR_COLORS = [
     MatMenuModule,
     MatTooltipModule,
     MatSnackBarModule,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './teams.component.html',
   styleUrls: ['./teams.component.scss'],

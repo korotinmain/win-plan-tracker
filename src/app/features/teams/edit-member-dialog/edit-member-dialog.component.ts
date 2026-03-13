@@ -9,6 +9,8 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
 import { Team } from '../../../core/models/team.model';
 import {
@@ -60,6 +62,8 @@ const AVATAR_COLORS = [
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './edit-member-dialog.component.html',
   styleUrls: ['./edit-member-dialog.component.scss'],

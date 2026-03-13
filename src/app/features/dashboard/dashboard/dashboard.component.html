@@ -54,7 +54,13 @@
       </div>
     </div>
 
-    <div class="kpi-card kpi-planning" role="button" tabindex="0">
+    <div
+      class="kpi-card kpi-planning"
+      role="button"
+      tabindex="0"
+      (click)="openTeamSizeDialog()"
+      (keyup.enter)="openTeamSizeDialog()"
+    >
       <div class="kpi-shine"></div>
       <div class="kpi-top">
         <div class="kpi-icon"><mat-icon>group</mat-icon></div>
@@ -66,7 +72,13 @@
       </div>
     </div>
 
-    <div class="kpi-card kpi-refinement" role="button" tabindex="0">
+    <div
+      class="kpi-card kpi-refinement"
+      role="button"
+      tabindex="0"
+      (click)="openSprintDaysDialog()"
+      (keyup.enter)="openSprintDaysDialog()"
+    >
       <div class="kpi-shine"></div>
       <div class="kpi-top">
         <div class="kpi-icon"><mat-icon>timer</mat-icon></div>
@@ -170,7 +182,7 @@
             ><mat-icon>upcoming</mat-icon></span
           >
           <div>
-            <h3 class="ic-title">Upcoming Events</h3>
+            <h3 class="ic-title">Upcoming Vacations</h3>
             <p class="ic-sub">Rest of this month</p>
           </div>
         </div>
@@ -205,11 +217,11 @@
 
       <div class="events-empty" *ngIf="upcomingEvents().length === 0">
         <mat-icon>event_available</mat-icon>
-        <p>No upcoming events this month</p>
+        <p>No upcoming vacations this month</p>
       </div>
 
       <button type="button" class="view-all-link" (click)="openEventsDialog()">
-        View all events &#8594;
+        View all vacations &#8594;
       </button>
     </div>
   </div>

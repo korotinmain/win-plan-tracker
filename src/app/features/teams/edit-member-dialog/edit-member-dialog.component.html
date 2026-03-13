@@ -148,15 +148,20 @@
       <!-- Timezone -->
       <div class="emd-field">
         <label class="emd-label">Timezone</label>
-        <select
-          class="emd-select"
-          [ngModel]="timezone()"
-          (ngModelChange)="timezone.set($event)"
+        <mat-form-field
+          class="emd-mat-field"
+          appearance="outline"
+          subscriptSizing="dynamic"
         >
-          <option *ngFor="let tz of timezones" [value]="tz.value">
-            {{ tz.label }}
-          </option>
-        </select>
+          <mat-select
+            [ngModel]="timezone()"
+            (ngModelChange)="timezone.set($event)"
+          >
+            <mat-option *ngFor="let tz of timezones" [value]="tz.value">
+              {{ tz.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
 
       <!-- Active toggle -->

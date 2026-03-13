@@ -1,0 +1,213 @@
+// Angular Material — mat-form-field, mat-select, mat-option premium theme
+// Covers both :root/light and [data-theme="dark"] modes.
+// Panel/overlay styles must live here (global) so the CDK overlay sees them.
+
+// ── Shared base ───────────────────────────────────────────────────────────────
+.mat-mdc-form-field.mat-form-field-appearance-outline {
+  --mdc-outlined-text-field-container-shape: 12px;
+  --mat-form-field-focus-state-layer-opacity: 0;
+  --mat-form-field-hover-state-layer-opacity: 0;
+  font-family: "Inter", Roboto, "Helvetica Neue", sans-serif;
+
+  // Smooth border transitions
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    transition:
+      border-color 0.2s,
+      border-width 0.2s;
+  }
+}
+
+.mat-mdc-select {
+  font-family: "Inter", Roboto, "Helvetica Neue", sans-serif;
+}
+
+// ── Select panel (CDK overlay — global scope required) ─────────────────────────
+.mat-mdc-select-panel {
+  border-radius: 14px !important;
+  padding: 6px 0 !important;
+  overflow: hidden;
+  min-width: 160px !important;
+
+  .mat-mdc-option {
+    font-size: 0.875rem;
+    font-family: "Inter", Roboto, "Helvetica Neue", sans-serif;
+    min-height: 42px;
+    transition: background 0.13s;
+
+    // Disable built-in ripple state layers; we supply our own bg transitions
+    --mat-option-hover-state-layer-opacity: 0;
+    --mat-option-focus-state-layer-opacity: 0;
+    --mat-option-selected-state-layer-opacity: 0;
+
+    .mdc-list-item__primary-text {
+      font-size: 0.875rem;
+      font-family: "Inter", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      .mdc-list-item__primary-text {
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// ── Light theme ───────────────────────────────────────────────────────────────
+:root,
+[data-theme="light"] {
+  .mat-mdc-form-field.mat-form-field-appearance-outline {
+    --mdc-outlined-text-field-outline-color: #e2e8f0;
+    --mdc-outlined-text-field-hover-outline-color: #6366f1;
+    --mdc-outlined-text-field-focus-outline-color: #6366f1;
+    --mdc-outlined-text-field-label-text-color: #64748b;
+    --mdc-outlined-text-field-focus-label-text-color: #6366f1;
+    --mdc-outlined-text-field-input-text-color: #0f172a;
+    --mat-select-enabled-trigger-text-color: #0f172a;
+    --mat-form-field-focus-select-arrow-color: #6366f1;
+
+    .mdc-text-field--outlined:not(.mdc-text-field--disabled) {
+      background-color: #fff;
+      border-radius: 12px;
+    }
+
+    .mat-mdc-select-arrow {
+      color: #94a3b8;
+    }
+
+    &.mat-focused .mat-mdc-select-arrow {
+      color: #6366f1;
+    }
+  }
+
+  .mat-mdc-select:not(.mat-mdc-select-in-form-field) {
+    color: #0f172a;
+
+    .mat-mdc-select-trigger {
+      color: #0f172a;
+    }
+    .mat-mdc-select-arrow {
+      color: #94a3b8;
+    }
+  }
+
+  .mat-mdc-select-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.1),
+      0 8px 20px rgba(0, 0, 0, 0.07),
+      0 0 0 1px rgba(99, 102, 241, 0.08);
+
+    .mat-mdc-option {
+      color: #1e293b;
+
+      &:hover:not(.mdc-list-item--disabled) {
+        background: rgba(99, 102, 241, 0.07);
+        .mdc-list-item__primary-text {
+          color: #4f46e5;
+        }
+      }
+
+      &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+        background: rgba(99, 102, 241, 0.09);
+        .mdc-list-item__primary-text {
+          color: #6366f1;
+        }
+      }
+
+      &.mdc-list-item--selected:not(.mdc-list-item--disabled):hover {
+        background: rgba(99, 102, 241, 0.13);
+      }
+    }
+  }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+[data-theme="dark"] {
+  .mat-mdc-form-field.mat-form-field-appearance-outline {
+    --mdc-outlined-text-field-outline-color: rgba(255, 255, 255, 0.11);
+    --mdc-outlined-text-field-hover-outline-color: rgba(99, 102, 241, 0.45);
+    --mdc-outlined-text-field-focus-outline-color: #6366f1;
+    --mdc-outlined-text-field-label-text-color: #64748b;
+    --mdc-outlined-text-field-focus-label-text-color: #a5b4fc;
+    --mdc-outlined-text-field-input-text-color: #f1f5f9;
+    --mat-select-enabled-trigger-text-color: #f1f5f9;
+    --mat-form-field-focus-select-arrow-color: #a5b4fc;
+
+    .mdc-text-field--outlined:not(.mdc-text-field--disabled) {
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+    }
+
+    // Glow ring on focus
+    &.mat-focused .mdc-notched-outline__leading,
+    &.mat-focused .mdc-notched-outline__notch,
+    &.mat-focused .mdc-notched-outline__trailing {
+      box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
+    }
+
+    .mat-mdc-select-trigger {
+      color: #f1f5f9;
+    }
+    .mat-mdc-select-arrow {
+      color: #64748b;
+    }
+
+    &.mat-focused .mat-mdc-select-arrow {
+      color: #a5b4fc;
+    }
+  }
+
+  // Standalone mat-select (e.g. in filter bar, no mat-form-field wrapper)
+  .mat-mdc-select:not(.mat-mdc-select-in-form-field) {
+    color: #f1f5f9;
+
+    .mat-mdc-select-trigger {
+      color: #f1f5f9;
+    }
+    .mat-mdc-select-min-line {
+      color: #f1f5f9;
+    }
+    .mat-mdc-select-arrow {
+      color: #64748b;
+    }
+    .mat-mdc-select-value-text {
+      color: #f1f5f9;
+    }
+  }
+
+  // Premium dark dropdown panel
+  .mat-mdc-select-panel {
+    background: #1a2235 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.55),
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(99, 102, 241, 0.1) !important;
+
+    .mat-mdc-option {
+      color: #e2e8f0;
+
+      &:hover:not(.mdc-list-item--disabled) {
+        background: rgba(99, 102, 241, 0.1);
+        .mdc-list-item__primary-text {
+          color: #c4b5fd;
+        }
+      }
+
+      &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+        background: rgba(99, 102, 241, 0.15);
+        .mdc-list-item__primary-text {
+          color: #a5b4fc;
+          font-weight: 600;
+        }
+      }
+
+      &.mdc-list-item--selected:not(.mdc-list-item--disabled):hover {
+        background: rgba(99, 102, 241, 0.2);
+      }
+    }
+  }
+}

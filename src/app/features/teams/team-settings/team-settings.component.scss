@@ -252,12 +252,12 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
   }
 
-  /* Gradient top accent */
+  /* Gradient top accent — border-radius matches the card's inner corner (card border is 1px, so inner radius = radius - 1px) */
   &::before {
     content: "";
     display: block;
     height: 2px;
-    border-radius: var(--_radius) var(--_radius) 0 0;
+    border-radius: calc(var(--_radius) - 1px) calc(var(--_radius) - 1px) 0 0;
     background: linear-gradient(
       90deg,
       var(--_accent) 0%,
@@ -342,15 +342,15 @@
   gap: 11px;
   padding: 9px 11px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
+  background: var(--c-surface-2, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--_border);
   transition:
     background 0.15s,
     border-color 0.15s;
 
   &:hover {
     background: rgba(99, 102, 241, 0.08);
-    border-color: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.2);
   }
 }
 
@@ -593,33 +593,24 @@
   align-items: center;
 }
 
-.ts-select {
+.ts-mat-field {
   flex: 1;
   min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid var(--_border);
-  border-radius: 10px;
-  font-size: 0.82rem;
-  color: var(--_text);
-  background: rgba(255, 255, 255, 0.05);
-  outline: none;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
 
-  &:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  // Compact sizing to match the existing ts-country-row layout
+  .mat-mdc-text-field-wrapper {
+    padding: 0 10px;
   }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+
+  .mat-mdc-form-field-infix {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    min-height: unset;
   }
-  option {
-    background: #1e293b;
-    color: #f1f5f9;
+
+  .mat-mdc-select-trigger {
+    font-size: 0.82rem;
+    font-family: inherit;
   }
 }
 

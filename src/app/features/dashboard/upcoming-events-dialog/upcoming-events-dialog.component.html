@@ -2,7 +2,7 @@
   <!-- ─── Header ──────────────────────────────────────────── -->
   <div class="ued-header">
     <div class="ued-title-block">
-      <span class="ued-title">Upcoming Events</span>
+      <span class="ued-title">Upcoming Vacations</span>
       <span class="ued-sub"
         >{{ data.currentMonth }} &middot; Sprint {{ data.sprintNumber }}</span
       >
@@ -17,27 +17,29 @@
     </button>
   </div>
 
-  <!-- ─── Filter chips ─────────────────────────────────────── -->
-  <div class="ued-filters" role="group" aria-label="Filter events by type">
-    <button
-      *ngFor="let chip of filterChips"
-      type="button"
-      class="ued-chip"
-      [class.active]="activeFilter() === chip.value"
-      (click)="activeFilter.set(chip.value)"
-    >
-      <mat-icon *ngIf="chip.icon" class="ued-chip-icon">{{
-        chip.icon
-      }}</mat-icon>
-      {{ chip.label }}
-    </button>
+  <!-- ─── Sprint stats ──────────────────────────────────────── -->
+  <div class="ued-stats">
+    <div class="ued-stat">
+      <span class="ued-stat-value">{{ data.sprintVacationCount }}</span>
+      <span class="ued-stat-label">this sprint</span>
+    </div>
+    <div class="ued-stat-sep"></div>
+    <div class="ued-stat">
+      <span class="ued-stat-value">{{ data.rows.length }}</span>
+      <span class="ued-stat-label">total upcoming</span>
+    </div>
+    <div class="ued-stat-sep"></div>
+    <div class="ued-stat">
+      <mat-icon class="ued-stat-icon">beach_access</mat-icon>
+      <span class="ued-stat-label">Sprint {{ data.sprintNumber }}</span>
+    </div>
   </div>
 
   <!-- ─── Scrollable event list ────────────────────────────── -->
   <div class="ued-body">
-    <ng-container *ngIf="filteredRows().length > 0; else emptyTpl">
+    <ng-container *ngIf="data.rows.length > 0; else emptyTpl">
       <div
-        *ngFor="let row of filteredRows()"
+        *ngFor="let row of data.rows"
         class="ued-row"
         [style.--row-accent]="row.accentColor"
       >
@@ -86,7 +88,7 @@
     <ng-template #emptyTpl>
       <div class="ued-empty">
         <mat-icon>event_available</mat-icon>
-        <p>No events for this filter</p>
+        <p>No upcoming vacations</p>
       </div>
     </ng-template>
   </div>

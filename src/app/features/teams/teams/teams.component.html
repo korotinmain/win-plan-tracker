@@ -207,43 +207,46 @@
     <!-- Role filter -->
     <div class="tm-filter-wrap">
       <mat-icon class="tm-filter-icon">badge</mat-icon>
-      <select
+      <mat-select
         class="tm-filter-select"
         [ngModel]="selectedRole()"
         (ngModelChange)="selectedRole.set($event)"
+        panelWidth="auto"
       >
-        <option *ngFor="let r of roleOptions" [value]="r.value">
+        <mat-option *ngFor="let r of roleOptions" [value]="r.value">
           {{ r.label }}
-        </option>
-      </select>
+        </mat-option>
+      </mat-select>
     </div>
 
     <!-- Status filter -->
     <div class="tm-filter-wrap">
       <mat-icon class="tm-filter-icon">circle</mat-icon>
-      <select
+      <mat-select
         class="tm-filter-select"
         [ngModel]="selectedStatus()"
         (ngModelChange)="selectedStatus.set($event)"
+        panelWidth="auto"
       >
-        <option *ngFor="let s of statusOptions" [value]="s.value">
+        <mat-option *ngFor="let s of statusOptions" [value]="s.value">
           {{ s.label }}
-        </option>
-      </select>
+        </mat-option>
+      </mat-select>
     </div>
 
     <!-- Sort -->
     <div class="tm-filter-wrap">
       <mat-icon class="tm-filter-icon">sort</mat-icon>
-      <select
+      <mat-select
         class="tm-filter-select"
         [ngModel]="sortBy()"
         (ngModelChange)="sortBy.set($event)"
+        panelWidth="auto"
       >
-        <option *ngFor="let s of sortOptions" [value]="s.value">
+        <mat-option *ngFor="let s of sortOptions" [value]="s.value">
           {{ s.label }}
-        </option>
-      </select>
+        </mat-option>
+      </mat-select>
     </div>
 
     <!-- Clear filters -->

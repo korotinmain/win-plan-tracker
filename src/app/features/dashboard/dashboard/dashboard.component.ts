@@ -45,6 +45,8 @@ import {
   UpcomingEventRow,
   MemberAvatar,
 } from '../upcoming-events-dialog/upcoming-events-dialog.component';
+import { TeamSizeDialogComponent } from '../team-size-dialog/team-size-dialog.component';
+import { SprintDaysDialogComponent } from '../sprint-days-dialog/sprint-days-dialog.component';
 
 interface TodaySummary {
   user: AppUser;
@@ -572,21 +574,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  openTeamSizeDialog(): void {
+    const members = this.allMembers();
+    this.dialog.open(TeamSizeDialogComponent, {
+      data: {
+        members,
+        working: this.working,
+        onVacation: this.onVacation,
+        asOf: new Date(),
+      },
+      panelClass: 'kpi-dialog-panel',
+      backdropClass: 'kpi-dialog-backdrop',
+      maxWidth: '95vw',
+    });
+  }
+
+  openSprintDaysDialog(): void {
+    const now = new Date();
+    const isoWeek = getISOWeek(now);
+    const isSecondHalf = isoWeek % 2 === 0;
+    const sprintStart = isSecondHalf
+      ? startOfISOWeek(addWeeks(now, -1))
+      : startOfISOWeek(now);
+    const sprintEnd = endOfISOWeek(addWeeks(sprintStart, 1));
+    const sp = this.sprintInfo;
+    this.dialog.open(SprintDaysDialogComponent, {
+      data: {
+        sprintNumber: sp.sprintNumber,
+        remaining: sp.remaining,
+        elapsed: sp.elapsed,
+        total: sp.total,
+        percent: sp.percent,
+        startDate: sp.startDate,
+        endDate: sp.endDate,
+        sprintStartRaw: sprintStart,
+        sprintEndRaw: sprintEnd,
+        asOf: now,
+      },
+      panelClass: 'kpi-dialog-panel',
+      backdropClass: 'kpi-dialog-backdrop',
+      maxWidth: '95vw',
+    });
+  }
+
   openEventsDialog(): void {
     const members = this.allMembers();
     const rawEvents = this.allMonthEvents();
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
 
-    const ACCENT_COLORS: Record<string, string> = {
-      vacation: '#6366f1',
-    };
-    const TYPE_LABELS: Record<string, string> = {
-      vacation: 'Vacation',
-    };
-    const TYPE_CATEGORY: Record<string, string> = {
-      vacation: 'Vacation',
-    };
+    const ACCENT_COLOR = '#6366f1';
     const AVATAR_PALETTE = [
       '#6366f1',
       '#8b5cf6',
@@ -597,54 +634,108 @@ export class DashboardComponent implements OnInit, OnDestroy {
       '#ef4444',
     ];
 
-    const map = new Map<string, UpcomingEventRow>();
+    // Collect future vacation dates per member
+    const byMember = new Map<string, string[]>();
     rawEvents
       .filter((e) => e.date >= todayStr && e.type === 'vacation')
-      .sort((a, b) => a.date.localeCompare(b.date))
       .forEach((e) => {
-        const key = `${e.date}__${e.type}`;
-        if (!map.has(key)) {
-          const d = parseISO(e.date);
-          const daysAway = differenceInCalendarDays(d, today);
-          map.set(key, {
-            key,
-            date: e.date,
-            type: e.type,
-            typeLabel: TYPE_LABELS[e.type] ?? e.type,
-            category: TYPE_CATEGORY[e.type] ?? e.type,
-            accentColor: ACCENT_COLORS[e.type] ?? '#6366f1',
-            displayDate: format(d, 'EEE, MMM d'),
-            isToday: daysAway === 0,
-            daysAway,
-            daysLabel:
-              daysAway === 0
-                ? 'Today'
-                : daysAway === 1
-                  ? 'Tomorrow'
-                  : `In ${daysAway}d`,
-            memberAvatars: [],
-          });
+        if (!byMember.has(e.userId)) byMember.set(e.userId, []);
+        byMember.get(e.userId)!.push(e.date);
+      });
+
+    const rows: UpcomingEventRow[] = [];
+
+    byMember.forEach((dates, userId) => {
+      // Deduplicate and sort
+      const sorted = [...new Set(dates)].sort();
+
+      // Group into consecutive runs — allow gap ≤ 3 days to bridge weekends (Fri→Mon = 3)
+      const runs: string[][] = [];
+      let current: string[] = [];
+      sorted.forEach((dateStr, i) => {
+        if (i === 0) {
+          current.push(dateStr);
+          return;
         }
-        const group = map.get(key)!;
-        const m = members.find((x) => x.uid === e.userId);
-        if (m) {
-          const hash = m.uid
-            .split('')
-            .reduce((acc, c) => acc + c.charCodeAt(0), 0);
-          const av: MemberAvatar = {
+        const diff = differenceInCalendarDays(
+          parseISO(dateStr),
+          parseISO(sorted[i - 1]),
+        );
+        if (diff <= 3) {
+          current.push(dateStr);
+        } else {
+          runs.push(current);
+          current = [dateStr];
+        }
+      });
+      if (current.length) runs.push(current);
+
+      const m = members.find((x) => x.uid === userId);
+      const hash = userId
+        .split('')
+        .reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      const av: MemberAvatar = m
+        ? {
             initials: this.getInitials(m.displayName),
             color: AVATAR_PALETTE[hash % AVATAR_PALETTE.length],
             name: m.displayName,
-          };
-          group.memberAvatars.push(av);
-        }
+          }
+        : { initials: '?', color: '#64748b', name: 'Unknown' };
+
+      runs.forEach((run) => {
+        const startDate = run[0];
+        const endDate = run[run.length - 1];
+        const startD = parseISO(startDate);
+        const endD = parseISO(endDate);
+        const daysAway = differenceInCalendarDays(startD, today);
+        const isSameMonth = startD.getMonth() === endD.getMonth();
+        const displayDate =
+          run.length === 1
+            ? format(startD, 'EEE, MMM d')
+            : isSameMonth
+              ? `${format(startD, 'MMM d')} – ${format(endD, 'd')}`
+              : `${format(startD, 'MMM d')} – ${format(endD, 'MMM d')}`;
+
+        rows.push({
+          key: `${userId}__${startDate}__${endDate}`,
+          date: startDate,
+          type: 'vacation',
+          typeLabel: 'Vacation',
+          category: 'Vacation',
+          accentColor: ACCENT_COLOR,
+          displayDate,
+          isToday: daysAway === 0,
+          daysAway,
+          daysLabel:
+            daysAway === 0
+              ? 'Today'
+              : daysAway === 1
+                ? 'Tomorrow'
+                : `In ${daysAway}d`,
+          memberAvatars: [av],
+        });
       });
+    });
+
+    rows.sort((a, b) => a.date.localeCompare(b.date));
+
+    const isoWeek = getISOWeek(today);
+    const isSecondHalf = isoWeek % 2 === 0;
+    const sprintStart = isSecondHalf
+      ? startOfISOWeek(addWeeks(today, -1))
+      : startOfISOWeek(today);
+    const sprintEnd = endOfISOWeek(addWeeks(sprintStart, 1));
+    const sprintEndStr = format(sprintEnd, 'yyyy-MM-dd');
+    const sprintVacationCount = rows.filter(
+      (r) => r.date <= sprintEndStr,
+    ).length;
 
     this.dialog.open(UpcomingEventsDialogComponent, {
       data: {
-        rows: Array.from(map.values()),
+        rows,
         sprintNumber: this.sprintInfo.sprintNumber,
         currentMonth: this.currentMonthYear,
+        sprintVacationCount,
       },
       panelClass: 'kpi-dialog-panel',
       backdropClass: 'kpi-dialog-backdrop',

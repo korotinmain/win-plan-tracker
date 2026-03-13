@@ -45,15 +45,32 @@
 
 @keyframes bell-ring {
   /* ring phase: 0–35% ≈ 1.1 s */
-  0%        { transform: rotate(0deg); }
-  4%        { transform: rotate(20deg); }
-  9%        { transform: rotate(-18deg); }
-  14%       { transform: rotate(14deg); }
-  19%       { transform: rotate(-10deg); }
-  24%       { transform: rotate(6deg); }
-  29%       { transform: rotate(-3deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  4% {
+    transform: rotate(20deg);
+  }
+  9% {
+    transform: rotate(-18deg);
+  }
+  14% {
+    transform: rotate(14deg);
+  }
+  19% {
+    transform: rotate(-10deg);
+  }
+  24% {
+    transform: rotate(6deg);
+  }
+  29% {
+    transform: rotate(-3deg);
+  }
   /* idle phase: 35–100% ≈ 2.1 s */
-  35%, 100% { transform: rotate(0deg); }
+  35%,
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 /* ── Unread badge ── */
@@ -69,7 +86,10 @@
   color: #fff;
   font-size: 0.62rem;
   font-weight: 800;
-  line-height: 17px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   border: 2px solid var(--c-bg);
   letter-spacing: 0;
@@ -93,7 +113,8 @@
 }
 
 @keyframes badge-ping {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
     transform: scale(1);
   }

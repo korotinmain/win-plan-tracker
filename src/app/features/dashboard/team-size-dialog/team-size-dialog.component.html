@@ -1,0 +1,94 @@
+<div class="tsd">
+  <!-- Gradient top band -->
+  <div class="tsd-band"></div>
+
+  <!-- Header -->
+  <div class="tsd-header">
+    <div class="tsd-header-left">
+      <div class="tsd-header-icon">
+        <mat-icon>group</mat-icon>
+      </div>
+      <div>
+        <h2 class="tsd-title">Team Size</h2>
+        <p class="tsd-subtitle">All registered team members</p>
+      </div>
+    </div>
+    <button class="tsd-close" (click)="close()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="tsd-body">
+    <!-- Hero stat + availability breakdown -->
+    <div class="tsd-hero">
+      <div class="tsd-hero-count">
+        <span class="tsd-hero-num">{{ total }}</span>
+        <div class="tsd-hero-meta">
+          <span class="tsd-hero-label">team members</span>
+          <span class="tsd-hero-asof">as of {{ asOfFormatted }}</span>
+        </div>
+      </div>
+      <div class="tsd-avail-bars">
+        <div class="tsd-avail-row">
+          <span class="tsd-avail-dot" style="background: #10b981"></span>
+          <span class="tsd-avail-label">Working</span>
+          <div class="tsd-avail-track">
+            <div
+              class="tsd-avail-fill"
+              [style.width.%]="workingPct"
+              style="background: #10b981"
+            ></div>
+          </div>
+          <span class="tsd-avail-val" style="color: #10b981">{{
+            data.working
+          }}</span>
+        </div>
+        <div class="tsd-avail-row">
+          <span class="tsd-avail-dot" style="background: #a78bfa"></span>
+          <span class="tsd-avail-label">Vacation</span>
+          <div class="tsd-avail-track">
+            <div
+              class="tsd-avail-fill"
+              [style.width.%]="vacationPct"
+              style="background: #a78bfa"
+            ></div>
+          </div>
+          <span class="tsd-avail-val" style="color: #a78bfa">{{
+            data.onVacation
+          }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members grouped by role -->
+    <div *ngFor="let group of membersByRole()" class="tsd-section">
+      <div class="tsd-section-header">
+        <span
+          class="tsd-role-pill"
+          [style.color]="roleColor(group.role)"
+          [style.background]="roleBg(group.role)"
+          >{{ roleLabel(group.role) }}</span
+        >
+        <span class="tsd-section-count">{{ group.members.length }}</span>
+      </div>
+      <div class="tsd-member-list">
+        <div class="tsd-member-row" *ngFor="let m of group.members">
+          <div class="tsd-avatar" [style.background]="avatarColor(m.uid)">
+            {{ getInitials(m.displayName) }}
+          </div>
+          <div class="tsd-member-body">
+            <span class="tsd-member-name">{{ m.displayName }}</span>
+            <span class="tsd-member-email">{{ m.email }}</span>
+          </div>
+          <span
+            class="tsd-member-badge"
+            [style.color]="roleColor(m.role)"
+            [style.border-color]="roleColor(m.role) + '44'"
+            >{{ roleLabel(m.role) }}</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

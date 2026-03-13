@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Team } from '../../../core/models/team.model';
@@ -25,6 +27,8 @@ import {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatDividerModule,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './team-settings.component.html',
   styleUrls: ['./team-settings.component.scss'],

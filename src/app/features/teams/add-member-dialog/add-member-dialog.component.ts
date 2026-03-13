@@ -17,6 +17,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
@@ -56,6 +58,8 @@ const AVATAR_COLORS = [
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './add-member-dialog.component.html',
   styleUrls: ['./add-member-dialog.component.scss'],

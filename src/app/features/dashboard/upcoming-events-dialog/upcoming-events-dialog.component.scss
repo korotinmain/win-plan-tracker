@@ -4,16 +4,350 @@
 
 /* ─── Shell ───────────────────────────────────────────────── */
 .ued {
-  background: #0d1117;
+  background: #0b0f19;
   color: #e6edf3;
-  border-radius: 20px;
-  width: 560px;
+  border-radius: 22px;
+  width: 580px;
   max-width: 100%;
-  font-family: inherit;
+  font-family: "Inter", "Roboto", sans-serif;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
+  max-height: 82vh;
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.12),
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.ued-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 26px 24px 20px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #0d1117 0%, #161d2e 55%, #1a1040 100%);
+  overflow: hidden;
+
+  /* dot-grid texture */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+    pointer-events: none;
+  }
+
+  /* bottom accent glow */
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(99, 102, 241, 0.55),
+      rgba(139, 92, 246, 0.3),
+      transparent
+    );
+  }
+}
+
+.ued-title-block {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ued-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.ued-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.ued-close {
+  position: relative;
+  z-index: 1;
+  margin-top: -4px;
+  margin-right: -8px;
+  color: #64748b;
+  transition:
+    color 0.15s,
+    background 0.15s;
+
+  &:hover {
+    color: #f1f5f9;
+  }
+}
+
+/* ─── Sprint stats bar ────────────────────────────────────── */
+.ued-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 24px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ued-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.ued-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #a5b4fc;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ued-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.ued-stat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.ued-stat-sep {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+/* ─── Scrollable body ─────────────────────────────────────── */
+.ued-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 16px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+}
+
+/* ─── Event row ───────────────────────────────────────────── */
+.ued-row {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  overflow: hidden;
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    box-shadow 0.18s,
+    transform 0.18s;
+
+  &:hover {
+    border-color: var(--row-accent);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 0 0 1px var(--row-accent, rgba(99, 102, 241, 0.3)),
+      0 4px 16px rgba(0, 0, 0, 0.25);
+    transform: translateX(2px);
+  }
+}
+
+.ued-accent-bar {
+  width: 3px;
+  flex-shrink: 0;
+  background: var(--row-accent);
+  border-radius: 2px 0 0 2px;
+}
+
+.ued-row-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  padding: 13px 16px;
+  gap: 12px;
+}
+
+.ued-row-left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ued-event-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.ued-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.ued-meta-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  color: #475569;
+}
+
+/* ─── Right side ──────────────────────────────────────────── */
+.ued-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Timing badge ────────────────────────────────────────── */
+.ued-badge {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.ued-badge-today {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.ued-badge-tomorrow {
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.ued-badge-future {
+  background: rgba(255, 255, 255, 0.06);
+  color: #64748b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Avatar stack ────────────────────────────────────────── */
+.ued-avatars {
+  display: flex;
+  align-items: center;
+}
+
+.ued-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid #0b0f19;
+  margin-left: -7px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+.ued-av-more {
+  background: #1e293b;
+  color: #64748b;
+  font-size: 0.6rem;
+}
+
+/* ─── Category pill ───────────────────────────────────────── */
+.ued-category {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+/* ─── Empty state ─────────────────────────────────────────── */
+.ued-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px 24px;
+  color: #475569;
+
+  mat-icon {
+    font-size: 44px;
+    width: 44px;
+    height: 44px;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: 0.88rem;
+    margin: 0;
+    font-weight: 500;
+  }
 }
 
 /* ─── Header ──────────────────────────────────────────────── */
