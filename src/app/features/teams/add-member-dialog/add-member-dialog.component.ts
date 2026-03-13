@@ -16,7 +16,6 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
@@ -28,23 +27,14 @@ import {
   TIMEZONES,
   TeamMember,
 } from '../../../core/models/team-member.model';
+import { getInitials } from '../../../shared/utils/initials.util';
+import { getAvatarColor } from '../../../shared/utils/avatar.util';
 
 export interface AddMemberDialogData {
   teamId: string;
   team: Team;
   currentMemberIds: string[];
 }
-
-const AVATAR_COLORS = [
-  '#6366f1',
-  '#8b5cf6',
-  '#ec4899',
-  '#f59e0b',
-  '#10b981',
-  '#3b82f6',
-  '#ef4444',
-  '#06b6d4',
-];
 
 @Component({
   selector: 'app-add-member-dialog',
@@ -57,7 +47,6 @@ const AVATAR_COLORS = [
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
     MatSelectModule,
     MatFormFieldModule,
   ],
@@ -66,7 +55,6 @@ const AVATAR_COLORS = [
 })
 export class AddMemberDialogComponent implements OnInit {
   private teamService = inject(TeamService);
-  private snackBar = inject(MatSnackBar);
   private ref = inject(MatDialogRef<AddMemberDialogComponent>);
   readonly data: AddMemberDialogData = inject(MAT_DIALOG_DATA);
 
@@ -168,23 +156,6 @@ export class AddMemberDialogComponent implements OnInit {
     this.ref.close(false);
   }
 
-  initials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
-
-  avatarColor(uid: string): string {
-    let hash = 0;
-    for (let i = 0; i < uid.length; i++) {
-      hash = uid.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-  }
+  protected readonly initials = getInitials;
+  protected readonly avatarColor = getAvatarColor;
 }

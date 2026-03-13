@@ -18,6 +18,8 @@ import {
   MEMBER_ROLES,
   TIMEZONES,
 } from '../../../core/models/team-member.model';
+import { getInitials } from '../../../shared/utils/initials.util';
+import { getAvatarColor } from '../../../shared/utils/avatar.util';
 
 export interface RichMember {
   uid: string;
@@ -39,17 +41,6 @@ export interface EditMemberDialogData {
   team: Team;
   member: RichMember;
 }
-
-const AVATAR_COLORS = [
-  '#6366f1',
-  '#8b5cf6',
-  '#ec4899',
-  '#f59e0b',
-  '#10b981',
-  '#3b82f6',
-  '#ef4444',
-  '#06b6d4',
-];
 
 @Component({
   selector: 'app-edit-member-dialog',
@@ -140,23 +131,6 @@ export class EditMemberDialogComponent {
     this.ref.close(false);
   }
 
-  initials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
-
-  avatarColor(uid: string): string {
-    let hash = 0;
-    for (let i = 0; i < uid.length; i++) {
-      hash = uid.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-  }
+  protected readonly initials = getInitials;
+  protected readonly avatarColor = getAvatarColor;
 }

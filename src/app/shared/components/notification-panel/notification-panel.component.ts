@@ -21,6 +21,8 @@ import {
   isToday,
   isYesterday,
 } from 'date-fns';
+import { getInitials } from '../../../shared/utils/initials.util';
+import { getAvatarGradient } from '../../../shared/utils/avatar.util';
 
 @Component({
   selector: 'app-notification-panel',
@@ -129,32 +131,8 @@ export class NotificationPanelComponent {
     }
   }
 
-  initials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
-
-  private readonly avatarPalette = [
-    ['#6366f1', '#8b5cf6'],
-    ['#0ea5e9', '#6366f1'],
-    ['#14b8a6', '#0ea5e9'],
-    ['#f43f5e', '#ec4899'],
-    ['#22c55e', '#16a34a'],
-    ['#f97316', '#ef4444'],
-  ];
-
-  avatarGradient(uid: string): string {
-    const hash = uid.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const [c1, c2] = this.avatarPalette[hash % this.avatarPalette.length];
-    return `linear-gradient(135deg, ${c1}, ${c2})`;
-  }
+  protected readonly initials = getInitials;
+  protected readonly avatarGradient = getAvatarGradient;
 
   private _toDate(val: any): Date {
     if (val instanceof Date) return val;

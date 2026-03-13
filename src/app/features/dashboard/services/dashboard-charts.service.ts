@@ -59,7 +59,10 @@ export class DashboardChartsService {
             itemStyle: {
               color: {
                 type: 'linear',
-                x: 0, y: 0, x2: 1, y2: 0,
+                x: 0,
+                y: 0,
+                x2: 1,
+                y2: 0,
                 colorStops: [
                   { offset: 0, color: '#4f46e5' },
                   { offset: 1, color: '#818cf8' },
@@ -71,7 +74,9 @@ export class DashboardChartsService {
             roundCap: true,
             lineStyle: {
               width: 14,
-              color: [[1, dark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.1)']],
+              color: [
+                [1, dark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.1)'],
+              ],
             },
           },
           axisTick: { show: false },
@@ -105,11 +110,17 @@ export class DashboardChartsService {
         trigger: 'axis',
         axisPointer: {
           type: 'shadow',
-          shadowStyle: { color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
+          shadowStyle: {
+            color: dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+          },
         },
         backgroundColor: tt.bg,
         borderColor: tt.border,
-        textStyle: { color: tt.text, fontFamily: 'Inter, sans-serif', fontSize: 12 },
+        textStyle: {
+          color: tt.text,
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const d = days[params[0].dataIndex];
           if (d.weekend) return `<b>${d.label} ${d.dayNum}</b><br/>Weekend`;
@@ -147,9 +158,17 @@ export class DashboardChartsService {
           data: days.map((d) => ({
             value: d.working,
             itemStyle: d.weekend
-              ? { color: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderRadius: [4, 4, 4, 4] }
+              ? {
+                  color: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                  borderRadius: [4, 4, 4, 4],
+                }
               : d.isToday
-                ? { color: '#6366f1', borderColor: '#818cf8', borderWidth: 1, borderRadius: [0, 0, 4, 4] }
+                ? {
+                    color: '#6366f1',
+                    borderColor: '#818cf8',
+                    borderWidth: 1,
+                    borderRadius: [0, 0, 4, 4],
+                  }
                 : {},
           })),
         },
@@ -159,7 +178,10 @@ export class DashboardChartsService {
           stack: 'total',
           barMaxWidth: 40,
           itemStyle: { color: '#7c3aed', borderRadius: [4, 4, 0, 0] },
-          data: days.map((d) => ({ value: d.onVacation, itemStyle: d.weekend ? { color: 'transparent' } : {} })),
+          data: days.map((d) => ({
+            value: d.onVacation,
+            itemStyle: d.weekend ? { color: 'transparent' } : {},
+          })),
         },
       ] as any,
     };
@@ -177,7 +199,11 @@ export class DashboardChartsService {
         trigger: 'axis',
         backgroundColor: tt.bg,
         borderColor: tt.border,
-        textStyle: { color: tt.text, fontFamily: 'Inter, sans-serif', fontSize: 12 },
+        textStyle: {
+          color: tt.text,
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const p = params[0];
           return `<b>${p.name}</b><br/>Availability: <b>${p.value}%</b><br/>Person-days: <b>${data[p.dataIndex]?.personDays}</b>`;
@@ -188,7 +214,12 @@ export class DashboardChartsService {
         data: data.map((d) => d.week),
         axisLine: { lineStyle: { color: gridColor } },
         axisTick: { show: false },
-        axisLabel: { color: textColor, fontSize: 11, fontFamily: 'Inter, sans-serif', fontWeight: 'bold' },
+        axisLabel: {
+          color: textColor,
+          fontSize: 11,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold',
+        },
       },
       yAxis: {
         type: 'value',
@@ -196,7 +227,12 @@ export class DashboardChartsService {
         max: 100,
         interval: 25,
         splitLine: { lineStyle: { color: gridColor } },
-        axisLabel: { color: textColor, fontSize: 10, fontFamily: 'Inter, sans-serif', formatter: '{value}%' },
+        axisLabel: {
+          color: textColor,
+          fontSize: 10,
+          fontFamily: 'Inter, sans-serif',
+          formatter: '{value}%',
+        },
       },
       series: [
         {
@@ -206,13 +242,26 @@ export class DashboardChartsService {
           symbolSize: 8,
           symbol: 'circle',
           data: data.map((d) => d.pct),
-          itemStyle: { color: '#10b981', borderWidth: 2, borderColor: dark ? '#111827' : '#ffffff' },
+          itemStyle: {
+            color: '#10b981',
+            borderWidth: 2,
+            borderColor: dark ? '#111827' : '#ffffff',
+          },
           lineStyle: { color: '#10b981', width: 3 },
           areaStyle: {
             color: {
-              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
               colorStops: [
-                { offset: 0, color: dark ? 'rgba(16,185,129,0.40)' : 'rgba(16,185,129,0.22)' },
+                {
+                  offset: 0,
+                  color: dark
+                    ? 'rgba(16,185,129,0.40)'
+                    : 'rgba(16,185,129,0.22)',
+                },
                 { offset: 1, color: 'rgba(16,185,129,0.02)' },
               ],
             } as any,
@@ -221,8 +270,18 @@ export class DashboardChartsService {
             silent: true,
             symbol: 'none',
             data: [{ type: 'average', name: 'Avg' }],
-            lineStyle: { color: '#10b981', type: 'dashed', width: 1, opacity: 0.5 },
-            label: { formatter: 'avg {c}%', color: '#10b981', fontSize: 10, fontFamily: 'Inter, sans-serif' },
+            lineStyle: {
+              color: '#10b981',
+              type: 'dashed',
+              width: 1,
+              opacity: 0.5,
+            },
+            label: {
+              formatter: 'avg {c}%',
+              color: '#10b981',
+              fontSize: 10,
+              fontFamily: 'Inter, sans-serif',
+            },
           },
         },
       ] as any,
@@ -241,12 +300,18 @@ export class DashboardChartsService {
         axisPointer: { type: 'shadow' },
         backgroundColor: tt.bg,
         borderColor: tt.border,
-        textStyle: { color: tt.text, fontFamily: 'Inter, sans-serif', fontSize: 12 },
+        textStyle: {
+          color: tt.text,
+          fontFamily: 'Inter, sans-serif',
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const d = cap.days[params[0].dataIndex];
           let html = `<b>${d.label}</b><br/>`;
-          if (d.working > 0) html += `<span style="color:#10b981">●</span> Working: ${d.working}<br/>`;
-          if (d.vacation > 0) html += `<span style="color:#7c3aed">●</span> Vacation: ${d.vacation}<br/>`;
+          if (d.working > 0)
+            html += `<span style="color:#10b981">●</span> Working: ${d.working}<br/>`;
+          if (d.vacation > 0)
+            html += `<span style="color:#7c3aed">●</span> Vacation: ${d.vacation}<br/>`;
           return html;
         },
       },
@@ -255,19 +320,30 @@ export class DashboardChartsService {
         data: cap.days.map((d) => d.label),
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { color: textColor, fontSize: 10, fontFamily: 'Inter, sans-serif', fontWeight: 'bold', interval: 0 },
+        axisLabel: {
+          color: textColor,
+          fontSize: 10,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold',
+          interval: 0,
+        },
       },
       yAxis: { type: 'value', max: cap.total, show: false },
       series: [
         {
           name: 'Working',
-          type: 'bar', stack: 'cap', barMaxWidth: 44, barCategoryGap: '28%',
+          type: 'bar',
+          stack: 'cap',
+          barMaxWidth: 44,
+          barCategoryGap: '28%',
           itemStyle: { color: '#10b981', borderRadius: [0, 0, 4, 4] },
           data: cap.days.map((d) => d.working),
         },
         {
           name: 'Vacation',
-          type: 'bar', stack: 'cap', barMaxWidth: 44,
+          type: 'bar',
+          stack: 'cap',
+          barMaxWidth: 44,
           itemStyle: { color: '#7c3aed', borderRadius: [4, 4, 0, 0] },
           data: cap.days.map((d) => d.vacation),
         },

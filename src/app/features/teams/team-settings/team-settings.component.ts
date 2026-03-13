@@ -16,6 +16,8 @@ import {
   HolidayService,
   NagerCountry,
 } from '../../../core/services/holiday.service';
+import { getInitials } from '../../../shared/utils/initials.util';
+import { getRoleColor, getRoleBg } from '../../../shared/utils/role.util';
 
 @Component({
   selector: 'app-team-settings',
@@ -78,17 +80,22 @@ export class TeamSettingsComponent {
       this.loading.set(false);
       return;
     }
-    const [team, allUsers] = await Promise.all([
-      this.teamService.getTeam(teamId),
-      this.teamService.getAllUsers(),
-    ]);
-    if (team) {
-      this.team.set(team);
-      this.members.set(allUsers.filter((u) => team.memberIds.includes(u.uid)));
-      this.selectedCountry.set(team.holidayCountryCode ?? '');
+    try {
+      const [team, allUsers] = await Promise.all([
+        this.teamService.getTeam(teamId),
+        this.teamService.getAllUsers(),
+      ]);
+      if (team) {
+        this.team.set(team);
+        this.members.set(allUsers.filter((u) => team.memberIds.includes(u.uid)));
+        this.selectedCountry.set(team.holidayCountryCode ?? '');
+      }
+      this.allUsers.set(allUsers);
+    } catch (e) {
+      console.error('[TeamSettings] load failed', e);
+    } finally {
+      this.loading.set(false);
     }
-    this.allUsers.set(allUsers);
-    this.loading.set(false);
   }
 
   private async loadCountries(): Promise<void> {
@@ -103,24 +110,34 @@ export class TeamSettingsComponent {
     const team = this.team();
     if (!team) return;
     this.saving.set(user.uid);
-    await this.teamService.addMember(team.id, user.uid, team.memberIds);
-    this.team.update((t) =>
-      t ? { ...t, memberIds: [...t.memberIds, user.uid] } : t,
-    );
-    this.members.update((m) => [...m, user]);
-    this.saving.set(null);
+    try {
+      await this.teamService.addMember(team.id, user.uid, team.memberIds);
+      this.team.update((t) =>
+        t ? { ...t, memberIds: [...t.memberIds, user.uid] } : t,
+      );
+      this.members.update((m) => [...m, user]);
+    } catch (e) {
+      console.error('[TeamSettings] add member failed', e);
+    } finally {
+      this.saving.set(null);
+    }
   }
 
   async remove(user: AppUser): Promise<void> {
     const team = this.team();
     if (!team) return;
     this.saving.set(user.uid);
-    await this.teamService.removeMember(team.id, user.uid, team.memberIds);
-    this.team.update((t) =>
-      t ? { ...t, memberIds: t.memberIds.filter((id) => id !== user.uid) } : t,
-    );
-    this.members.update((m) => m.filter((u) => u.uid !== user.uid));
-    this.saving.set(null);
+    try {
+      await this.teamService.removeMember(team.id, user.uid, team.memberIds);
+      this.team.update((t) =>
+        t ? { ...t, memberIds: t.memberIds.filter((id) => id !== user.uid) } : t,
+      );
+      this.members.update((m) => m.filter((u) => u.uid !== user.uid));
+    } catch (e) {
+      console.error('[TeamSettings] remove member failed', e);
+    } finally {
+      this.saving.set(null);
+    }
   }
 
   async saveCountry(): Promise<void> {
@@ -148,38 +165,7 @@ export class TeamSettingsComponent {
     this.router.navigate(['/teams']);
   }
 
-  initials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
-
-  roleBg(role: string): string {
-    return (
-      (
-        { admin: '#dbeafe', manager: '#ede9fe', employee: '#f0fdf4' } as Record<
-          string,
-          string
-        >
-      )[role] ?? '#f1f5f9'
-    );
-  }
-
-  roleColor(role: string): string {
-    return (
-      (
-        {
-          admin: '#1d4ed8',
-          manager: '#6d28d9',
-          employee: '#166534',
-        } as Record<string, string>
-      )[role] ?? '#475569'
-    );
-  }
+  protected readonly initials = getInitials;
+  protected readonly roleBg = getRoleBg;
+  protected readonly roleColor = getRoleColor;
 }

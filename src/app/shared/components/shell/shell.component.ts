@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +14,7 @@ import { PresenceService } from '../../../core/services/presence.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AppUser } from '../../../core/models/user.model';
 import { NotificationPanelComponent } from '../notification-panel/notification-panel.component';
+import { getInitials } from '../../../shared/utils/initials.util';
 
 interface NavItem {
   label: string;
@@ -44,6 +46,7 @@ export class ShellComponent {
   private _presence = inject(PresenceService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
+  private destroyRef = inject(DestroyRef);
 
   currentUser: AppUser | null = null;
   sidenavOpen = signal(true);
@@ -76,9 +79,11 @@ export class ShellComponent {
   );
 
   constructor() {
-    this.authService.currentUser$.subscribe((user) => {
-      this.currentUser = user ?? null;
-    });
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.currentUser = user ?? null;
+      });
   }
 
   isVisible(item: NavItem): boolean {
@@ -98,17 +103,7 @@ export class ShellComponent {
     await this.authService.logout();
   }
 
-  getInitials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
+  protected readonly getInitials = getInitials;
 
   private titleFromUrl(url: string): string {
     if (/^\/teams\/[^/]+\/settings/.test(url)) return 'Team Settings';

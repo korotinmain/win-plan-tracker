@@ -57,6 +57,8 @@ import { DEFAULT_CEREMONY_CONFIG } from '../../../core/models/team.model'; // on
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest, map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getInitials } from '../../../shared/utils/initials.util';
+import { getAvatarGradient } from '../../../shared/utils/avatar.util';
 
 interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -503,20 +505,8 @@ export class CalendarGridComponent implements OnInit {
       });
   }
 
-  private readonly avatarPalette = [
-    ['#6366f1', '#8b5cf6'],
-    ['#0ea5e9', '#6366f1'],
-    ['#14b8a6', '#0ea5e9'],
-    ['#f43f5e', '#ec4899'],
-    ['#22c55e', '#16a34a'],
-    ['#f97316', '#ef4444'],
-  ];
-
-  getAvatarGradient(uid: string): string {
-    const hash = uid.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const [c1, c2] = this.avatarPalette[hash % this.avatarPalette.length];
-    return `linear-gradient(135deg, ${c1}, ${c2})`;
-  }
+  protected readonly getInitials = getInitials;
+  protected readonly getAvatarGradient = getAvatarGradient;
 
   trackBySegment(_: number, seg: RowSegment): string {
     return seg.days[0].date + '_' + seg.type;
@@ -535,17 +525,5 @@ export class CalendarGridComponent implements OnInit {
 
   trackByUser(_: number, row: MemberRow): string {
     return row.user.uid;
-  }
-
-  getInitials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
   }
 }

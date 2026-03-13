@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { format } from 'date-fns';
 import { CalendarEvent } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
+import { getInitials } from '../../../shared/utils/initials.util';
 
 export type KpiType = 'working' | 'vacation';
 
@@ -129,17 +130,7 @@ export class KpiDetailDialogComponent {
     return format(this.data.asOf, 'h:mm aa');
   }
 
-  getInitials(name: string): string {
-    return (
-      (name ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
+  protected readonly getInitials = getInitials;
 
   close(): void {
     this.dialogRef.close();
