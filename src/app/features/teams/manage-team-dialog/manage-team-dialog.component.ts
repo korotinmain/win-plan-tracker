@@ -115,7 +115,10 @@ export class ManageTeamDialogComponent {
         user.uid,
         this.team().memberIds,
       );
-      this.team.update((t) => ({ ...t, memberIds: [...t.memberIds, user.uid] }));
+      this.team.update((t) => ({
+        ...t,
+        memberIds: [...t.memberIds, user.uid],
+      }));
       this.members.update((m) => [...m, user]);
     } catch (e) {
       console.error('[ManageTeamDialog] add member failed', e);

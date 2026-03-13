@@ -428,7 +428,7 @@
 
     <!-- "Add Team Member" ghost card -->
     <button
-      *ngIf="isAdminOrManager()"
+      *ngIf="isAdminOrManager() && filteredMembers().length > 0"
       class="tm-add-card"
       (click)="openAddMember()"
       type="button"

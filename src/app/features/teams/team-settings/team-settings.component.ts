@@ -87,7 +87,9 @@ export class TeamSettingsComponent {
       ]);
       if (team) {
         this.team.set(team);
-        this.members.set(allUsers.filter((u) => team.memberIds.includes(u.uid)));
+        this.members.set(
+          allUsers.filter((u) => team.memberIds.includes(u.uid)),
+        );
         this.selectedCountry.set(team.holidayCountryCode ?? '');
       }
       this.allUsers.set(allUsers);
@@ -130,7 +132,9 @@ export class TeamSettingsComponent {
     try {
       await this.teamService.removeMember(team.id, user.uid, team.memberIds);
       this.team.update((t) =>
-        t ? { ...t, memberIds: t.memberIds.filter((id) => id !== user.uid) } : t,
+        t
+          ? { ...t, memberIds: t.memberIds.filter((id) => id !== user.uid) }
+          : t,
       );
       this.members.update((m) => m.filter((u) => u.uid !== user.uid));
     } catch (e) {

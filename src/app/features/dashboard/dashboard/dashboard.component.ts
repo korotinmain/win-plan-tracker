@@ -23,6 +23,7 @@ import {
   eachDayOfInterval,
   isWeekend,
   getISOWeek,
+  startOfISOWeek,
   differenceInCalendarDays,
   parseISO,
 } from 'date-fns';
@@ -188,7 +189,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const total = members.length;
     if (!total) return null;
 
-    const { startRaw: spStart, endRaw: spEnd } = this.sprintService.getSprintInfo();
+    const { startRaw: spStart, endRaw: spEnd } =
+      this.sprintService.getSprintInfo();
     const sprintDays = eachDayOfInterval({ start: spStart, end: spEnd }).filter(
       (d) => !isWeekend(d),
     );
@@ -577,25 +579,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async ([events]) => {
-      try {
-        const members = await this.teamService.getTeamMembers(teamId);
-        this.allMonthEvents.set(events);
-        this.allMembers.set(members);
-        const todayStr = format(now, 'yyyy-MM-dd');
-        this.todaySummary.set(
-          members.map((user) => ({
-            user,
-            event:
-              events.find((e) => e.userId === user.uid && e.date === todayStr) ??
-              null,
-          }))
-        );
-      } catch (e) {
-        console.error('[Dashboard] Failed to load team data', e);
-      } finally {
-        this.loading.set(false);
-      }
-    });
+        try {
+          const members = await this.teamService.getTeamMembers(teamId);
+          this.allMonthEvents.set(events);
+          this.allMembers.set(members);
+          const todayStr = format(now, 'yyyy-MM-dd');
+          this.todaySummary.set(
+            members.map((user) => ({
+              user,
+              event:
+                events.find(
+                  (e) => e.userId === user.uid && e.date === todayStr,
+                ) ?? null,
+            })),
+          );
+        } catch (e) {
+          console.error('[Dashboard] Failed to load team data', e);
+        } finally {
+          this.loading.set(false);
+        }
+      });
   }
 
   ngOnDestroy(): void {
