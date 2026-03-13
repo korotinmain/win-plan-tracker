@@ -1,0 +1,65 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 256 256"
+  fill="none"
+>
+  <defs>
+    <linearGradient id="bg" x1="30" y1="22" x2="226" y2="234" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#08111f" />
+      <stop offset="0.48" stop-color="#0f1c31" />
+      <stop offset="1" stop-color="#171b2f" />
+    </linearGradient>
+    <radialGradient id="glowTop" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(90 62) rotate(41) scale(112 98)">
+      <stop stop-color="#fff2cb" stop-opacity="0.24" />
+      <stop offset="1" stop-color="#fff2cb" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowBottom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(190 202) rotate(180) scale(108 86)">
+      <stop stop-color="#c58b3f" stop-opacity="0.26" />
+      <stop offset="1" stop-color="#c58b3f" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="gold" x1="60" y1="68" x2="196" y2="184" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff4cf" />
+      <stop offset="0.34" stop-color="#eccb88" />
+      <stop offset="0.68" stop-color="#c39147" />
+      <stop offset="1" stop-color="#8d612f" />
+    </linearGradient>
+    <linearGradient id="goldSoft" x1="78" y1="74" x2="188" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff7db" stop-opacity="0.72" />
+      <stop offset="1" stop-color="#c08b44" stop-opacity="0.25" />
+    </linearGradient>
+    <filter id="shadow" x="28" y="40" width="200" height="170" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#050814" flood-opacity="0.42" />
+    </filter>
+  </defs>
+
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#bg)" />
+  <rect x="17.5" y="17.5" width="221" height="221" rx="54.5" stroke="url(#goldSoft)" stroke-width="3" />
+  <rect x="31" y="31" width="194" height="194" rx="42" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#glowTop)" />
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#glowBottom)" />
+
+  <path
+    d="M64 70L88 172L128 116L168 172L192 70"
+    stroke="url(#gold)"
+    stroke-width="18"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#shadow)"
+  />
+  <path
+    d="M79 88L94 153L128 106L162 153L177 88"
+    stroke="#fff8e3"
+    stroke-opacity="0.18"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M152 78H186"
+    stroke="url(#gold)"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+  <circle cx="196" cy="78" r="8" fill="#fff0c1" />
+  <circle cx="196" cy="78" r="15" stroke="#f0cf8a" stroke-opacity="0.25" stroke-width="2" />
+</svg>

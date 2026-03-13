@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Auth-gated routes — no value to crawlers
+Disallow: /dashboard
+Disallow: /calendar
+Disallow: /teams
+Disallow: /settings
+
+Sitemap: https://win-plan-tracker.web.app/sitemap.xml
