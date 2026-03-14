@@ -2,18 +2,22 @@ import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AppUser } from '../../../core/models/user.model';
 import { NotificationPanelComponent } from '../notification-panel/notification-panel.component';
+import {
+  DropdownMenuComponent,
+  MenuItemComponent,
+  MenuDividerComponent,
+} from '../dropdown-menu/dropdown-menu.component';
 import { getInitials } from '../../../shared/utils/initials.util';
 
 interface NavItem {
@@ -31,10 +35,11 @@ interface NavItem {
     RouterModule,
     MatIconModule,
     MatButtonModule,
-    MatMenuModule,
-    MatDividerModule,
     MatTooltipModule,
     NotificationPanelComponent,
+    DropdownMenuComponent,
+    MenuItemComponent,
+    MenuDividerComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.scss'],
@@ -49,7 +54,13 @@ export class ShellComponent {
   private destroyRef = inject(DestroyRef);
 
   currentUser: AppUser | null = null;
-  sidenavOpen = signal(true);
+  sidenavOpen = signal(
+    typeof window !== 'undefined' ? window.innerWidth > 768 : true,
+  );
+
+  private get isMobile(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 768;
+  }
   isDark = this.themeService.isDark;
 
   today = new Date().toLocaleDateString('en-US', {
@@ -84,6 +95,29 @@ export class ShellComponent {
       .subscribe((user) => {
         this.currentUser = user ?? null;
       });
+
+    // Close sidebar on mobile when navigating
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        if (this.isMobile) {
+          this.sidenavOpen.set(false);
+        }
+      });
+
+    // Auto-close when window resizes to mobile
+    if (typeof window !== 'undefined') {
+      fromEvent(window, 'resize')
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          if (this.isMobile && this.sidenavOpen()) {
+            this.sidenavOpen.set(false);
+          }
+        });
+    }
   }
 
   isVisible(item: NavItem): boolean {
@@ -101,6 +135,16 @@ export class ShellComponent {
 
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  headerScrolled = signal(false);
+
+  onPageScroll(event: Event): void {
+    this.headerScrolled.set((event.target as HTMLElement).scrollTop > 4);
+  }
+
+  navigate(route: string): void {
+    this.router.navigate([route]);
   }
 
   protected readonly getInitials = getInitials;

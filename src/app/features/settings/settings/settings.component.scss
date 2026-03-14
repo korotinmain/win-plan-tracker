@@ -6,6 +6,14 @@
   padding: 28px;
   background: var(--c-bg);
   min-height: 100%;
+
+  @media (max-width: 768px) {
+    padding: 18px 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 10px;
+  }
 }
 
 /* ── Header ── */
@@ -433,6 +441,10 @@
   .st-layout {
     grid-template-columns: 1fr;
   }
+
+  .st-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .st-toggle {
@@ -530,7 +542,7 @@
   }
 
   &:not(.active):not(:disabled):hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--c-border);
     color: var(--c-text);
   }
 }

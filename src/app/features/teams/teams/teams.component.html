@@ -14,6 +14,16 @@
     </div>
     <div class="tm-header-actions" *ngIf="hasTeam()">
       <button
+        *ngIf="canLeaveTeam()"
+        class="btn-leave-team"
+        (click)="leaveTeam()"
+        type="button"
+        matTooltip="Leave Team"
+      >
+        <mat-icon>logout</mat-icon>
+        Leave Team
+      </button>
+      <button
         *ngIf="isAdminOrManager()"
         class="btn-manage-team"
         (click)="openManageTeam()"
@@ -69,7 +79,7 @@
       </div>
       <div class="tm-stat-info">
         <div class="tm-stat-value">{{ totalSprints() }}</div>
-        <div class="tm-stat-label">Active Sprints</div>
+        <div class="tm-stat-label">This Sprint</div>
       </div>
     </div>
   </div>
@@ -323,31 +333,38 @@
       <div class="tm-card-actions" *ngIf="isAdminOrManager()">
         <button
           class="tm-menu-trigger"
-          [matMenuTriggerFor]="memberMenu"
-          (click)="$event.stopPropagation()"
+          (click)="
+            $event.stopPropagation(); memberMenu.toggle($event.currentTarget)
+          "
           type="button"
           matTooltip="Options"
         >
           <mat-icon>more_vert</mat-icon>
         </button>
-        <mat-menu #memberMenu="matMenu" class="tm-member-menu">
-          <button mat-menu-item (click)="openEditMember(member, $event)">
-            <mat-icon>edit</mat-icon>
-            <span>Edit member</span>
-          </button>
-          <button mat-menu-item (click)="openEditMember(member, $event)">
-            <mat-icon>person</mat-icon>
-            <span>View details</span>
-          </button>
-          <button
-            mat-menu-item
-            class="tm-menu-danger"
-            (click)="openEditMember(member, $event)"
+        <app-dropdown-menu #memberMenu yPosition="below" xPosition="before">
+          <app-menu-item (itemClick)="openEditMember(member)">
+            <span class="dmi-icon-wrap dmi-icon-wrap--indigo"
+              ><mat-icon>edit</mat-icon></span
+            >
+            <span class="dmi-label">Edit member</span>
+          </app-menu-item>
+          <app-menu-item (itemClick)="openEditMember(member)">
+            <span class="dmi-icon-wrap dmi-icon-wrap--teal"
+              ><mat-icon>person</mat-icon></span
+            >
+            <span class="dmi-label">View details</span>
+          </app-menu-item>
+          <app-menu-divider></app-menu-divider>
+          <app-menu-item
+            [danger]="true"
+            (itemClick)="confirmRemoveMember(member)"
           >
-            <mat-icon>person_remove</mat-icon>
-            <span>Remove</span>
-          </button>
-        </mat-menu>
+            <span class="dmi-icon-wrap dmi-icon-wrap--red"
+              ><mat-icon>person_remove</mat-icon></span
+            >
+            <span class="dmi-label">Remove</span>
+          </app-menu-item>
+        </app-dropdown-menu>
       </div>
 
       <!-- Avatar with presence indicator -->
@@ -416,7 +433,7 @@
         <div class="tm-member-stat-divider"></div>
         <div class="tm-member-stat">
           <span class="tm-member-stat-value">{{ member.sprintCount }}</span>
-          <span class="tm-member-stat-label">SPRINTS</span>
+          <span class="tm-member-stat-label">SPRINT</span>
         </div>
         <div class="tm-member-stat-divider"></div>
         <div class="tm-member-stat">

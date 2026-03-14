@@ -11,9 +11,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  DropdownMenuComponent,
+  MenuItemComponent,
+  MenuDividerComponent,
+} from '../../../shared/components/dropdown-menu/dropdown-menu.component';
 import { switchMap, combineLatest, of, map, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
+import { SprintService } from '../../../core/services/sprint.service';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import { Team } from '../../../core/models/team.model';
@@ -47,6 +53,9 @@ import { getAvatarColor } from '../../../shared/utils/avatar.util';
     MatSnackBarModule,
     MatSelectModule,
     MatFormFieldModule,
+    DropdownMenuComponent,
+    MenuItemComponent,
+    MenuDividerComponent,
   ],
   templateUrl: './teams.component.html',
   styleUrls: ['./teams.component.scss'],
@@ -54,6 +63,8 @@ import { getAvatarColor } from '../../../shared/utils/avatar.util';
 export class TeamsComponent {
   private authService = inject(AuthService);
   private teamService = inject(TeamService);
+  private sprintService = inject(SprintService);
+  private readonly _sprintInfo = this.sprintService.getSprintInfo();
   private calendarService = inject(CalendarService);
   private presenceService = inject(PresenceService);
   private dialog = inject(MatDialog);
@@ -129,9 +140,11 @@ export class TeamsComponent {
           ? ('online' as const)
           : ('offline' as const),
         eventCount: evts.filter((e) => e.userId === u.uid).length,
-        sprintCount: evts.filter(
-          (e) => e.userId === u.uid && e.type === 'vacation',
-        ).length,
+        sprintCount: evts.filter((e) => {
+          if (e.userId !== u.uid) return false;
+          const d = new Date(e.date);
+          return d >= this._sprintInfo.startRaw && d <= this._sprintInfo.endRaw;
+        }).length,
       };
     });
   });
@@ -184,9 +197,14 @@ export class TeamsComponent {
     () => this.members().filter((m) => m.onlineState === 'online').length,
   );
   totalEvents = computed(() => this.events().length);
-  totalSprints = computed(
-    () => this.events().filter((e) => e.type === 'vacation').length,
+  totalSprints = computed(() =>
+    this.members().reduce((sum, m) => sum + m.sprintCount, 0),
   );
+  canLeaveTeam = computed(() => {
+    const user = this.currentUser();
+    const team = this.currentTeam();
+    return !!user?.teamId && !!team && team.managerId !== user.uid;
+  });
   filteredJoinTeams = computed(() => {
     const q = this.joinSearchQuery().toLowerCase().trim();
     if (!q) return this.teams();
@@ -257,10 +275,10 @@ export class TeamsComponent {
           const key = [...team.memberIds].sort().join(',');
           if (key !== this._prevMemberKey) {
             this._prevMemberKey = key;
-            const allUsers = await this.teamService.getAllUsers();
-            this.rawUsers.set(
-              allUsers.filter((u) => team.memberIds.includes(u.uid)),
+            const members = await this.teamService.getMembersByIds(
+              team.memberIds,
             );
+            this.rawUsers.set(members);
           }
         }
         this.loading.set(false);
@@ -269,8 +287,14 @@ export class TeamsComponent {
 
   // ── Actions ───────────────────────────────────────────────────────────────
   isAdminOrManager(): boolean {
-    const role = this.currentUser()?.role;
-    return role === 'admin' || role === 'manager';
+    const appRole = this.currentUser()?.role;
+    if (appRole === 'admin' || appRole === 'manager') return true;
+    const uid = this.currentUser()?.uid;
+    if (!uid) return false;
+    const teamRole = this.enrichments().get(uid)?.role;
+    return (
+      teamRole === 'owner' || teamRole === 'admin' || teamRole === 'manager'
+    );
   }
 
   clearFilters(): void {
@@ -350,15 +374,70 @@ export class TeamsComponent {
     this.joining.set(team.id);
     this.joinError.set(null);
     try {
-      await this.teamService.addMember(team.id, uid, team.memberIds);
+      await this.teamService.joinTeam(team.id, uid, team.memberIds);
       this.joining.set(null);
       this.joinSuccess.set(team.id);
       await new Promise((r) => setTimeout(r, 1200));
       this.authService.patchCurrentUser({ teamId: team.id });
-    } catch {
-      this.joinError.set('Failed to join the team. Please try again.');
+    } catch (err: any) {
+      this.joinError.set(
+        err?.message ?? 'Failed to join the team. Please try again.',
+      );
       this.joining.set(null);
     }
+  }
+
+  confirmRemoveMember(member: RichMember, event?: MouseEvent): void {
+    event?.stopPropagation();
+    const team = this.currentTeam();
+    if (!team) return;
+    const snackRef = this.snackBar.open(
+      `Remove ${member.displayName} from the team?`,
+      'Remove',
+      { duration: 6000 },
+    );
+    snackRef.onAction().subscribe(async () => {
+      try {
+        await this.teamService.removeTeamMember(
+          team.id,
+          member.uid,
+          team.memberIds,
+        );
+        this.snackBar.open(
+          `${member.displayName} removed from team`,
+          'Dismiss',
+          { duration: 3000 },
+        );
+      } catch {
+        this.snackBar.open('Failed to remove member', 'Dismiss', {
+          duration: 3000,
+        });
+      }
+    });
+  }
+
+  leaveTeam(): void {
+    const user = this.currentUser();
+    const team = this.currentTeam();
+    if (!user || !team) return;
+    const snackRef = this.snackBar.open(
+      `Leave "${team.name}"? You will need to be re-invited to rejoin.`,
+      'Leave',
+      { duration: 7000 },
+    );
+    snackRef.onAction().subscribe(async () => {
+      try {
+        await this.teamService.removeMember(team.id, user.uid, team.memberIds);
+        this.authService.patchCurrentUser({ teamId: '' });
+        this.snackBar.open('You have left the team', 'Dismiss', {
+          duration: 3000,
+        });
+      } catch {
+        this.snackBar.open('Failed to leave the team', 'Dismiss', {
+          duration: 3000,
+        });
+      }
+    });
   }
 
   protected readonly initials = getInitials;

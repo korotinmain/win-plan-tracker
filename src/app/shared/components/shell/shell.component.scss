@@ -287,6 +287,13 @@
   position: sticky;
   top: 0;
   z-index: 200;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s ease;
+
+  &.scrolled {
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .menu-toggle {
@@ -423,4 +430,75 @@
   flex: 1;
   overflow-y: auto;
   background: var(--c-bg);
+}
+
+// ── Mobile Backdrop ───────────────────────────
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 299;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+
+  &.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+// ── Mobile Responsive ─────────────────────────
+@media (max-width: 768px) {
+  .sidebar-backdrop {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100dvh;
+    z-index: 300;
+    width: 240px !important;
+    transform: translateX(0);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.collapsed {
+      transform: translateX(-100%);
+    }
+  }
+
+  .main-area {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .top-header {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .date-pill {
+    display: none;
+  }
+
+  .header-title {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-header {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .header-title {
+    font-size: 0.85rem;
+  }
 }

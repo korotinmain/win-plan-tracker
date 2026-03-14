@@ -11,6 +11,10 @@
   display: flex;
   min-height: 100vh;
   font-family: "Inter", "Roboto", sans-serif;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 /* ══════════════════════════════════════
@@ -31,6 +35,10 @@
   justify-content: center;
   overflow: hidden;
   padding: 60px 48px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 }
 
 .al-glow-1 {
@@ -207,10 +215,24 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at top left, rgba(214, 177, 106, 0.08), transparent 24%),
+    radial-gradient(
+      circle at top left,
+      rgba(214, 177, 106, 0.08),
+      transparent 24%
+    ),
     linear-gradient(180deg, #fbfaf7 0%, #f5f1ea 100%);
   padding: 48px 40px;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 40px 24px;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 480px) {
+    padding: 32px 18px;
+  }
 }
 
 .ar-inner {

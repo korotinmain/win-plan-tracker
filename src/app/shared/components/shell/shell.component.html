@@ -56,7 +56,10 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-card" [matMenuTriggerFor]="sidebarMenu">
+      <div
+        class="user-card"
+        (click)="sidebarDropdown.toggle($event.currentTarget)"
+      >
         <div class="user-avatar-box">
           {{ getInitials(currentUser?.displayName ?? "") }}
         </div>
@@ -68,49 +71,54 @@
           >unfold_more</mat-icon
         >
       </div>
-      <mat-menu
-        #sidebarMenu="matMenu"
+
+      <app-dropdown-menu
+        #sidebarDropdown
         yPosition="above"
-        panelClass="user-dropdown"
+        xPosition="after"
+        [wide]="true"
+        [offsetY]="6"
       >
-        <div class="udp-header" (click)="$event.stopPropagation()">
-          <div class="udp-avatar">
-            {{ getInitials(currentUser?.displayName ?? "") }}
-            <span class="udp-avatar-ring"></span>
+        <ng-container slot="header">
+          <div class="udp-header">
+            <div class="udp-avatar">
+              {{ getInitials(currentUser?.displayName ?? "") }}
+            </div>
+            <div class="udp-info">
+              <span class="udp-name">{{ currentUser?.displayName }}</span>
+              <span class="udp-email">{{ currentUser?.email }}</span>
+            </div>
           </div>
-          <div class="udp-info">
-            <span class="udp-name">{{ currentUser?.displayName }}</span>
-            <span class="udp-email">{{ currentUser?.email }}</span>
-            <span class="udp-role-badge udp-role-{{ currentUser?.role }}">{{
-              currentUser?.role | titlecase
-            }}</span>
-          </div>
-        </div>
-        <div class="udp-divider"></div>
-        <button mat-menu-item class="udp-item" routerLink="/settings">
-          <span class="udp-item-inner">
-            <span class="udp-item-icon"><mat-icon>tune</mat-icon></span>
-            <span class="udp-item-label">Settings</span>
-          </span>
-        </button>
-        <div class="udp-divider"></div>
-        <button
-          mat-menu-item
-          class="udp-item udp-item-danger"
-          (click)="logout()"
-        >
-          <span class="udp-item-inner">
-            <span class="udp-item-icon"><mat-icon>logout</mat-icon></span>
-            <span class="udp-item-label">Sign out</span>
-          </span>
-        </button>
-      </mat-menu>
+          <app-menu-divider></app-menu-divider>
+        </ng-container>
+        <app-menu-item (itemClick)="navigate('/settings')">
+          <span class="dmi-icon-wrap dmi-icon-wrap--indigo"
+            ><mat-icon>settings</mat-icon></span
+          >
+          <span class="dmi-label">Settings</span>
+        </app-menu-item>
+        <app-menu-divider></app-menu-divider>
+        <app-menu-item [danger]="true" (itemClick)="logout()">
+          <span class="dmi-icon-wrap dmi-icon-wrap--red"
+            ><mat-icon>logout</mat-icon></span
+          >
+          <span class="dmi-label">Sign out</span>
+        </app-menu-item>
+      </app-dropdown-menu>
     </div>
   </nav>
 
+  <!-- ── Mobile sidebar backdrop ──────────────────────────────── -->
+  <div
+    class="sidebar-backdrop"
+    [class.is-open]="sidenavOpen()"
+    (click)="toggleSidenav()"
+    aria-hidden="true"
+  ></div>
+
   <!-- ── Main area ──────────────────────────────────────────────── -->
   <div class="main-area">
-    <header class="top-header">
+    <header class="top-header" [class.scrolled]="headerScrolled()">
       <button
         class="menu-toggle"
         (click)="toggleSidenav()"
@@ -147,52 +155,50 @@
           <mat-icon>{{ isDark() ? "light_mode" : "dark_mode" }}</mat-icon>
         </button>
 
-        <div class="header-avatar" [matMenuTriggerFor]="headerMenu">
+        <div
+          class="header-avatar"
+          (click)="headerDropdown.toggle($event.currentTarget)"
+        >
           {{ getInitials(currentUser?.displayName ?? "") }}
         </div>
 
-        <mat-menu
-          #headerMenu="matMenu"
+        <app-dropdown-menu
+          #headerDropdown
           yPosition="below"
           xPosition="before"
-          panelClass="user-dropdown"
+          [wide]="true"
+          [offsetY]="10"
         >
-          <div class="udp-header" (click)="$event.stopPropagation()">
-            <div class="udp-avatar">
-              {{ getInitials(currentUser?.displayName ?? "") }}
-              <span class="udp-avatar-ring"></span>
+          <ng-container slot="header">
+            <div class="udp-header">
+              <div class="udp-avatar">
+                {{ getInitials(currentUser?.displayName ?? "") }}
+              </div>
+              <div class="udp-info">
+                <span class="udp-name">{{ currentUser?.displayName }}</span>
+                <span class="udp-email">{{ currentUser?.email }}</span>
+              </div>
             </div>
-            <div class="udp-info">
-              <span class="udp-name">{{ currentUser?.displayName }}</span>
-              <span class="udp-email">{{ currentUser?.email }}</span>
-              <span class="udp-role-badge udp-role-{{ currentUser?.role }}">{{
-                currentUser?.role | titlecase
-              }}</span>
-            </div>
-          </div>
-          <div class="udp-divider"></div>
-          <button mat-menu-item class="udp-item" routerLink="/settings">
-            <span class="udp-item-inner">
-              <span class="udp-item-icon"><mat-icon>tune</mat-icon></span>
-              <span class="udp-item-label">Settings</span>
-            </span>
-          </button>
-          <div class="udp-divider"></div>
-          <button
-            mat-menu-item
-            class="udp-item udp-item-danger"
-            (click)="logout()"
-          >
-            <span class="udp-item-inner">
-              <span class="udp-item-icon"><mat-icon>logout</mat-icon></span>
-              <span class="udp-item-label">Sign out</span>
-            </span>
-          </button>
-        </mat-menu>
+            <app-menu-divider></app-menu-divider>
+          </ng-container>
+          <app-menu-item (itemClick)="navigate('/settings')">
+            <span class="dmi-icon-wrap dmi-icon-wrap--indigo"
+              ><mat-icon>settings</mat-icon></span
+            >
+            <span class="dmi-label">Settings</span>
+          </app-menu-item>
+          <app-menu-divider></app-menu-divider>
+          <app-menu-item [danger]="true" (itemClick)="logout()">
+            <span class="dmi-icon-wrap dmi-icon-wrap--red"
+              ><mat-icon>logout</mat-icon></span
+            >
+            <span class="dmi-label">Sign out</span>
+          </app-menu-item>
+        </app-dropdown-menu>
       </div>
     </header>
 
-    <main class="page-content">
+    <main class="page-content" (scroll)="onPageScroll($event)">
       <router-outlet></router-outlet>
     </main>
   </div>

@@ -75,6 +75,23 @@ export class TeamService {
     return snap.docs.map((d) => d.data() as AppUser);
   }
 
+  /** Fetch only specific users by UID — avoids a full collection scan. */
+  async getMembersByIds(memberIds: string[]): Promise<AppUser[]> {
+    if (!memberIds.length) return [];
+    const chunks: string[][] = [];
+    for (let i = 0; i < memberIds.length; i += 30) {
+      chunks.push(memberIds.slice(i, i + 30));
+    }
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        getDocs(
+          query(collection(db, 'users'), where('uid', 'in', chunk)),
+        ).then((snap) => snap.docs.map((d) => d.data() as AppUser)),
+      ),
+    );
+    return results.flat();
+  }
+
   async getTeamMembers(teamId: string): Promise<AppUser[]> {
     if (!teamId) return [];
     const snap = await getDoc(doc(db, `teams/${teamId}`));

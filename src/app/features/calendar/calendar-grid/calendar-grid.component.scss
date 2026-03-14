@@ -1528,3 +1528,324 @@
     }
   }
 }
+
+// ── Mobile Responsive ──────────────────────
+// ── Light theme structural overrides ─────────────────────────────────────────
+:host-context([data-theme="light"]) {
+  // Header card
+  .cal-head {
+    background: var(--c-surface);
+    border-color: var(--c-border);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  // Nav buttons
+  .nav-btn {
+    border-color: var(--c-border);
+    background: transparent;
+    color: var(--c-text-2);
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.08);
+      border-color: rgba(99, 102, 241, 0.35);
+      color: #6366f1;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.12);
+    }
+  }
+
+  // Month name – remove white gradient clip, use readable dark text
+  .month-name {
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: var(--c-text);
+    background-clip: unset;
+    color: var(--c-text);
+  }
+
+  .month-year {
+    color: var(--c-text-2);
+  }
+
+  // Pill / sprint selector buttons
+  .cal-pill-btn {
+    border-color: var(--c-border);
+    background: var(--c-surface-2);
+    color: var(--c-text-2);
+
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: #eef2ff;
+      color: #6366f1;
+    }
+  }
+
+  // View toggle (month/week/day)
+  .view-toggle {
+    background: var(--c-surface-2);
+    border-color: var(--c-border);
+
+    button {
+      color: var(--c-text-2);
+
+      &:not(.active):hover {
+        background: var(--c-border);
+        color: var(--c-text);
+      }
+    }
+  }
+
+  // Today button
+  .today-btn {
+    color: #6366f1;
+    border-color: rgba(99, 102, 241, 0.3);
+
+    &:hover {
+      color: #4338ca;
+      background: #eef2ff;
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.12);
+    }
+  }
+
+  // Table wrapper
+  .table-wrap {
+    background: var(--c-surface);
+    border-color: var(--c-border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  // Table header backgrounds
+  .cal-table thead tr {
+    background: var(--c-surface-2);
+  }
+
+  .cal-table th {
+    background: var(--c-surface-2);
+    color: var(--c-text-3);
+    border-right-color: var(--c-border);
+  }
+
+  .sprint-header-row th {
+    background: var(--c-surface-2);
+    border-bottom-color: rgba(99, 102, 241, 0.12);
+  }
+
+  .day-header-row th {
+    background: var(--c-surface-2);
+    border-bottom-color: var(--c-border);
+  }
+
+  // Sticky corner cell
+  .th-corner {
+    background: var(--c-surface-2) !important;
+  }
+
+  // Sticky member column
+  .td-member {
+    background: var(--c-surface);
+    border-right-color: var(--c-border);
+  }
+
+  .member-row {
+    border-bottom-color: var(--c-border-faint);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.018);
+    }
+
+    &:hover .td-member {
+      background: var(--c-surface-2);
+    }
+  }
+
+  // Body row borders and hover
+  .cal-table tbody tr {
+    border-bottom-color: var(--c-border-faint);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.018);
+    }
+  }
+
+  .row-weekend {
+    background: rgba(71, 85, 105, 0.04);
+
+    &:hover {
+      background: rgba(71, 85, 105, 0.08);
+    }
+  }
+
+  .row-holiday {
+    background: rgba(245, 158, 11, 0.04);
+
+    &:hover {
+      background: rgba(245, 158, 11, 0.08);
+    }
+  }
+
+  // Cell column borders
+  .td-cell {
+    border-right-color: var(--c-border-faint);
+  }
+
+  // Sprint separator
+  .sprint-sep-inner {
+    border-bottom-color: var(--c-border);
+  }
+
+  // Sprint nav arrows
+  .sprint-nav-btn {
+    color: var(--c-text-3);
+  }
+
+  // Day header text (overrides hardcoded dark values)
+  .day-hdr-dow {
+    color: var(--c-text-3);
+  }
+
+  .day-hdr-num {
+    color: var(--c-text-2);
+  }
+
+  // Member column text
+  .member-name-short {
+    color: var(--c-text-2);
+  }
+
+  .th-team-label {
+    color: var(--c-text-3);
+  }
+
+  .corner-sprints-label,
+  .members-label {
+    color: var(--c-text-3);
+
+    mat-icon {
+      color: var(--c-text-3);
+    }
+  }
+
+  // Sprint range text in header
+  .sprint-hdr-range {
+    color: var(--c-text-2);
+  }
+
+  // th-day weekend/holiday header states
+  .th-day.is-weekend {
+    background: rgba(71, 85, 105, 0.05) !important;
+
+    .day-hdr-dow {
+      color: var(--c-text-2);
+    }
+
+    .day-hdr-num {
+      color: var(--c-text-2);
+    }
+  }
+
+  // td-date weekend/holiday text
+  .td-date.is-weekend {
+    .date-dow,
+    .date-num {
+      color: var(--c-text-2);
+    }
+  }
+
+  // Empty cell dot
+  .cell-empty-dot {
+    color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+// ── Mobile Responsive ──────────────────────
+@media (max-width: 768px) {
+  .cal-page {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .cal-head {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 11px 14px;
+  }
+
+  .cal-head-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cal-head-right {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .month-label {
+    min-width: 130px;
+    font-size: 0.95rem;
+  }
+
+  .cal-add-btn span {
+    display: none;
+  }
+  .cal-add-btn {
+    padding: 0 10px;
+    gap: 0;
+  }
+
+  .cal-pill-btn span {
+    display: none;
+  }
+  .cal-pill-btn .expand-icon {
+    display: none;
+  }
+  .cal-pill-btn {
+    padding: 0 9px;
+    gap: 0;
+  }
+
+  .cal-legend {
+    padding: 8px 12px;
+    gap: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cal-page {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .cal-head {
+    padding: 9px 10px;
+  }
+
+  .month-label {
+    min-width: 100px;
+    font-size: 0.875rem;
+  }
+
+  .month-year {
+    display: none;
+  }
+
+  .today-btn {
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
+
+  .view-toggle button {
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
+}

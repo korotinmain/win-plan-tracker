@@ -1,28 +1,39 @@
-// Angular Material — mat-menu component theme overrides
-// Uses CSS custom property tokens exposed by Angular Material MDC components.
-// Applied scoped to the `.user-dropdown` panelClass.
+// Angular Material — mat-menu user-dropdown overrides
+// panelClass="user-dropdown"
 
-// ─── Panel tokens ────────────────────────────────────────────────────────────
+// ─── Entrance animation ───────────────────────────────────────────────────────
+@keyframes udp-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// ─── Panel ───────────────────────────────────────────────────────────────────
 .user-dropdown.mat-mdc-menu-panel {
-  // Shape
-  --mat-menu-container-shape: 16px;
-
-  // Disable MDC state-layer tint on hover/focus (we supply our own bg)
+  --mat-menu-container-shape: 22px;
   --mat-menu-item-hover-state-layer-opacity: 0;
   --mat-menu-item-focus-state-layer-opacity: 0;
-
-  // Remove top/bottom padding from the menu list
   --mat-menu-content-padding: 0;
 
-  // Sizing & shadow
-  min-width: 260px;
-  max-width: 300px;
+  min-width: 280px;
+  max-width: 340px;
   overflow: hidden;
+
+  background: #1a2035 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
   box-shadow:
-    0 0 0 1px rgba(99, 102, 241, 0.1),
-    0 8px 30px rgba(15, 23, 42, 0.18),
-    0 2px 8px rgba(15, 23, 42, 0.08);
-  margin-top: 8px;
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.3),
+    0 24px 60px rgba(0, 0, 0, 0.4);
+
+  margin-top: 10px;
+  animation: udp-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .user-dropdown.mat-mdc-menu-panel .mat-mdc-menu-content,
@@ -34,46 +45,38 @@
 .udp-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 20px 18px 16px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  gap: 18px;
+  padding: 26px 24px 22px;
+  background: transparent;
   cursor: default;
 }
 
 .udp-avatar {
-  position: relative;
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%);
   color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  letter-spacing: -0.02em;
-}
-
-.udp-avatar-ring {
-  position: absolute;
-  inset: -3px;
-  border-radius: 15px;
-  border: 2px solid rgba(99, 102, 241, 0.5);
-  pointer-events: none;
+  letter-spacing: -0.03em;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
 }
 
 .udp-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
 .udp-name {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   color: #f1f5f9;
   white-space: nowrap;
   overflow: hidden;
@@ -82,86 +85,54 @@
 }
 
 .udp-email {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: #64748b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.udp-role-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  width: fit-content;
-  margin-top: 2px;
-
-  &.udp-role-admin {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-  }
-
-  &.udp-role-manager {
-    background: rgba(16, 185, 129, 0.15);
-    color: #6ee7b7;
-  }
-
-  &.udp-role-employee {
-    background: rgba(148, 163, 184, 0.15);
-    color: #94a3b8;
-  }
-}
-
-// ─── Divider ──────────────────────────────────────────────────────────────────
+// ─── Divider ─────────────────────────────────────────────────────────────────
 .udp-divider {
   height: 1px;
-  background: #f1f5f9;
-  margin: 0;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 6px 0;
 }
 
-// ─── Menu item tokens ─────────────────────────────────────────────────────────
+// ─── Menu items ───────────────────────────────────────────────────────────────
 .udp-item.mat-mdc-menu-item {
-  --mat-menu-item-label-text-size: 0.85rem;
+  --mat-menu-item-label-text-size: 0.95rem;
   --mat-menu-item-label-text-weight: 500;
-  --mat-menu-item-label-text-color: #334155;
 
-  // Reset MDC defaults so we fully control layout
-  height: 44px;
-  min-height: 44px;
+  height: 58px;
+  min-height: 58px;
   width: 100%;
-  padding: 0 16px;
+  padding: 0 24px;
+  transition: background 0.12s ease;
 
-  // Remove the default 16px right-margin Angular Material puts on mat-icon
   .mat-icon {
     margin-right: 0;
   }
 
-  // MDC wraps projected content here — flex row so icon + label align
   .mdc-list-item__primary-text {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 16px;
     width: 100%;
     overflow: visible;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    color: #334155;
+    color: #94a3b8;
+    transition: color 0.1s ease;
   }
 
   &:hover {
-    background: #f8faff;
-
+    background: rgba(255, 255, 255, 0.06);
     .mdc-list-item__primary-text {
-      color: #4f46e5;
+      color: #f1f5f9;
     }
-
-    .udp-item-icon {
-      background: #eef2ff;
-      color: #4f46e5;
+    .udp-icon {
+      color: #f1f5f9;
     }
   }
 }
@@ -170,30 +141,18 @@
 .udp-item-inner {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
 
-.udp-item-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: #f1f5f9;
+.udp-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
   color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  transition:
-    background 0.12s,
-    color 0.12s;
-
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
+  transition: color 0.1s ease;
 }
 
 .udp-item-label {
@@ -202,93 +161,24 @@
   line-height: 1.1;
 }
 
-// ─── Danger item ──────────────────────────────────────────────────────────────
+// ─── Sign Out (danger) ────────────────────────────────────────────────────────
 .udp-item-danger.mat-mdc-menu-item {
   .mdc-list-item__primary-text {
-    color: #dc2626;
+    color: #f97316;
   }
-
-  .udp-item-icon {
-    background: #fef2f2;
-    color: #ef4444;
+  .udp-icon {
+    color: #f97316;
   }
 
   &:hover {
-    background: #fff5f5;
-
+    background: rgba(249, 115, 22, 0.06);
     .mdc-list-item__primary-text {
-      color: #dc2626;
+      color: #ea6c0a;
     }
-
-    .udp-item-icon {
-      background: #fee2e2;
-      color: #dc2626;
+    .udp-icon {
+      color: #ea6c0a;
     }
   }
 }
 
-// ─── Dark theme overrides ─────────────────────────────────────────────────────
-[data-theme="dark"] {
-  .user-dropdown.mat-mdc-menu-panel {
-    --mat-menu-container-color: #1e293b;
-    background: #1e293b;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 8px 30px rgba(0, 0, 0, 0.55),
-      0 2px 8px rgba(0, 0, 0, 0.35);
-  }
-
-  .udp-divider {
-    background: rgba(255, 255, 255, 0.07);
-  }
-
-  .udp-item.mat-mdc-menu-item {
-    --mat-menu-item-label-text-color: #e2e8f0;
-
-    .mdc-list-item__primary-text {
-      color: #e2e8f0;
-    }
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.06);
-
-      .mdc-list-item__primary-text {
-        color: #a5b4fc;
-      }
-
-      .udp-item-icon {
-        background: rgba(99, 102, 241, 0.2);
-        color: #a5b4fc;
-      }
-    }
-  }
-
-  .udp-item-icon {
-    background: rgba(255, 255, 255, 0.07);
-    color: #94a3b8;
-  }
-
-  .udp-item-danger.mat-mdc-menu-item {
-    .mdc-list-item__primary-text {
-      color: #f87171;
-    }
-
-    .udp-item-icon {
-      background: rgba(239, 68, 68, 0.12);
-      color: #f87171;
-    }
-
-    &:hover {
-      background: rgba(239, 68, 68, 0.08);
-
-      .mdc-list-item__primary-text {
-        color: #fca5a5;
-      }
-
-      .udp-item-icon {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-      }
-    }
-  }
-}
+// No theme overrides needed — panel is always dark

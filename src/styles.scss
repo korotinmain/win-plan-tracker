@@ -197,3 +197,170 @@ a {
     overflow: visible;
   }
 }
+
+// ── Custom Dropdown Menu — shared item content styles ─────────────────────────
+// CDK backdrop (transparent — panel has its own shadow feel)
+.dm-overlay-backdrop {
+  background: transparent;
+}
+.dmi-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.18s ease;
+
+  mat-icon {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+  }
+
+  &--indigo {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+  }
+  &--teal {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+  &--red {
+    background: rgba(239, 68, 68, 0.09);
+    color: #ef4444;
+  }
+  &--orange {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+  }
+  &--amber {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+  }
+}
+
+// Hover: elevate icon when parent dm-item is hovered
+.dm-item:hover:not(:disabled) .dmi-icon-wrap {
+  transform: scale(1.1);
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.18);
+}
+
+.dmi-label {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--c-text);
+  line-height: 1.1;
+  transition:
+    color 0.15s ease,
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dm-item:hover:not(:disabled) .dmi-label {
+  transform: translateX(1px);
+}
+
+// ── User profile header inside custom dropdown ────────────────────────────────
+.udp-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 18px 18px;
+}
+
+.udp-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -0.03em;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+}
+
+.udp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.udp-name {
+  font-size: 0.975rem;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.udp-email {
+  font-size: 0.775rem;
+  color: var(--c-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Global Premium Scrollbar ──────────────────────────────────────────────────
+// Thin, elegant scrollbar matching the app theme
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.22);
+  border-radius: 10px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.4);
+  }
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.18);
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.32);
+  }
+}
+
+// ── Route Transition Animation ────────────────────────────────────────────────
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+router-outlet + * {
+  animation: page-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
