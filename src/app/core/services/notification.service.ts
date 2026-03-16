@@ -7,10 +7,7 @@ import {
   where,
   orderBy,
   limit,
-  onSnapshot,
   writeBatch,
-  Query,
-  DocumentData,
 } from '@firebase/firestore';
 import { Observable } from 'rxjs';
 import {
@@ -19,18 +16,7 @@ import {
 } from '../models/notification.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
-
-function snapObservable<T>(q: Query<DocumentData>): Observable<T[]> {
-  return new Observable<T[]>((subscriber) => {
-    const unsub = onSnapshot(
-      q,
-      (snap) =>
-        subscriber.next(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T)),
-      (err) => subscriber.error(err),
-    );
-    return unsub;
-  });
-}
+import { snapObservable } from '../../shared/utils/firestore.util';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {

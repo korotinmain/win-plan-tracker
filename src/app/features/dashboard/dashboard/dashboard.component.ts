@@ -4,10 +4,9 @@ import {
   DestroyRef,
   inject,
   OnInit,
-  OnDestroy,
   signal,
 } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +30,7 @@ import { CalendarService } from '../../../core/services/calendar.service';
 import { TeamService } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SprintService } from '../../../core/services/sprint.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { CalendarEvent } from '../../../core/models/event.model';
 import { AppUser } from '../../../core/models/user.model';
 import { combineLatest } from 'rxjs';
@@ -73,20 +73,17 @@ interface TodaySummary {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit {
   private calendarService = inject(CalendarService);
   private teamService = inject(TeamService);
   private authService = inject(AuthService);
   private sprintService = inject(SprintService);
   private chartsService = inject(DashboardChartsService);
   private destroyRef = inject(DestroyRef);
-  private doc = inject(DOCUMENT);
+  private themeService = inject(ThemeService);
   private dialog = inject(MatDialog);
-  private themeObserver?: MutationObserver;
 
-  isDark = signal(
-    this.doc.documentElement.getAttribute('data-theme') === 'dark',
-  );
+  readonly isDark = this.themeService.isDark;
 
   get currentUser() {
     return this.authService.currentUser;
@@ -553,15 +550,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    const html = this.doc.documentElement;
-    this.themeObserver = new MutationObserver(() => {
-      this.isDark.set(html.getAttribute('data-theme') === 'dark');
-    });
-    this.themeObserver.observe(html, {
-      attributes: true,
-      attributeFilter: ['data-theme'],
-    });
-
     const teamId = this.currentUser?.teamId ?? '';
     const now = new Date();
 
@@ -599,9 +587,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.themeObserver?.disconnect();
   }
 }

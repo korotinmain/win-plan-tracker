@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 
 @Component({
   selector: 'app-register',
@@ -43,8 +44,10 @@ export class RegisterComponent {
         this.form.value.password!,
         this.form.value.displayName!,
       );
-    } catch (e: any) {
-      this.error.set(e.message ?? 'Registration failed. Please try again.');
+    } catch (e: unknown) {
+      this.error.set(
+        getErrorMessage(e, 'Registration failed. Please try again.'),
+      );
     } finally {
       this.loading.set(false);
     }

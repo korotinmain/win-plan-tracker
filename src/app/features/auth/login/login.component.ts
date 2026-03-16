@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 
 @Component({
   selector: 'app-login',
@@ -59,8 +60,8 @@ export class LoginComponent {
         this.form.value.email!,
         this.form.value.password!,
       );
-    } catch (e: any) {
-      this.error.set(e.message ?? 'Login failed. Please try again.');
+    } catch (e: unknown) {
+      this.error.set(getErrorMessage(e, 'Login failed. Please try again.'));
     } finally {
       this.loading.set(false);
     }
@@ -71,8 +72,8 @@ export class LoginComponent {
     this.error.set('');
     try {
       await this.authService.loginWithGoogle();
-    } catch (e: any) {
-      this.error.set(e.message ?? 'Google sign-in failed.');
+    } catch (e: unknown) {
+      this.error.set(getErrorMessage(e, 'Google sign-in failed.'));
       this.loading.set(false);
     }
   }

@@ -342,3 +342,54 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ─── Light theme overrides ─────────────────────────────────── */
+:host-context([data-theme="light"]) {
+  .tsd {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow:
+      0 0 0 1px rgba(20, 184, 166, 0.1),
+      0 24px 64px rgba(0, 0, 0, 0.1),
+      0 8px 24px rgba(0, 0, 0, 0.05);
+  }
+
+  .tsd-title {
+    color: #0f172a;
+  }
+
+  .tsd-close {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    &:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+  }
+
+  .tsd-body {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .tsd-avail-track {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .tsd-member-name {
+    color: #0f172a;
+  }
+
+  .tsd-member-row {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    &:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  }
+}

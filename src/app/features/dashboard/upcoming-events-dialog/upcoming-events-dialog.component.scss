@@ -612,3 +612,84 @@
     margin: 0;
   }
 }
+
+/* ─── Light theme overrides ─────────────────────────────────── */
+:host-context([data-theme="light"]) {
+  .ued {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow:
+      0 0 0 1px rgba(99, 102, 241, 0.1),
+      0 24px 64px rgba(0, 0, 0, 0.12),
+      0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .ued-title {
+    color: #0f172a;
+  }
+
+  .ued-stats {
+    border-bottom-color: #e2e8f0;
+    background: #f8fafc;
+  }
+
+  .ued-stat-sep {
+    background: #e2e8f0;
+  }
+
+  .ued-body {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* covers both the first and second .ued-row definitions */
+  .ued-row {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+
+  .ued-event-name {
+    color: #0f172a;
+  }
+
+  .ued-av {
+    border-color: #ffffff;
+  }
+
+  .ued-av-more {
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  .ued-category {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: #e2e8f0;
+    color: #475569;
+  }
+
+  .ued-badge-future {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: #e2e8f0;
+    color: #64748b;
+  }
+
+  /* second duplicate header */
+  .ued-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  .ued-chip {
+    border-color: #e2e8f0;
+    color: #64748b;
+
+    &:hover {
+      border-color: #6366f1;
+      color: #0f172a;
+    }
+  }
+}

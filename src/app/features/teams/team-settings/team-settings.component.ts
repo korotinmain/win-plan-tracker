@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
@@ -158,8 +159,8 @@ export class TeamSettingsComponent {
       );
       this.countrySaved.set(true);
       setTimeout(() => this.countrySaved.set(false), 2500);
-    } catch (e: any) {
-      this.countrySaveError.set(e?.message ?? 'Failed to save.');
+    } catch (e: unknown) {
+      this.countrySaveError.set(getErrorMessage(e, 'Failed to save.'));
     } finally {
       this.countrySaving.set(false);
     }

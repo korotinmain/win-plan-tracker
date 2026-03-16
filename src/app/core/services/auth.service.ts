@@ -69,8 +69,8 @@ export class AuthService {
 
     try {
       await signInWithPopup(auth, provider);
-    } catch (e: any) {
-      const code = e?.code as string | undefined;
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
       if (
         code === 'auth/popup-blocked' ||
         code === 'auth/operation-not-supported-in-this-environment'

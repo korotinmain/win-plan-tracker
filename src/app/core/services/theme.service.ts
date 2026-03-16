@@ -2,9 +2,17 @@ import { Injectable, signal } from '@angular/core';
 
 const THEME_KEY = 'app-theme';
 
+function readStoredTheme(): boolean {
+  try {
+    return localStorage.getItem(THEME_KEY) !== 'light';
+  } catch {
+    return true; // default dark when localStorage is unavailable (SSR / tests)
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  isDark = signal(localStorage.getItem(THEME_KEY) !== 'light');
+  isDark = signal(readStoredTheme());
 
   constructor() {
     document.documentElement.setAttribute(
@@ -16,7 +24,11 @@ export class ThemeService {
   toggle(): void {
     const next = !this.isDark();
     this.isDark.set(next);
-    localStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+    try {
+      localStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+    } catch {
+      // localStorage unavailable — preference won't persist across sessions
+    }
     document.documentElement.setAttribute(
       'data-theme',
       next ? 'dark' : 'light',

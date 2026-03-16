@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 import {
   Team,
   SprintCeremonyConfig,
@@ -117,8 +118,8 @@ export class SettingsComponent {
       await this.teamService.joinTeam(team.id, user.uid, team.memberIds);
       this.authService.patchCurrentUser({ teamId: team.id });
       this.snackBar.open(`Joined "${team.name}"`, 'OK', { duration: 3000 });
-    } catch (e: any) {
-      this.teamError.set(e?.message ?? 'Failed to join team.');
+    } catch (e: unknown) {
+      this.teamError.set(getErrorMessage(e, 'Failed to join team.'));
     } finally {
       this.actingTeamId.set(null);
     }
@@ -133,8 +134,8 @@ export class SettingsComponent {
       await this.teamService.removeMember(team.id, user.uid, team.memberIds);
       this.authService.patchCurrentUser({ teamId: '' });
       this.snackBar.open(`Left "${team.name}"`, 'OK', { duration: 3000 });
-    } catch (e: any) {
-      this.teamError.set(e?.message ?? 'Failed to leave team.');
+    } catch (e: unknown) {
+      this.teamError.set(getErrorMessage(e, 'Failed to leave team.'));
     } finally {
       this.actingTeamId.set(null);
     }
@@ -161,8 +162,8 @@ export class SettingsComponent {
       this.snackBar.open('Sprint ceremony settings saved', 'OK', {
         duration: 3000,
       });
-    } catch (e: any) {
-      this.snackBar.open(e?.message ?? 'Failed to save.', 'OK', {
+    } catch (e: unknown) {
+      this.snackBar.open(getErrorMessage(e, 'Failed to save.'), 'OK', {
         duration: 4000,
       });
     } finally {

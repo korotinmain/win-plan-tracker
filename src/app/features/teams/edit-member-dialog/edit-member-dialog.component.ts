@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
 import {
   MemberRole,
@@ -101,8 +102,8 @@ export class EditMemberDialogComponent {
         },
       );
       this.ref.close({ confirmed: true });
-    } catch (e: any) {
-      this.error.set(e?.message ?? 'Failed to save changes.');
+    } catch (e: unknown) {
+      this.error.set(getErrorMessage(e, 'Failed to save changes.'));
     } finally {
       this.saving.set(false);
     }
@@ -119,8 +120,8 @@ export class EditMemberDialogComponent {
         this.data.team.memberIds,
       );
       this.ref.close({ confirmed: true, removed: true });
-    } catch (e: any) {
-      this.error.set(e?.message ?? 'Failed to remove member.');
+    } catch (e: unknown) {
+      this.error.set(getErrorMessage(e, 'Failed to remove member.'));
       this.confirmRemove.set(false);
     } finally {
       this.removing.set(false);

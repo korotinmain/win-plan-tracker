@@ -613,3 +613,61 @@
   min-width: 20px;
   text-align: right;
 }
+
+/* ─── Light theme overrides ─────────────────────────────────── */
+:host-context([data-theme="light"]) {
+  .kpi-dialog {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #e2e8f0;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.05),
+      0 24px 64px rgba(0, 0, 0, 0.1),
+      0 8px 24px rgba(0, 0, 0, 0.05);
+  }
+
+  .kd-title {
+    color: #0f172a;
+  }
+
+  .kd-close {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #64748b;
+
+    &:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+  }
+
+  .kd-body {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .kd-summary-card {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+
+  .kd-member-name {
+    color: #0f172a;
+  }
+
+  .kd-member-row {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    &:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  }
+
+  .kd-ov-track {
+    background: rgba(0, 0, 0, 0.08);
+  }
+}

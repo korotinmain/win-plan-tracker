@@ -19,6 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
 import {
@@ -88,8 +89,8 @@ export class AddMemberDialogComponent implements OnInit {
     try {
       const users = await this.teamService.getAllUsers();
       this.allUsers.set(users);
-    } catch (e: any) {
-      this.error.set(e?.message ?? 'Failed to load users');
+    } catch (e: unknown) {
+      this.error.set(getErrorMessage(e, 'Failed to load users'));
     } finally {
       this.loading.set(false);
     }
@@ -145,8 +146,10 @@ export class AddMemberDialogComponent implements OnInit {
         } as Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>,
       );
       this.ref.close({ confirmed: true, uid: user.uid });
-    } catch (e: any) {
-      this.error.set(e?.message ?? 'Failed to add member. Please try again.');
+    } catch (e: unknown) {
+      this.error.set(
+        getErrorMessage(e, 'Failed to add member. Please try again.'),
+      );
     } finally {
       this.saving.set(false);
     }

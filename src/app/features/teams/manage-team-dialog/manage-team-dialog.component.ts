@@ -18,6 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { TeamService } from '../../../core/services/team.service';
+import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
 import {
@@ -164,8 +165,8 @@ export class ManageTeamDialogComponent {
       }));
       this.countrySaved.set(true);
       setTimeout(() => this.countrySaved.set(false), 2500);
-    } catch (e: any) {
-      this.countrySaveError.set(e?.message ?? 'Failed to save.');
+    } catch (e: unknown) {
+      this.countrySaveError.set(getErrorMessage(e, 'Failed to save.'));
     } finally {
       this.countrySaving.set(false);
     }

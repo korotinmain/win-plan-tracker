@@ -451,6 +451,92 @@
   }
 }
 
+// ── Light theme ───────────────────────────────
+:host-context([data-theme="light"]) {
+  .sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e8ecf0;
+
+    &::after {
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(99, 102, 241, 0.18) 25%,
+        rgba(99, 102, 241, 0.18) 75%,
+        transparent 100%
+      );
+    }
+  }
+
+  .logo-name {
+    color: #0f172a;
+  }
+
+  .logo-tagline {
+    color: #94a3b8;
+  }
+
+  .sidebar-nav {
+    &::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+    }
+  }
+
+  .nav-group {
+    & + & {
+      border-top-color: #f1f5f9;
+    }
+  }
+
+  .nav-group-label {
+    color: #94a3b8;
+  }
+
+  .nav-link {
+    color: #64748b;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.06);
+      color: #334155;
+    }
+
+    &.is-active {
+      background: rgba(99, 102, 241, 0.08);
+      color: #4f46e5;
+
+      &::before {
+        background: linear-gradient(180deg, #6366f1, #4f46e5);
+      }
+
+      .nav-icon-wrap mat-icon {
+        color: #6366f1;
+      }
+    }
+  }
+
+  .sidebar-footer {
+    border-top-color: #e8ecf0;
+  }
+
+  .user-card {
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .user-name {
+    color: #0f172a;
+  }
+
+  .user-role {
+    color: #94a3b8;
+  }
+
+  .user-chevron {
+    color: rgba(100, 116, 139, 0.6) !important;
+  }
+}
+
 // ── Mobile Responsive ─────────────────────────
 @media (max-width: 768px) {
   .sidebar-backdrop {

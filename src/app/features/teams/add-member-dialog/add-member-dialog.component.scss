@@ -651,3 +651,135 @@
     }
   }
 }
+
+/* ─── Light theme overrides ─────────────────────────────────── */
+:host-context([data-theme="light"]) {
+  .amd-wrap {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .amd-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  .amd-title {
+    color: #0f172a;
+  }
+
+  .amd-close {
+    color: #64748b;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #0f172a;
+    }
+  }
+
+  .amd-steps {
+    border-bottom-color: #e2e8f0;
+  }
+
+  .amd-step-num {
+    border-color: #cbd5e1;
+  }
+
+  .amd-step-line {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .amd-body {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .amd-search-wrap {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+
+  .amd-search-input {
+    color: #0f172a;
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+
+  .amd-search-clear {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .amd-user-name {
+    color: #0f172a;
+  }
+
+  .amd-user-arrow {
+    color: #cbd5e1;
+  }
+
+  .amd-sel-name {
+    color: #0f172a;
+  }
+
+  .amd-label {
+    color: #64748b;
+  }
+
+  .amd-field-hint {
+    color: #64748b;
+  }
+
+  .amd-role-btn {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #64748b;
+
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    &--selected {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
+    }
+  }
+
+  .amd-role-btn-name {
+    color: #0f172a;
+
+    .amd-role-btn--selected & {
+      color: #6366f1;
+    }
+  }
+
+  .amd-capacity-wrap {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+
+  .amd-capacity-input {
+    color: #0f172a;
+    border-left-color: #e2e8f0;
+    border-right-color: #e2e8f0;
+  }
+
+  .amd-footer {
+    border-top-color: #e2e8f0;
+  }
+
+  .amd-btn {
+    &--ghost {
+      background: #f1f5f9;
+      color: #475569;
+      border-color: #e2e8f0;
+
+      &:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+    }
+  }
+}

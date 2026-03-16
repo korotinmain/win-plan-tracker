@@ -438,6 +438,21 @@
 
   .mat-mdc-text-field-wrapper {
     padding: 0 12px;
+    background: #1e293b;
+  }
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .mat-mdc-select-value-text {
+    color: #e2e8f0;
+  }
+
+  .mat-mdc-select-placeholder {
+    color: #475569;
   }
 
   .mat-mdc-form-field-infix {
@@ -606,6 +621,201 @@
 
     &:hover {
       background: rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Light Theme Overrides
+══════════════════════════════════════════════ */
+:host-context([data-theme="light"]) {
+  .emd-wrap {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .emd-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  .emd-name {
+    color: #0f172a;
+  }
+
+  .emd-email {
+    color: #64748b;
+  }
+
+  .emd-online-dot {
+    border-color: #ffffff;
+
+    &--offline {
+      background: #94a3b8;
+    }
+  }
+
+  .emd-status-badge {
+    color: #64748b;
+    border-color: #e2e8f0;
+
+    &--online {
+      color: #059669;
+      border-color: rgba(5, 150, 105, 0.3);
+      background: rgba(5, 150, 105, 0.07);
+    }
+  }
+
+  .emd-close {
+    color: #94a3b8;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+  }
+
+  .emd-stats {
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
+  }
+
+  .emd-stat-divider {
+    background: #e2e8f0;
+  }
+
+  .emd-stat-value {
+    color: #0f172a;
+  }
+
+  .emd-stat-label {
+    color: #94a3b8;
+  }
+
+  .emd-body {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .emd-label {
+    color: #64748b;
+  }
+
+  .emd-field-hint {
+    color: #94a3b8;
+  }
+
+  .emd-field--row {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+
+  .emd-role-btn {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    &--selected {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
+    }
+  }
+
+  .emd-role-btn-name {
+    color: #1e293b;
+
+    .emd-role-btn--selected & {
+      color: #4f46e5;
+    }
+  }
+
+  .emd-role-btn-desc {
+    color: #94a3b8;
+  }
+
+  .emd-capacity-wrap {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+
+  .emd-capacity-btn {
+    color: #94a3b8;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.08);
+      color: #6366f1;
+    }
+  }
+
+  .emd-capacity-input {
+    color: #0f172a;
+    border-left-color: #e2e8f0;
+    border-right-color: #e2e8f0;
+  }
+
+  .emd-toggle {
+    background: #cbd5e1;
+  }
+
+  .emd-danger-zone {
+    background: rgba(239, 68, 68, 0.03);
+    border-color: rgba(239, 68, 68, 0.18);
+  }
+
+  .emd-danger-title {
+    color: #1e293b;
+  }
+
+  .emd-danger-desc {
+    color: #94a3b8;
+  }
+
+  .emd-confirm-text {
+    color: #64748b;
+
+    strong {
+      color: #0f172a;
+    }
+  }
+
+  .emd-footer {
+    border-top-color: #e2e8f0;
+  }
+
+  .emd-btn {
+    &--ghost {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #e2e8f0;
+
+      &:hover {
+        background: #e2e8f0;
+        color: #334155;
+      }
+    }
+  }
+
+  .emd-mat-field {
+    .mat-mdc-text-field-wrapper {
+      background: #f8fafc;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #e2e8f0 !important;
+    }
+
+    .mat-mdc-select-value-text {
+      color: #0f172a;
+    }
+
+    .mat-mdc-select-placeholder {
+      color: #94a3b8;
     }
   }
 }

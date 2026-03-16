@@ -288,3 +288,51 @@
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
   }
 }
+
+/* ─── Light theme overrides ─────────────────────────────────── */
+:host-context([data-theme="light"]) {
+  .eid-dialog {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
+  }
+
+  .eid-icon {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+
+    mat-icon {
+      color: #64748b;
+    }
+  }
+
+  .eid-title {
+    color: #0f172a;
+  }
+
+  .eid-body {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+
+  .eid-row + .eid-row {
+    border-top-color: #e2e8f0;
+  }
+
+  .eid-row-value {
+    color: #0f172a;
+  }
+
+  .eid-assignee-name {
+    color: #0f172a;
+  }
+
+  .eid-role-chip {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: #e2e8f0;
+  }
+
+  .eid-sprint-name {
+    color: #0f172a;
+  }
+}
