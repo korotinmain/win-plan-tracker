@@ -142,15 +142,15 @@
         <button
           class="btn-submit"
           type="submit"
-          [disabled]="loading() || form.invalid"
+          [disabled]="loadingEmail() || loadingGoogle() || form.invalid"
         >
           <mat-spinner
-            *ngIf="loading()"
+            *ngIf="loadingEmail()"
             diameter="20"
             class="btn-spin"
           ></mat-spinner>
-          <span>{{ loading() ? "Signing in…" : "Sign In" }}</span>
-          <mat-icon *ngIf="!loading()">arrow_forward</mat-icon>
+          <span>{{ loadingEmail() ? "Signing in…" : "Sign In" }}</span>
+          <mat-icon *ngIf="!loadingEmail()">arrow_forward</mat-icon>
         </button>
       </form>
 
@@ -163,13 +163,14 @@
       <button
         class="btn-google"
         (click)="loginWithGoogle()"
-        [disabled]="loading()"
+        [disabled]="loadingEmail() || loadingGoogle()"
         type="button"
       >
         <svg
           class="g-svg"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
+          *ngIf="!loadingGoogle()"
         >
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -188,7 +189,16 @@
             fill="#EA4335"
           />
         </svg>
-        Sign in with Google
+
+        <mat-spinner
+          *ngIf="loadingGoogle()"
+          diameter="20"
+          class="btn-spin"
+        ></mat-spinner>
+
+        <span>{{
+          loadingGoogle() ? "Signing in…" : "Sign in with Google"
+        }}</span>
       </button>
 
       <p class="auth-switch">

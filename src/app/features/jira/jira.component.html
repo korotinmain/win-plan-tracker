@@ -1,0 +1,314 @@
+<div class="jp">
+  <!-- HEADER -->
+  <div class="jp-header">
+    <div class="jp-brand">
+      <div class="jp-brand-icon">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M16.002 2L2 16.002 16.002 30l14.001-13.998L16.002 2zm0 4.243l9.758 9.759-9.758 9.757-9.758-9.757 9.758-9.759z"
+            fill="url(#jp-grad)"
+          />
+          <path
+            d="M16.002 10.485l-5.517 5.517 5.517 5.516 5.516-5.516-5.516-5.517z"
+            fill="url(#jp-grad)"
+          />
+          <defs>
+            <linearGradient
+              id="jp-grad"
+              x1="2"
+              y1="2"
+              x2="30"
+              y2="30"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="jp-brand-text">
+        <h1 class="jp-brand-title">Jira Integration</h1>
+        <p class="jp-brand-sub">
+          <span *ngIf="configuredDomain()" class="jp-domain-pill">
+            <mat-icon class="jp-domain-icon">check_circle</mat-icon>
+            {{ configuredDomain() }}
+          </span>
+          <span
+            *ngIf="configured() === false"
+            class="jp-domain-pill jp-domain-pill--warn"
+          >
+            <mat-icon class="jp-domain-icon">warning</mat-icon>
+            Not configured
+          </span>
+          <span
+            *ngIf="configured() === null"
+            class="jp-domain-pill jp-domain-pill--loading"
+          >
+            Checking…
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="jp-header-actions">
+      <button
+        class="jp-btn jp-btn--ghost"
+        (click)="checkConfig()"
+        [disabled]="connecting()"
+        type="button"
+        matTooltip="Re-check Jira config"
+      >
+        <mat-spinner *ngIf="connecting()" diameter="16"></mat-spinner>
+        <mat-icon *ngIf="!connecting()">sync</mat-icon>
+      </button>
+      <button
+        class="jp-btn jp-btn--primary"
+        (click)="refresh()"
+        [disabled]="loadingSprints() || !configured()"
+        type="button"
+      >
+        <mat-spinner *ngIf="loadingSprints()" diameter="16"></mat-spinner>
+        <mat-icon *ngIf="!loadingSprints()">refresh</mat-icon>
+        Refresh
+      </button>
+      <button
+        class="jp-btn jp-btn--planning"
+        (click)="goToPlanning()"
+        [disabled]="!configured()"
+        type="button"
+        matTooltip="Open interactive sprint planning board"
+      >
+        <mat-icon>rocket_launch</mat-icon>
+        Start Planning
+      </button>
+    </div>
+  </div>
+
+  <!-- NOT CONFIGURED -->
+  <div *ngIf="configured() === false" class="jp-unconfigured">
+    <div class="jp-unconfigured-icon">
+      <mat-icon>cloud_off</mat-icon>
+    </div>
+    <h2>Jira is not configured</h2>
+    <p>
+      Ask an admin to set <code>JIRA_DOMAIN</code> and
+      <code>JIRA_TOKEN</code> in the Cloud Functions environment.
+    </p>
+  </div>
+
+  <!-- CONFIGURED CONTENT -->
+  <div *ngIf="configured()" class="jp-content">
+    <!-- STAT STRIP (active sprint stats) -->
+    <div class="jp-stats">
+      <div class="jp-stat">
+        <span class="jp-stat-value">{{ sprintStats().total }}</span>
+        <span class="jp-stat-label">Sprint Total</span>
+      </div>
+      <div class="jp-stat">
+        <span class="jp-stat-value jp-stat-value--prog">{{
+          sprintStats().inProgress
+        }}</span>
+        <span class="jp-stat-label">In Progress</span>
+      </div>
+      <div class="jp-stat">
+        <span class="jp-stat-value jp-stat-value--done">{{
+          sprintStats().done
+        }}</span>
+        <span class="jp-stat-label">Done</span>
+      </div>
+      <div class="jp-stat">
+        <span class="jp-stat-value jp-stat-value--todo">{{
+          sprintStats().todo
+        }}</span>
+        <span class="jp-stat-label">To Do</span>
+      </div>
+    </div>
+
+    <!-- SPRINT LIST -->
+    <div class="jp-pane">
+      <!-- Loading -->
+      <div *ngIf="loadingSprints()" class="jp-loading">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Loading sprints…</span>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!loadingSprints() && sprints().length === 0" class="jp-empty">
+        <mat-icon>sprint</mat-icon>
+        <p>No sprints found. Click Refresh to load.</p>
+      </div>
+
+      <!-- Sprint cards -->
+      <div *ngIf="!loadingSprints()" class="jp-sprint-list">
+        <div
+          *ngFor="let sprint of sprints()"
+          class="jp-sprint"
+          [class]="'sprint-' + sprint.state"
+        >
+          <div class="jp-sprint-head">
+            <div class="jp-sprint-info">
+              <span
+                class="jp-sprint-state-badge"
+                [class]="'sb-' + sprint.state"
+                >{{ sprint.state }}</span
+              >
+              <h3 class="jp-sprint-name">{{ sprint.name }}</h3>
+              <p *ngIf="sprint.goal" class="jp-sprint-goal">
+                {{ sprint.goal }}
+              </p>
+            </div>
+            <div class="jp-sprint-dates">
+              <span *ngIf="sprint.startDate">{{
+                sprint.startDate | date: "MMM d"
+              }}</span>
+              <span *ngIf="sprint.startDate && sprint.endDate"> → </span>
+              <span *ngIf="sprint.endDate">{{
+                sprint.endDate | date: "MMM d, y"
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="jp-progress-wrap">
+            <div class="jp-progress-bar">
+              <div
+                class="jp-progress-fill"
+                [style.width.%]="sprintProgress(sprint)"
+              ></div>
+            </div>
+            <span class="jp-progress-label"
+              >{{ sprint.stats.done }} / {{ sprint.stats.total }} done ·
+              {{ sprintProgress(sprint) }}%</span
+            >
+          </div>
+
+          <!-- Issues -->
+          <div *ngIf="sprint.issues.length > 0" class="jp-sprint-issues">
+            <a
+              *ngFor="let issue of sprint.issues"
+              class="jp-si"
+              href="https://{{ configuredDomain() }}/browse/{{ issue.id }}"
+              target="_blank"
+              rel="noopener"
+            >
+              <mat-icon
+                class="jp-si-type"
+                [class]="'type-' + issue.type.toLowerCase()"
+                [matTooltip]="issue.type"
+                >{{ typeIcon(issue.type) }}</mat-icon
+              >
+              <span class="jp-si-id">{{ issue.id }}</span>
+              <span class="jp-si-title">{{ issue.title }}</span>
+              <span class="jp-si-assignee" *ngIf="issue.assignee">{{
+                issue.assignee
+              }}</span>
+              <span
+                class="jp-si-status"
+                [class]="'sc-' + issue.statusCategory"
+                >{{ issue.status }}</span
+              >
+            </a>
+          </div>
+          <div *ngIf="sprint.issues.length === 0" class="jp-sprint-empty">
+            No issues in this sprint.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PLANNING HISTORY ───────────────────────────────────────────── -->
+    <div class="jp-history">
+      <div class="jp-history-header">
+        <div class="jp-history-title">
+          <mat-icon class="jp-history-icon">history</mat-icon>
+          <h3>Planning History</h3>
+        </div>
+        <button
+          class="jp-btn jp-btn--ghost jp-btn--sm"
+          (click)="loadHistory()"
+          [disabled]="loadingHistory()"
+          type="button"
+          matTooltip="Refresh history"
+        >
+          <mat-spinner *ngIf="loadingHistory()" diameter="14"></mat-spinner>
+          <mat-icon *ngIf="!loadingHistory()">refresh</mat-icon>
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loadingHistory()" class="jp-history-loading">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading history…</span>
+      </div>
+
+      <!-- Empty -->
+      <div
+        *ngIf="!loadingHistory() && planningHistory().length === 0"
+        class="jp-history-empty"
+      >
+        <mat-icon>event_note</mat-icon>
+        <p>No planning sessions yet. Start your first one!</p>
+      </div>
+
+      <!-- Session list -->
+      <div
+        *ngIf="!loadingHistory() && planningHistory().length > 0"
+        class="jp-history-list"
+      >
+        <div *ngFor="let session of planningHistory()" class="jp-history-card">
+          <div class="jp-hc-left">
+            <div class="jp-hc-icon">
+              <mat-icon>rocket_launch</mat-icon>
+            </div>
+            <div class="jp-hc-info">
+              <span class="jp-hc-sprint">{{ session.sprintName }}</span>
+              <span class="jp-hc-meta">
+                {{ session.createdAt.toDate() | date: "MMM d, y · HH:mm" }} · by
+                {{ session.createdByName }}
+              </span>
+            </div>
+          </div>
+          <div class="jp-hc-right">
+            <div class="jp-hc-stat">
+              <span class="jp-hc-stat-val">{{ session.issueCount }}</span>
+              <span class="jp-hc-stat-lbl">issues</span>
+            </div>
+            <div class="jp-hc-stat">
+              <span class="jp-hc-stat-val jp-hc-sp">{{
+                session.totalStoryPoints
+              }}</span>
+              <span class="jp-hc-stat-lbl">SP</span>
+            </div>
+            <div class="jp-hc-participants">
+              <div
+                *ngFor="
+                  let p of session.participants.slice(0, 4);
+                  let pi = index
+                "
+                class="jp-hc-av"
+                [style.marginLeft]="pi > 0 ? '-6px' : '0'"
+                [matTooltip]="p"
+              >
+                {{ p.split(" ")[0][0] }}{{ (p.split(" ")[1] || "")[0] }}
+              </div>
+              <div
+                *ngIf="session.participants.length > 4"
+                class="jp-hc-av jp-hc-av--more"
+                [style.marginLeft]="'-6px'"
+              >
+                +{{ session.participants.length - 4 }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -49,6 +49,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sprints',
+        loadComponent: () =>
+          import('./features/jira/jira.component').then((m) => m.JiraComponent),
+      },
+      {
+        path: 'sprints/planning',
+        loadComponent: () =>
+          import('./features/sprints/sprint-planning/sprint-planning.component').then(
+            (m) => m.SprintPlanningComponent,
+          ),
+      },
+      {
         path: 'teams',
         canActivate: [roleGuard(['admin'])],
         loadComponent: () =>

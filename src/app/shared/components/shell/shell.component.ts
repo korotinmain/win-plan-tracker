@@ -72,6 +72,7 @@ export class ShellComponent {
   workspaceNav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Calendar', icon: 'calendar_month', route: '/calendar' },
+    { label: 'Sprints', icon: 'rocket_launch', route: '/sprints' },
     { label: 'Team', icon: 'groups', route: '/teams', roles: ['admin'] },
   ];
 
@@ -151,6 +152,7 @@ export class ShellComponent {
 
   private titleFromUrl(url: string): string {
     if (/^\/teams\/[^/]+\/settings/.test(url)) return 'Team Settings';
+    if (/^\/sprints\/planning/.test(url)) return 'Sprint Planning';
     const match = this.allNavItems.find((i) => url.startsWith(i.route));
     return match?.label ?? 'Dashboard';
   }

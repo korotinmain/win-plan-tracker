@@ -24,7 +24,8 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
 
-  loading = signal(false);
+  loadingEmail = signal(false);
+  loadingGoogle = signal(false);
   error = signal('');
   hidePassword = signal(true);
 
@@ -53,7 +54,7 @@ export class LoginComponent {
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
-    this.loading.set(true);
+    this.loadingEmail.set(true);
     this.error.set('');
     try {
       await this.authService.loginWithEmail(
@@ -63,18 +64,19 @@ export class LoginComponent {
     } catch (e: unknown) {
       this.error.set(getErrorMessage(e, 'Login failed. Please try again.'));
     } finally {
-      this.loading.set(false);
+      this.loadingEmail.set(false);
     }
   }
 
   async loginWithGoogle(): Promise<void> {
-    this.loading.set(true);
+    this.loadingGoogle.set(true);
     this.error.set('');
     try {
       await this.authService.loginWithGoogle();
     } catch (e: unknown) {
       this.error.set(getErrorMessage(e, 'Google sign-in failed.'));
-      this.loading.set(false);
+    } finally {
+      this.loadingGoogle.set(false);
     }
   }
 }

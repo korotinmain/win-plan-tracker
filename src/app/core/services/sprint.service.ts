@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   format,
   getISOWeek,
@@ -8,6 +8,7 @@ import {
   eachDayOfInterval,
   isWeekend,
 } from 'date-fns';
+import { JiraService, JiraSprint } from './jira.service';
 
 export interface SprintInfo {
   sprintNumber: number;
@@ -23,6 +24,8 @@ export interface SprintInfo {
 
 @Injectable({ providedIn: 'root' })
 export class SprintService {
+  private jiraService = inject(JiraService);
+
   /**
    * Resolves sprint boundaries and progress for the given date (defaults to now).
    * Each sprint = 2 ISO weeks. Week 1-2 = sprint 1, 3-4 = sprint 2, etc.
@@ -60,5 +63,10 @@ export class SprintService {
       startRaw: sprintStart,
       endRaw: sprintEnd,
     };
+  }
+
+  /** Fetch all sprints from Jira for the given board. */
+  async getJiraSprints(boardId: string): Promise<JiraSprint[]> {
+    return this.jiraService.fetchSprints(boardId);
   }
 }

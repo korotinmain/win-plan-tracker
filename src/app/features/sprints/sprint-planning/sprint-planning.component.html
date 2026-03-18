@@ -1,0 +1,468 @@
+<div class="sp">
+  <!-- ── LOADING ──────────────────────────────────────────────────────────── -->
+  <div *ngIf="loading() || configured() === null" class="sp-loading-screen">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading sprint data…</span>
+  </div>
+
+  <!-- ── NOT CONFIGURED ──────────────────────────────────────────────────── -->
+  <div *ngIf="configured() === false && !loading()" class="sp-unconfigured">
+    <mat-icon>cloud_off</mat-icon>
+    <h2>Jira not configured</h2>
+    <p>
+      Set <code>JIRA_DOMAIN</code>, <code>JIRA_EMAIL</code> and
+      <code>JIRA_TOKEN</code> in Cloud Functions env.
+    </p>
+    <button class="sp-btn sp-btn--primary" (click)="load()">
+      <mat-icon>refresh</mat-icon> Retry
+    </button>
+  </div>
+
+  <!-- ── MAIN VIEW ─────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="configured() && !loading()">
+    <!-- Header ---------------------------------------------------------------->
+    <header class="sp-header">
+      <div class="sp-header-left">
+        <div class="sp-header-title-group">
+          <h1 class="sp-header-title">Sprint Planning</h1>
+          <span class="sp-header-sprint" *ngIf="activeSprint()">
+            &middot; {{ activeSprint()!.name }}
+          </span>
+        </div>
+        <span class="sp-days-badge" *ngIf="daysLeft > 0">
+          <mat-icon>schedule</mat-icon>{{ daysLeft }} days left
+        </span>
+      </div>
+
+      <div class="sp-header-right">
+        <div class="sp-confidence" *ngIf="activeSprint()">
+          <span class="sp-confidence-label">Confidence</span>
+          <div class="sp-confidence-bar">
+            <div
+              class="sp-confidence-fill"
+              [style.width.%]="sprintProgress"
+            ></div>
+          </div>
+          <span class="sp-confidence-val">{{ sprintProgress }}%</span>
+        </div>
+        <button
+          class="sp-btn sp-btn--ghost"
+          (click)="load()"
+          matTooltip="Refresh data"
+        >
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button
+          class="sp-btn sp-btn--outline"
+          [class.sp-btn--cap-active]="capacityDrawerOpen()"
+          (click)="toggleCapacityDrawer()"
+          matTooltip="Team capacity"
+        >
+          <mat-icon>people_alt</mat-icon>
+          Capacity
+          <span *ngIf="overloadedMember" class="sp-cap-badge-warn">!</span>
+        </button>
+        <button class="sp-btn sp-btn--outline" (click)="advanceTurn()">
+          <mat-icon>skip_next</mat-icon> Next Turn
+        </button>
+        <button class="sp-btn sp-btn--primary">
+          <mat-icon>rocket_launch</mat-icon> Start Sprint
+        </button>
+      </div>
+    </header>
+
+    <!-- Queue bar ------------------------------------------------------------->
+    <div class="sp-queue" *ngIf="members.length > 0">
+      <span class="sp-queue-label">Turn Order</span>
+      <div class="sp-queue-members">
+        <div
+          *ngFor="let member of members; let i = index"
+          class="sp-queue-member"
+          [class.sp-queue-member--active]="i === turnIndex()"
+          [class.sp-queue-member--next]="
+            i === (turnIndex() + 1) % members.length
+          "
+          (click)="turnIndex.set(i)"
+        >
+          <div class="sp-q-avatar" [class]="'q-av-' + (i % 5)">
+            {{ member.initials }}
+            <span *ngIf="i === turnIndex()" class="sp-q-pulse"></span>
+          </div>
+          <span class="sp-q-name">{{ member.name.split(" ")[0] }}</span>
+          <span *ngIf="i === turnIndex()" class="sp-q-badge sp-q-badge--you"
+            >Your turn</span
+          >
+          <span
+            *ngIf="
+              i === (turnIndex() + 1) % members.length && members.length > 1
+            "
+            class="sp-q-badge sp-q-badge--next"
+            >On deck</span
+          >
+        </div>
+      </div>
+      <div class="sp-queue-end">
+        <mat-icon class="sp-queue-icon" matTooltip="Sound notifications"
+          >notifications_none</mat-icon
+        >
+      </div>
+    </div>
+
+    <!-- 2-column body + capacity drawer ---------------------------------------->
+    <div class="sp-body" cdkDropListGroup>
+      <!-- LEFT: Backlog ─────────────────────────────────────────────────────-->
+      <aside class="sp-sidebar-left">
+        <div class="sp-bl-header">
+          <h2 class="sp-bl-title">Backlog</h2>
+          <span class="sp-bl-count">{{ backlogIssues.length }}</span>
+        </div>
+
+        <div class="sp-bl-search">
+          <mat-icon class="sp-bl-search-icon">search</mat-icon>
+          <input
+            class="sp-bl-search-input"
+            type="text"
+            placeholder="Search issues…"
+            [(ngModel)]="backlogSearch"
+          />
+        </div>
+
+        <div class="sp-bl-chips">
+          <button
+            class="sp-chip"
+            [class.sp-chip--active]="backlogTypeFilter === 'all'"
+            (click)="backlogTypeFilter = 'all'"
+          >
+            All
+          </button>
+          <button
+            class="sp-chip"
+            [class.sp-chip--active]="backlogTypeFilter === 'bug'"
+            (click)="backlogTypeFilter = 'bug'"
+          >
+            Bugs
+          </button>
+          <button
+            class="sp-chip"
+            [class.sp-chip--active]="backlogTypeFilter === 'story'"
+            (click)="backlogTypeFilter = 'story'"
+          >
+            Stories
+          </button>
+          <button
+            class="sp-chip"
+            [class.sp-chip--active]="backlogTypeFilter === 'task'"
+            (click)="backlogTypeFilter = 'task'"
+          >
+            Tasks
+          </button>
+        </div>
+
+        <div
+          cdkDropList
+          id="sp-bl"
+          [cdkDropListData]="backlogIssues"
+          (cdkDropListDropped)="onDropBacklog($event)"
+          class="sp-bl-list"
+        >
+          <div
+            *ngFor="let issue of backlogIssues"
+            cdkDrag
+            class="sp-bl-item"
+            [class.sp-bl-item--hidden]="!matchesBacklogFilter(issue)"
+          >
+            <div class="sp-bl-item-drag" cdkDragHandle>
+              <mat-icon>drag_indicator</mat-icon>
+            </div>
+            <div class="sp-bl-item-body">
+              <div class="sp-bl-meta">
+                <span class="sp-bl-id">{{ issue.id }}</span>
+                <mat-icon
+                  class="sp-bl-type"
+                  [class]="'type-' + issue.type.toLowerCase()"
+                  [matTooltip]="issue.type"
+                  >{{ typeIcon(issue.type) }}</mat-icon
+                >
+              </div>
+              <div class="sp-bl-title">{{ issue.title }}</div>
+              <div class="sp-bl-foot">
+                <mat-icon class="sp-bl-pri" [matTooltip]="issue.priority">{{
+                  priorityIcon(issue.priority)
+                }}</mat-icon>
+                <span
+                  class="sp-bl-sp"
+                  *ngIf="storyPoints[issue.id]; else spEmpty"
+                >
+                  {{ storyPoints[issue.id] }} SP
+                </span>
+                <ng-template #spEmpty
+                  ><span class="sp-bl-sp sp-bl-sp--empty"
+                    >SP ?</span
+                  ></ng-template
+                >
+              </div>
+            </div>
+
+            <!-- Drag preview -->
+            <div *cdkDragPreview class="sp-bl-preview">
+              <span class="sp-bl-preview-id">{{ issue.id }}</span>
+              <span class="sp-bl-preview-title">{{ issue.title }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="backlogIssues.length === 0" class="sp-bl-empty">
+            <mat-icon>inbox</mat-icon>
+            <p>No backlog issues</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER: Canvas ────────────────────────────────────────────────────-->
+      <main class="sp-canvas">
+        <!-- Day header -->
+        <div class="sp-canvas-head">
+          <div class="sp-ch-spacer"></div>
+          <div class="sp-ch-week" *ngIf="week1Days.length > 0">
+            <span class="sp-ch-week-label">Week 1</span>
+            <div class="sp-ch-days">
+              <span *ngFor="let d of week1Days" class="sp-ch-day">{{
+                d | date: "EEE d"
+              }}</span>
+            </div>
+          </div>
+          <div class="sp-ch-sep" *ngIf="week2Days.length > 0"></div>
+          <div class="sp-ch-week" *ngIf="week2Days.length > 0">
+            <span class="sp-ch-week-label">Week 2</span>
+            <div class="sp-ch-days">
+              <span *ngFor="let d of week2Days" class="sp-ch-day">{{
+                d | date: "EEE d"
+              }}</span>
+            </div>
+          </div>
+          <div *ngIf="workDays.length === 0" class="sp-ch-no-dates">
+            Sprint timeline
+          </div>
+        </div>
+
+        <!-- Member rows -->
+        <div class="sp-canvas-rows">
+          <div
+            *ngFor="let member of members; let i = index"
+            class="sp-row"
+            [class.sp-row--active]="i === turnIndex()"
+          >
+            <div class="sp-row-label">
+              <div class="sp-row-avatar" [class]="'q-av-' + (i % 5)">
+                {{ member.initials }}
+              </div>
+              <span class="sp-row-name">{{ member.name }}</span>
+            </div>
+
+            <div
+              cdkDropList
+              [id]="'sp-mr-' + i"
+              [cdkDropListData]="memberIssues[i]"
+              (cdkDropListDropped)="onDropMember($event)"
+              class="sp-row-drop"
+              [class.sp-row-drop--turn]="i === turnIndex()"
+            >
+              <div
+                *ngFor="let issue of memberIssues[i]"
+                cdkDrag
+                class="sp-task"
+                [class.sp-task--estimating]="estimatingId() === issue.id"
+              >
+                <div class="sp-task-head">
+                  <span class="sp-task-id">{{ issue.id }}</span>
+                  <mat-icon class="sp-task-pri" [matTooltip]="issue.priority">{{
+                    priorityIcon(issue.priority)
+                  }}</mat-icon>
+                </div>
+                <div class="sp-task-title">{{ issue.title }}</div>
+                <div class="sp-task-foot">
+                  <span
+                    class="sp-sc"
+                    [class]="statusChipClass(issue.statusCategory)"
+                    >{{ issue.status }}</span
+                  >
+                  <span class="sp-task-sp" *ngIf="storyPoints[issue.id]"
+                    >{{ storyPoints[issue.id] }} SP</span
+                  >
+                </div>
+
+                <!-- Estimation popover -->
+                <div
+                  *ngIf="estimatingId() === issue.id"
+                  class="sp-est-pop"
+                  (click)="$event.stopPropagation()"
+                >
+                  <p class="sp-est-title">
+                    <mat-icon>stars</mat-icon> Story Points?
+                  </p>
+                  <div class="sp-est-opts">
+                    <button
+                      *ngFor="let opt of SP_OPTIONS"
+                      class="sp-est-opt"
+                      (click)="setEstimation(issue.id, opt)"
+                    >
+                      {{ opt }}
+                    </button>
+                  </div>
+                  <button class="sp-est-skip" (click)="dismissEstimation()">
+                    Skip
+                  </button>
+                </div>
+
+                <!-- CDK drag preview -->
+                <div *cdkDragPreview class="sp-task-preview">
+                  <span class="sp-task-preview-id">{{ issue.id }}</span>
+                  <span class="sp-task-preview-title">{{ issue.title }}</span>
+                </div>
+              </div>
+
+              <!-- Current-turn drop hint when row is empty -->
+              <div
+                *ngIf="i === turnIndex() && memberIssues[i].length === 0"
+                class="sp-drop-hint"
+              >
+                <mat-icon>add_circle_outline</mat-icon>
+                <span
+                  >{{ member.name.split(" ")[0] }}'s turn — drag a task
+                  here</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state when no active sprint -->
+          <div *ngIf="members.length === 0" class="sp-canvas-empty">
+            <mat-icon>calendar_today</mat-icon>
+            <p>No active sprint found for board {{ BOARD_ID }}.</p>
+            <button class="sp-btn sp-btn--outline" (click)="load()">
+              <mat-icon>refresh</mat-icon> Reload
+            </button>
+          </div>
+        </div>
+
+        <!-- Sprint overview footer -->
+        <div class="sp-overview" *ngIf="activeSprint()">
+          <span class="sp-ov-label">Sprint Overview</span>
+          <div class="sp-ov-stats">
+            <span class="sp-ov-stat"
+              >Total SP: <strong>{{ totalSP }}</strong></span
+            >
+            <span class="sp-ov-divider">·</span>
+            <span class="sp-ov-stat"
+              >{{ activeSprint()!.stats.done }} /
+              {{ activeSprint()!.stats.total }} done</span
+            >
+          </div>
+          <div class="sp-ov-bar">
+            <div
+              class="sp-ov-fill"
+              [style.width.%]="sprintProgress"
+              [class.sp-ov-fill--complete]="sprintProgress >= 80"
+            ></div>
+          </div>
+          <span class="sp-ov-pct">{{ sprintProgress }}%</span>
+          <button class="sp-btn sp-btn--sm sp-btn--outline">
+            Start Estimation
+          </button>
+        </div>
+      </main>
+
+      <!-- RIGHT: Capacity drawer (overlay) ─────────────────────────────────-->
+      <!-- Backdrop -->
+      <div
+        class="sp-cap-backdrop"
+        *ngIf="capacityDrawerOpen()"
+        (click)="capacityDrawerOpen.set(false)"
+      ></div>
+
+      <!-- Drawer panel -->
+      <aside
+        class="sp-cap-drawer"
+        [class.sp-cap-drawer--open]="capacityDrawerOpen()"
+      >
+        <div class="sp-cap-drawer-header">
+          <div class="sp-cap-drawer-title">
+            <mat-icon>people_alt</mat-icon>
+            <span>Team Capacity</span>
+          </div>
+          <button
+            class="sp-cap-drawer-close"
+            (click)="capacityDrawerOpen.set(false)"
+            matTooltip="Close"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Overloaded warning -->
+        <div class="sp-cap-warn-card" *ngIf="overloadedMember">
+          <mat-icon class="sp-cap-warn-icon">warning_amber</mat-icon>
+          <div class="sp-cap-warn-text">
+            <strong>Overloaded</strong>
+            <span
+              >{{ overloadedMember }} has too many tasks. Consider
+              rebalancing.</span
+            >
+          </div>
+        </div>
+
+        <!-- Capacity rows -->
+        <div class="sp-cap-drawer-body">
+          <div
+            *ngFor="let cap of capacities; let i = index"
+            class="sp-cap-row"
+            [class.sp-cap-row--over]="cap.level === 'over'"
+          >
+            <div class="sp-cap-avatar" [class]="'q-av-' + (i % 5)">
+              {{ cap.initials }}
+            </div>
+            <div class="sp-cap-info">
+              <div class="sp-cap-name-row">
+                <span class="sp-cap-name">{{ cap.name }}</span>
+                <span class="sp-cap-pct" [class]="'sp-pct--' + cap.level">
+                  {{ memberIssues[i].length }} tasks
+                </span>
+              </div>
+              <div class="sp-cap-bar">
+                <div
+                  class="sp-cap-fill"
+                  [class]="'sp-cap-fill--' + cap.level"
+                  [style.width.%]="cap.pct"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="members.length === 0" class="sp-cap-drawer-empty">
+            No team members in this sprint.
+          </div>
+        </div>
+
+        <!-- Footer stats -->
+        <div class="sp-cap-drawer-footer" *ngIf="activeSprint()">
+          <div class="sp-cap-drawer-stat">
+            <span class="sp-cap-drawer-stat-val">{{ sprintTotalIssues }}</span>
+            <span class="sp-cap-drawer-stat-lbl">assigned</span>
+          </div>
+          <div class="sp-cap-drawer-sep"></div>
+          <div class="sp-cap-drawer-stat">
+            <span class="sp-cap-drawer-stat-val sp-cap-drawer-stat-val--sp">{{
+              totalSP
+            }}</span>
+            <span class="sp-cap-drawer-stat-lbl">story points</span>
+          </div>
+          <div class="sp-cap-drawer-sep"></div>
+          <div class="sp-cap-drawer-stat">
+            <span class="sp-cap-drawer-stat-val">{{
+              backlogIssues.length
+            }}</span>
+            <span class="sp-cap-drawer-stat-lbl">in backlog</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</div>

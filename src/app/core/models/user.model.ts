@@ -8,4 +8,13 @@ export interface AppUser {
   teamId: string;
   photoURL?: string;
   createdAt: Date;
+  /** Optional Jira connection metadata (stored in the user profile). */
+  jira?: {
+    /** True once Jira credentials have been stored. */
+    configured: boolean;
+    /** Simple boolean for UI state. */
+    connected: boolean;
+    /** When the connection was established. */
+    connectedAt?: Date;
+  } | null;
 }

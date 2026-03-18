@@ -130,5 +130,11 @@ service cloud.firestore {
                     && request.auth.uid == resource.data.recipientUid;
       allow create: if signedIn();
     }
+
+    // ─── jira credentials ───────────────────────────────────────────────────
+    // Store the user’s Jira Cloud domain + API token for backend requests.
+    match /jiraCredentials/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
   }
 }

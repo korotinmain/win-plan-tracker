@@ -1,0 +1,106 @@
+<div class="psd">
+  <!-- HEADER -->
+  <div class="psd-header">
+    <div class="psd-header-left">
+      <div class="psd-header-icon">
+        <mat-icon>groups</mat-icon>
+      </div>
+      <div class="psd-header-text">
+        <h2 class="psd-title">Select Participants</h2>
+        <p class="psd-sub">Choose who joins the sprint planning session</p>
+      </div>
+    </div>
+    <button class="psd-close" (click)="close()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- SPRINT BADGE -->
+  <div class="psd-sprint-badge">
+    <mat-icon class="psd-sprint-icon">rocket_launch</mat-icon>
+    <span class="psd-sprint-name">{{ data.sprintName }}</span>
+    <span class="psd-sprint-sep">·</span>
+    <span class="psd-sprint-count">{{ data.members.length }} team members</span>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="psd-controls">
+    <span class="psd-controls-label">
+      <span class="psd-badge-count">{{ selectedCount }}</span>
+      selected
+    </span>
+    <div class="psd-controls-actions">
+      <button class="psd-link-btn" (click)="selectAll()">Select all</button>
+      <span class="psd-controls-sep">·</span>
+      <button class="psd-link-btn" (click)="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <!-- MEMBER GRID -->
+  <div class="psd-grid">
+    <button
+      *ngFor="let m of data.members; let i = index"
+      class="psd-member"
+      [class.psd-member--on]="isSelected(m.name)"
+      (click)="toggle(m.name)"
+      type="button"
+    >
+      <!-- Avatar -->
+      <div
+        class="psd-av"
+        [style.background]="avColor(i).bg"
+        [style.color]="avColor(i).text"
+      >
+        {{ m.initials }}
+      </div>
+
+      <!-- Name -->
+      <span class="psd-member-name">{{ m.name }}</span>
+
+      <!-- Check badge -->
+      <div class="psd-check" [class.psd-check--visible]="isSelected(m.name)">
+        <mat-icon>check</mat-icon>
+      </div>
+    </button>
+  </div>
+
+  <!-- SELECTED PREVIEW -->
+  <div class="psd-preview" *ngIf="selectedCount > 0">
+    <span class="psd-preview-label">Joining:</span>
+    <div class="psd-av-stack">
+      <div
+        *ngFor="let m of selectedMembers.slice(0, 7); let i = index"
+        class="psd-av psd-av--sm"
+        [style.background]="avColor(data.members.indexOf(m)).bg"
+        [style.color]="avColor(data.members.indexOf(m)).text"
+        [style.marginLeft]="i > 0 ? '-8px' : '0'"
+        [matTooltip]="m.name"
+      >
+        {{ m.initials }}
+      </div>
+      <div
+        *ngIf="selectedCount > 7"
+        class="psd-av psd-av--sm psd-av--more"
+        [style.marginLeft]="'-8px'"
+      >
+        +{{ selectedCount - 7 }}
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="psd-footer">
+    <button class="psd-btn psd-btn--ghost" (click)="close()" type="button">
+      Cancel
+    </button>
+    <button
+      class="psd-btn psd-btn--primary"
+      [disabled]="selectedCount === 0"
+      (click)="confirm()"
+      type="button"
+    >
+      <mat-icon>rocket_launch</mat-icon>
+      Start Planning ({{ selectedCount }})
+    </button>
+  </div>
+</div>

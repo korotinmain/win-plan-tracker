@@ -457,8 +457,11 @@
 }
 
 .btn-spin {
+  /* Use current text color so the spinner remains visible in both light and dark themes */
+  color: inherit;
+
   ::ng-deep circle {
-    stroke: rgba(255, 255, 255, 0.85);
+    stroke: currentColor;
   }
 }
 

@@ -1,0 +1,20 @@
+# Firebase Functions build output
+node_modules/
+
+# Firebase emulators and local state
+.firebase/
+
+# Local env vars (if used)
+.env
+
+# Yarn files
+.yarnrc.yml
+.pnp.*
+
+# MacOS
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

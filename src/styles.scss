@@ -198,6 +198,25 @@ a {
   }
 }
 
+// ── Participant Select Dialog ─────────────────────────────────────────────────
+.psd-backdrop {
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(8px);
+}
+
+.psd-panel .mat-mdc-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+
+  .mdc-dialog__surface {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 24px;
+    overflow: visible;
+  }
+}
+
 // ── Custom Dropdown Menu — shared item content styles ─────────────────────────
 // CDK backdrop (transparent — panel has its own shadow feel)
 .dm-overlay-backdrop {
@@ -256,6 +275,9 @@ a {
   font-weight: 500;
   color: var(--c-text);
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition:
     color 0.15s ease,
     transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);

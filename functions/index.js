@@ -1,0 +1,15 @@
+const admin = require("firebase-admin");
+
+// Load environment variables from .env file (local dev / emulators)
+require("dotenv").config();
+
+admin.initializeApp();
+
+// ── Jira ──────────────────────────────────────────────────────────────────────
+const { checkJiraConfig } = require("./jira/checkConfig");
+const { getJiraTasks } = require("./jira/getTasks");
+const { getJiraSprints } = require("./jira/getSprints");
+
+exports.checkJiraConfig = checkJiraConfig;
+exports.getJiraTasks = getJiraTasks;
+exports.getJiraSprints = getJiraSprints;
