@@ -138,10 +138,23 @@ service cloud.firestore {
     }
 
     // ─── planning sessions ──────────────────────────────────────────────────
-    // Sprint planning drafts and completed snapshots are collaborative team
-    // artifacts. Any authenticated user may read/write for now.
+    // Sprint planning drafts and completed snapshots are team-scoped.
+    // Legacy docs without teamId remain readable by their creator only.
     match /planningSessions/{sessionId} {
-      allow read, write: if signedIn();
+      allow read: if signedIn()
+                  && ((resource.data.teamId is string
+                       && isMember(resource.data.teamId))
+                      || (!(resource.data.teamId is string)
+                          && resource.data.createdBy == request.auth.uid));
+      allow create: if signedIn()
+                    && request.resource.data.teamId is string
+                    && isMember(request.resource.data.teamId)
+                    && request.resource.data.createdBy == request.auth.uid;
+      allow update,
+            delete: if signedIn()
+                    && ((resource.data.teamId is string
+                         && isMember(resource.data.teamId))
+                        || resource.data.createdBy == request.auth.uid);
     }
   }
 }
