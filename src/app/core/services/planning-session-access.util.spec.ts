@@ -1,5 +1,6 @@
 import {
   buildPlanningSessionAccessFields,
+  buildPlanningSessionMetadataPatch,
   canReadLegacyPlanningSession,
   mapPlanningParticipants,
   mergePlanningSessions,
@@ -42,6 +43,27 @@ describe('planning-session-access.util', () => {
         participantIds: ['user-1', 'user-2'],
       }),
     ).toThrowError('Planning sessions require a teamId.');
+  });
+
+  it('buildPlanningSessionMetadataPatch backfills team and participant ids when teamId is present', () => {
+    expect(
+      buildPlanningSessionMetadataPatch({
+        teamId: ' team-1 ',
+        participantIds: ['user-1', 'user-2', 'user-1'],
+      }),
+    ).toEqual({
+      teamId: 'team-1',
+      participantIds: ['user-1', 'user-2'],
+    });
+  });
+
+  it('buildPlanningSessionMetadataPatch skips backfill when teamId is missing', () => {
+    expect(
+      buildPlanningSessionMetadataPatch({
+        teamId: '   ',
+        participantIds: ['user-1'],
+      }),
+    ).toEqual({});
   });
 
   it('canReadLegacyPlanningSession allows the creator when teamId is missing', () => {

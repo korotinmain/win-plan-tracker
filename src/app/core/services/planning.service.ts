@@ -16,6 +16,7 @@ import { db } from '../../firebase';
 import { AuthService } from './auth.service';
 import {
   buildPlanningSessionAccessFields,
+  buildPlanningSessionMetadataPatch,
   canReadLegacyPlanningSession,
   mergePlanningSessions,
 } from './planning-session-access.util';
@@ -141,6 +142,8 @@ export class PlanningService {
   async updateDraft(
     sessionId: string,
     payload: {
+      teamId?: string;
+      participantIds?: string[];
       tasks: TaskPlacement[];
       summary: PlanningSummary;
       guidedModeEnabled: boolean;
@@ -150,6 +153,10 @@ export class PlanningService {
   ): Promise<void> {
     const ref = doc(this.col, sessionId);
     await updateDoc(ref, {
+      ...buildPlanningSessionMetadataPatch({
+        teamId: payload.teamId,
+        participantIds: payload.participantIds,
+      }),
       tasks: payload.tasks,
       summary: payload.summary,
       guidedModeEnabled: payload.guidedModeEnabled,
@@ -166,9 +173,14 @@ export class PlanningService {
     tasks: TaskPlacement[],
     summary: PlanningSummary,
     workflowStep: PlanningStep = 'review-sprint',
+    metadata?: {
+      teamId?: string;
+      participantIds?: string[];
+    },
   ): Promise<void> {
     const ref = doc(this.col, sessionId);
     await updateDoc(ref, {
+      ...buildPlanningSessionMetadataPatch(metadata ?? {}),
       tasks,
       summary,
       workflowStep,

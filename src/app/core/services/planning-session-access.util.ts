@@ -9,6 +9,11 @@ export interface PlanningParticipant {
   uid?: string;
 }
 
+export interface PlanningSessionMetadataPatchInput {
+  teamId?: string;
+  participantIds?: string[];
+}
+
 export function buildPlanningSessionAccessFields(
   fields: PlanningSessionAccessFields,
 ): PlanningSessionAccessFields {
@@ -20,6 +25,20 @@ export function buildPlanningSessionAccessFields(
     teamId: fields.teamId.trim(),
     createdBy: fields.createdBy,
     participantIds: Array.from(new Set(fields.participantIds)),
+  };
+}
+
+export function buildPlanningSessionMetadataPatch(
+  input: PlanningSessionMetadataPatchInput,
+): Partial<Pick<PlanningSessionAccessFields, 'teamId' | 'participantIds'>> {
+  const teamId = input.teamId?.trim();
+  if (!teamId) {
+    return {};
+  }
+
+  return {
+    teamId,
+    participantIds: Array.from(new Set(input.participantIds ?? [])),
   };
 }
 

@@ -554,11 +554,17 @@ export class SprintPlanningComponent {
       }
       const sessionId = this.sessionId();
       if (!sessionId) throw new Error('Missing draft session id');
+      const teamId = this.authService.currentUser?.teamId?.trim();
+      const participantIds = await this.resolveParticipantIds();
       await this.planningService.completePlanning(
         sessionId,
         this.buildPlacements(),
         this.buildSummary(),
         'review-sprint',
+        {
+          teamId,
+          participantIds,
+        },
       );
       this.snackBar.open('Sprint plan completed.', 'OK', { duration: 2800 });
       this.router.navigate(['/sprints']);
@@ -821,6 +827,8 @@ export class SprintPlanningComponent {
 
     if (this.sessionId()) {
       await this.planningService.updateDraft(this.sessionId()!, {
+        teamId: payload.teamId,
+        participantIds: payload.participantIds,
         tasks: payload.tasks,
         summary: payload.summary,
         guidedModeEnabled: payload.guidedModeEnabled,
