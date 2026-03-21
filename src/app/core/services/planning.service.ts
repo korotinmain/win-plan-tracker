@@ -13,6 +13,7 @@ import {
 } from '@firebase/firestore';
 import { db } from '../../firebase';
 import { AuthService } from './auth.service';
+import { buildPlanningSessionAccessFields } from './planning-session-access.util';
 
 export type PlanningStep = 'review' | 'estimate' | 'plan' | 'review-sprint';
 export type PlanningBucket = 'backlog' | 'candidate' | 'planned';
@@ -105,13 +106,26 @@ export class PlanningService {
 
   async saveDraft(data: DraftSavePayload): Promise<string> {
     const user = this.auth.currentUser;
+    const teamId = user?.teamId?.trim();
+    if (!teamId) {
+      throw new Error('Planning sessions require a teamId.');
+    }
+
+    const access = buildPlanningSessionAccessFields({
+      teamId,
+      createdBy: user?.uid ?? 'unknown',
+      participantIds: data.participantIds ?? [],
+    });
+
     const ref = await addDoc(this.col, {
       ...data,
+      teamId: access.teamId,
+      participantIds: access.participantIds,
       status: 'draft',
       turnOrderIndex: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      createdBy: user?.uid ?? 'unknown',
+      createdBy: access.createdBy,
       createdByName: user?.displayName ?? user?.email ?? 'Unknown',
       totalStoryPoints: data.summary.totalStoryPoints,
       issueCount: data.tasks.length,
@@ -163,32 +177,38 @@ export class PlanningService {
 
   async getActiveDraftForSprint(
     sprintName: string,
+  ): Promise<PlanningSession | null>;
+  async getActiveDraftForSprint(
+    teamId: string,
+    sprintName: string,
+  ): Promise<PlanningSession | null>;
+  async getActiveDraftForSprint(
+    teamIdOrSprintName: string,
+    sprintName?: string,
   ): Promise<PlanningSession | null> {
-    const q = query(
-      this.col,
-      where('sprintName', '==', sprintName),
-      where('status', '==', 'draft'),
-      orderBy('createdAt', 'desc'),
+    return this.getLatestSession(
+      sprintName ? teamIdOrSprintName : null,
+      sprintName ?? teamIdOrSprintName,
+      'draft',
     );
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    const d = snap.docs[0];
-    return { id: d.id, ...d.data() } as PlanningSession;
   }
 
   async getCompletedForSprint(
     sprintName: string,
+  ): Promise<PlanningSession | null>;
+  async getCompletedForSprint(
+    teamId: string,
+    sprintName: string,
+  ): Promise<PlanningSession | null>;
+  async getCompletedForSprint(
+    teamIdOrSprintName: string,
+    sprintName?: string,
   ): Promise<PlanningSession | null> {
-    const q = query(
-      this.col,
-      where('sprintName', '==', sprintName),
-      where('status', '==', 'completed'),
-      orderBy('createdAt', 'desc'),
+    return this.getLatestSession(
+      sprintName ? teamIdOrSprintName : null,
+      sprintName ?? teamIdOrSprintName,
+      'completed',
     );
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    const d = snap.docs[0];
-    return { id: d.id, ...d.data() } as PlanningSession;
   }
 
   async getSessionById(id: string): Promise<PlanningSession | null> {
@@ -202,5 +222,36 @@ export class PlanningService {
     const q = query(this.col, orderBy('updatedAt', 'desc'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PlanningSession);
+  }
+
+  async getSessionsForTeam(teamId: string): Promise<PlanningSession[]> {
+    const q = query(
+      this.col,
+      where('teamId', '==', teamId),
+      orderBy('updatedAt', 'desc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PlanningSession);
+  }
+
+  private async getLatestSession(
+    teamId: string | null,
+    sprintName: string,
+    status: PlanningSession['status'],
+  ): Promise<PlanningSession | null> {
+    const constraints = [
+      where('sprintName', '==', sprintName),
+      where('status', '==', status),
+      orderBy('createdAt', 'desc'),
+    ];
+
+    if (teamId) {
+      constraints.unshift(where('teamId', '==', teamId));
+    }
+
+    const snap = await getDocs(query(this.col, ...constraints));
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as PlanningSession;
   }
 }

@@ -7,8 +7,12 @@ export interface PlanningSessionAccessFields {
 export function buildPlanningSessionAccessFields(
   fields: PlanningSessionAccessFields,
 ): PlanningSessionAccessFields {
+  if (!fields.teamId.trim()) {
+    throw new Error('Planning sessions require a teamId.');
+  }
+
   return {
-    teamId: fields.teamId,
+    teamId: fields.teamId.trim(),
     createdBy: fields.createdBy,
     participantIds: Array.from(new Set(fields.participantIds)),
   };

@@ -32,6 +32,16 @@ describe('planning-session-access.util', () => {
     });
   });
 
+  it('buildPlanningSessionAccessFields rejects an empty team id', () => {
+    expect(() =>
+      buildPlanningSessionAccessFields({
+        teamId: '   ',
+        createdBy: 'user-1',
+        participantIds: ['user-1', 'user-2'],
+      }),
+    ).toThrowError('Planning sessions require a teamId.');
+  });
+
   it('canReadLegacyPlanningSession allows the creator when teamId is missing', () => {
     expect(
       canReadLegacyPlanningSession(

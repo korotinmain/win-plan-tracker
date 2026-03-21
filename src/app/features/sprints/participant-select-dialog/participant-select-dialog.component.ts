@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface PlanMemberOption {
+  uid?: string;
   name: string;
   initials: string;
 }

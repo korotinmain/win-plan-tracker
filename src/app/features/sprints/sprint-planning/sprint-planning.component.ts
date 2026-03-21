@@ -9,6 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { Subject, debounceTime } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { JiraService, JiraSprint, JiraSprintIssue } from '../../../core/services/jira.service';
 import {
   CommitmentLevel,
@@ -19,8 +20,10 @@ import {
   PlanningSummary,
   TaskPlacement,
 } from '../../../core/services/planning.service';
+import { TeamService } from '../../../core/services/team.service';
 
 interface PlanMember {
+  uid?: string;
   name: string;
   initials: string;
 }
@@ -100,8 +103,10 @@ function defaultChecklist(): TaskChecklist {
   styleUrls: ['./sprint-planning.component.scss'],
 })
 export class SprintPlanningComponent {
+  private authService = inject(AuthService);
   private jiraService = inject(JiraService);
   private planningService = inject(PlanningService);
+  private teamService = inject(TeamService);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
@@ -670,9 +675,10 @@ export class SprintPlanningComponent {
   ): void {
     if (!this.members().length) {
       this.members.set(
-        (session.participants ?? []).map((name) => ({
+        (session.participants ?? []).map((name, index) => ({
           name,
           initials: initials(name),
+          uid: session.participantIds?.[index],
         })),
       );
     }
@@ -795,13 +801,16 @@ export class SprintPlanningComponent {
   }
 
   private async saveDraftInternal(): Promise<void> {
+    const teamId = this.authService.currentUser?.teamId?.trim();
     const payload = {
       sprintId: this.futureSprint()?.id ?? this.activeSprint()?.id ?? 0,
       sprintName:
         this.futureSprint()?.name ??
         this.activeSprint()?.name ??
         'Sprint Planning',
+      teamId,
       participants: this.members().map((member) => member.name),
+      participantIds: await this.resolveParticipantIds(),
       turnOrder: this.members().map((member) => member.name),
       guidedModeEnabled: false,
       workflowStep: this.currentStep(),
@@ -911,5 +920,31 @@ export class SprintPlanningComponent {
     }
 
     this.triggerAutoSave();
+  }
+
+  private async resolveParticipantIds(): Promise<string[]> {
+    const directIds = this.members()
+      .map((member) => member.uid?.trim())
+      .filter((uid): uid is string => !!uid);
+
+    if (directIds.length === this.members().length) {
+      return directIds;
+    }
+
+    const teamId = this.authService.currentUser?.teamId?.trim();
+    if (!teamId) {
+      return directIds;
+    }
+
+    const teamMembers = await this.teamService.getTeamMembers(teamId);
+    const uidByName = new Map(
+      teamMembers
+        .filter((member) => member.displayName)
+        .map((member) => [member.displayName, member.uid] as const),
+    );
+
+    return this.members()
+      .map((member) => member.uid?.trim() || uidByName.get(member.name) || '')
+      .filter((uid): uid is string => !!uid);
   }
 }

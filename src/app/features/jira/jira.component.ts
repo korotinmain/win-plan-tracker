@@ -138,7 +138,15 @@ export class JiraComponent implements OnInit {
   async loadHistory(): Promise<void> {
     this.loadingHistory.set(true);
     try {
-      this.planningHistory.set(await this.planningService.getSessions());
+      const teamId = this.authService.currentUser?.teamId;
+      if (!teamId) {
+        this.planningHistory.set([]);
+        return;
+      }
+
+      this.planningHistory.set(
+        await this.planningService.getSessionsForTeam(teamId),
+      );
     } catch {
       this.snackBar.open('Failed to load planning history.', 'Dismiss', {
         duration: 4000,
@@ -154,7 +162,13 @@ export class JiraComponent implements OnInit {
 
   async checkPlanningState(): Promise<void> {
     const next = this.nextSprint();
+    const teamId = this.authService.currentUser?.teamId;
     if (!next) {
+      this.draftSession.set(null);
+      this.completedSession.set(null);
+      return;
+    }
+    if (!teamId) {
       this.draftSession.set(null);
       this.completedSession.set(null);
       return;
@@ -162,8 +176,8 @@ export class JiraComponent implements OnInit {
     this.checkingPlanningState.set(true);
     try {
       const [draft, completed] = await Promise.all([
-        this.planningService.getActiveDraftForSprint(next.name),
-        this.planningService.getCompletedForSprint(next.name),
+        this.planningService.getActiveDraftForSprint(teamId, next.name),
+        this.planningService.getCompletedForSprint(teamId, next.name),
       ]);
       this.draftSession.set(draft);
       this.completedSession.set(completed);
@@ -181,9 +195,10 @@ export class JiraComponent implements OnInit {
       this.router.navigate(['/sprints/planning'], {
         state: {
           sessionId: session.id,
-          participants: (session.participants ?? []).map((name) => ({
+          participants: (session.participants ?? []).map((name, index) => ({
             name,
             initials: this.initials(name),
+            uid: session.participantIds?.[index],
           })),
         },
       });
@@ -209,6 +224,7 @@ export class JiraComponent implements OnInit {
       members = users
         .filter((user) => user?.displayName)
         .map((user) => ({
+          uid: user.uid,
           name: user.displayName,
           initials: this.initials(user.displayName),
         }));
