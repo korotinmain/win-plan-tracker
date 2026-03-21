@@ -1,468 +1,629 @@
-<div class="sp">
-  <!-- ── LOADING ──────────────────────────────────────────────────────────── -->
-  <div *ngIf="loading() || configured() === null" class="sp-loading-screen">
+<div class="sw">
+  <div class="sw__accent"></div>
+
+  <div *ngIf="loading() || configured() === null" class="sw__loading">
     <mat-spinner diameter="40"></mat-spinner>
-    <span>Loading sprint data…</span>
+    <span>Loading sprint planning workspace…</span>
   </div>
 
-  <!-- ── NOT CONFIGURED ──────────────────────────────────────────────────── -->
-  <div *ngIf="configured() === false && !loading()" class="sp-unconfigured">
+  <div *ngIf="configured() === false && !loading()" class="sw__empty">
     <mat-icon>cloud_off</mat-icon>
-    <h2>Jira not configured</h2>
+    <h2>Jira is not configured</h2>
     <p>
-      Set <code>JIRA_DOMAIN</code>, <code>JIRA_EMAIL</code> and
-      <code>JIRA_TOKEN</code> in Cloud Functions env.
+      Set <code>JIRA_DOMAIN</code>, <code>JIRA_EMAIL</code>, and
+      <code>JIRA_TOKEN</code> in Cloud Functions to continue.
     </p>
-    <button class="sp-btn sp-btn--primary" (click)="load()">
-      <mat-icon>refresh</mat-icon> Retry
+    <button class="sw__btn sw__btn--ghost" (click)="cancel()" type="button">
+      Back to Sprints
     </button>
   </div>
 
-  <!-- ── MAIN VIEW ─────────────────────────────────────────────────────────── -->
   <ng-container *ngIf="configured() && !loading()">
-    <!-- Header ---------------------------------------------------------------->
-    <header class="sp-header">
-      <div class="sp-header-left">
-        <div class="sp-header-title-group">
-          <h1 class="sp-header-title">Sprint Planning</h1>
-          <span class="sp-header-sprint" *ngIf="activeSprint()">
-            &middot; {{ activeSprint()!.name }}
-          </span>
+    <header class="sw__hero">
+      <div class="sw__hero-copy">
+        <button class="sw__btn sw__btn--ghost sw__btn--icon" (click)="cancel()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <span class="sw__eyebrow">Sprint Planning Workflow</span>
+          <h1>{{ futureSprint()?.name ?? activeSprint()?.name ?? "Sprint Planning" }}</h1>
+          <p>
+            Review candidates, estimate confidently, place work by capacity, and
+            commit with a clear sprint summary.
+          </p>
         </div>
-        <span class="sp-days-badge" *ngIf="daysLeft > 0">
-          <mat-icon>schedule</mat-icon>{{ daysLeft }} days left
-        </span>
       </div>
 
-      <div class="sp-header-right">
-        <div class="sp-confidence" *ngIf="activeSprint()">
-          <span class="sp-confidence-label">Confidence</span>
-          <div class="sp-confidence-bar">
-            <div
-              class="sp-confidence-fill"
-              [style.width.%]="sprintProgress"
-            ></div>
-          </div>
-          <span class="sp-confidence-val">{{ sprintProgress }}%</span>
-        </div>
+      <div class="sw__hero-actions">
+        <span class="sw__saved" *ngIf="lastSaved()">
+          <mat-icon>cloud_done</mat-icon>
+          Saved {{ lastSaved() | date: "HH:mm" }}
+        </span>
         <button
-          class="sp-btn sp-btn--ghost"
-          (click)="load()"
-          matTooltip="Refresh data"
+          class="sw__btn sw__btn--ghost"
+          (click)="saveDraft()"
+          [disabled]="savingDraft() || readOnly()"
+          type="button"
         >
-          <mat-icon>refresh</mat-icon>
+          <mat-spinner *ngIf="savingDraft()" diameter="16"></mat-spinner>
+          <mat-icon *ngIf="!savingDraft()">save</mat-icon>
+          Save draft
         </button>
         <button
-          class="sp-btn sp-btn--outline"
-          [class.sp-btn--cap-active]="capacityDrawerOpen()"
-          (click)="toggleCapacityDrawer()"
-          matTooltip="Team capacity"
+          class="sw__btn sw__btn--primary"
+          (click)="finishPlanning()"
+          [disabled]="finishing() || readOnly()"
+          type="button"
         >
-          <mat-icon>people_alt</mat-icon>
-          Capacity
-          <span *ngIf="overloadedMember" class="sp-cap-badge-warn">!</span>
-        </button>
-        <button class="sp-btn sp-btn--outline" (click)="advanceTurn()">
-          <mat-icon>skip_next</mat-icon> Next Turn
-        </button>
-        <button class="sp-btn sp-btn--primary">
-          <mat-icon>rocket_launch</mat-icon> Start Sprint
+          <mat-spinner *ngIf="finishing()" diameter="16"></mat-spinner>
+          <mat-icon *ngIf="!finishing()">check_circle</mat-icon>
+          Finish planning
         </button>
       </div>
     </header>
 
-    <!-- Queue bar ------------------------------------------------------------->
-    <div class="sp-queue" *ngIf="members.length > 0">
-      <span class="sp-queue-label">Turn Order</span>
-      <div class="sp-queue-members">
-        <div
-          *ngFor="let member of members; let i = index"
-          class="sp-queue-member"
-          [class.sp-queue-member--active]="i === turnIndex()"
-          [class.sp-queue-member--next]="
-            i === (turnIndex() + 1) % members.length
-          "
-          (click)="turnIndex.set(i)"
-        >
-          <div class="sp-q-avatar" [class]="'q-av-' + (i % 5)">
-            {{ member.initials }}
-            <span *ngIf="i === turnIndex()" class="sp-q-pulse"></span>
+    <section class="sw__progress">
+      <button
+        *ngFor="let step of steps; let i = index"
+        class="sw__step"
+        [class.sw__step--active]="currentStep() === step.id"
+        [class.sw__step--done]="i < currentStepIndex()"
+        (click)="setStep(step.id)"
+        type="button"
+      >
+        <span class="sw__step-index">{{ i + 1 }}</span>
+        <mat-icon>{{ step.icon }}</mat-icon>
+        <strong>{{ step.label }}</strong>
+      </button>
+    </section>
+
+    <section class="sw__stats">
+      <div>
+        <strong>{{ summary().candidateTasks ?? 0 }}</strong>
+        <span>Candidates</span>
+      </div>
+      <div>
+        <strong>{{ summary().estimatedTasks ?? 0 }}</strong>
+        <span>Estimated</span>
+      </div>
+      <div>
+        <strong>{{ summary().plannedTasks }}</strong>
+        <span>Planned</span>
+      </div>
+      <div>
+        <strong>{{ summary().totalStoryPoints }}</strong>
+        <span>Total SP</span>
+      </div>
+      <div>
+        <strong>{{ warnings().length }}</strong>
+        <span>Open risks</span>
+      </div>
+    </section>
+
+    <section *ngIf="currentStep() === 'review'" class="sw__stage sw__stage--review">
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Backlog inbox</span>
+            <h2>{{ backlogTasks().length }} issues to review</h2>
           </div>
-          <span class="sp-q-name">{{ member.name.split(" ")[0] }}</span>
-          <span *ngIf="i === turnIndex()" class="sp-q-badge sp-q-badge--you"
-            >Your turn</span
-          >
-          <span
-            *ngIf="
-              i === (turnIndex() + 1) % members.length && members.length > 1
-            "
-            class="sp-q-badge sp-q-badge--next"
-            >On deck</span
-          >
-        </div>
-      </div>
-      <div class="sp-queue-end">
-        <mat-icon class="sp-queue-icon" matTooltip="Sound notifications"
-          >notifications_none</mat-icon
-        >
-      </div>
-    </div>
-
-    <!-- 2-column body + capacity drawer ---------------------------------------->
-    <div class="sp-body" cdkDropListGroup>
-      <!-- LEFT: Backlog ─────────────────────────────────────────────────────-->
-      <aside class="sp-sidebar-left">
-        <div class="sp-bl-header">
-          <h2 class="sp-bl-title">Backlog</h2>
-          <span class="sp-bl-count">{{ backlogIssues.length }}</span>
-        </div>
-
-        <div class="sp-bl-search">
-          <mat-icon class="sp-bl-search-icon">search</mat-icon>
           <input
-            class="sp-bl-search-input"
-            type="text"
-            placeholder="Search issues…"
+            class="sw__search"
             [(ngModel)]="backlogSearch"
+            placeholder="Search backlog"
           />
         </div>
 
-        <div class="sp-bl-chips">
+        <div class="sw__task-list">
           <button
-            class="sp-chip"
-            [class.sp-chip--active]="backlogTypeFilter === 'all'"
-            (click)="backlogTypeFilter = 'all'"
+            *ngFor="let task of backlogTasks(); trackBy: trackTask"
+            class="sw__task-row"
+            [class.sw__task-row--selected]="reviewSelectedTask().id === task.id"
+            (click)="selectTask(task.id)"
+            type="button"
           >
-            All
-          </button>
-          <button
-            class="sp-chip"
-            [class.sp-chip--active]="backlogTypeFilter === 'bug'"
-            (click)="backlogTypeFilter = 'bug'"
-          >
-            Bugs
-          </button>
-          <button
-            class="sp-chip"
-            [class.sp-chip--active]="backlogTypeFilter === 'story'"
-            (click)="backlogTypeFilter = 'story'"
-          >
-            Stories
-          </button>
-          <button
-            class="sp-chip"
-            [class.sp-chip--active]="backlogTypeFilter === 'task'"
-            (click)="backlogTypeFilter = 'task'"
-          >
-            Tasks
+            <div class="sw__task-row-top">
+              <span>{{ task.id }}</span>
+              <mat-icon [class]="'type-' + task.type.toLowerCase()">{{
+                issueTypeIcon(task.type)
+              }}</mat-icon>
+            </div>
+            <strong>{{ task.title }}</strong>
+            <div class="sw__task-row-meta">
+              <span>{{ task.assignee || "Unassigned" }}</span>
+              <span>{{ task.priority }}</span>
+            </div>
           </button>
         </div>
+      </article>
 
-        <div
-          cdkDropList
-          id="sp-bl"
-          [cdkDropListData]="backlogIssues"
-          (cdkDropListDropped)="onDropBacklog($event)"
-          class="sp-bl-list"
-        >
-          <div
-            *ngFor="let issue of backlogIssues"
-            cdkDrag
-            class="sp-bl-item"
-            [class.sp-bl-item--hidden]="!matchesBacklogFilter(issue)"
-          >
-            <div class="sp-bl-item-drag" cdkDragHandle>
-              <mat-icon>drag_indicator</mat-icon>
-            </div>
-            <div class="sp-bl-item-body">
-              <div class="sp-bl-meta">
-                <span class="sp-bl-id">{{ issue.id }}</span>
-                <mat-icon
-                  class="sp-bl-type"
-                  [class]="'type-' + issue.type.toLowerCase()"
-                  [matTooltip]="issue.type"
-                  >{{ typeIcon(issue.type) }}</mat-icon
-                >
-              </div>
-              <div class="sp-bl-title">{{ issue.title }}</div>
-              <div class="sp-bl-foot">
-                <mat-icon class="sp-bl-pri" [matTooltip]="issue.priority">{{
-                  priorityIcon(issue.priority)
-                }}</mat-icon>
-                <span
-                  class="sp-bl-sp"
-                  *ngIf="storyPoints[issue.id]; else spEmpty"
-                >
-                  {{ storyPoints[issue.id] }} SP
-                </span>
-                <ng-template #spEmpty
-                  ><span class="sp-bl-sp sp-bl-sp--empty"
-                    >SP ?</span
-                  ></ng-template
-                >
-              </div>
-            </div>
-
-            <!-- Drag preview -->
-            <div *cdkDragPreview class="sp-bl-preview">
-              <span class="sp-bl-preview-id">{{ issue.id }}</span>
-              <span class="sp-bl-preview-title">{{ issue.title }}</span>
-            </div>
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Sprint candidates</span>
+            <h2>{{ candidateTasks().length }} shortlisted tasks</h2>
           </div>
-
-          <div *ngIf="backlogIssues.length === 0" class="sp-bl-empty">
-            <mat-icon>inbox</mat-icon>
-            <p>No backlog issues</p>
-          </div>
-        </div>
-      </aside>
-
-      <!-- CENTER: Canvas ────────────────────────────────────────────────────-->
-      <main class="sp-canvas">
-        <!-- Day header -->
-        <div class="sp-canvas-head">
-          <div class="sp-ch-spacer"></div>
-          <div class="sp-ch-week" *ngIf="week1Days.length > 0">
-            <span class="sp-ch-week-label">Week 1</span>
-            <div class="sp-ch-days">
-              <span *ngFor="let d of week1Days" class="sp-ch-day">{{
-                d | date: "EEE d"
-              }}</span>
-            </div>
-          </div>
-          <div class="sp-ch-sep" *ngIf="week2Days.length > 0"></div>
-          <div class="sp-ch-week" *ngIf="week2Days.length > 0">
-            <span class="sp-ch-week-label">Week 2</span>
-            <div class="sp-ch-days">
-              <span *ngFor="let d of week2Days" class="sp-ch-day">{{
-                d | date: "EEE d"
-              }}</span>
-            </div>
-          </div>
-          <div *ngIf="workDays.length === 0" class="sp-ch-no-dates">
-            Sprint timeline
-          </div>
+          <input
+            class="sw__search"
+            [(ngModel)]="candidateSearch"
+            placeholder="Search candidates"
+          />
         </div>
 
-        <!-- Member rows -->
-        <div class="sp-canvas-rows">
-          <div
-            *ngFor="let member of members; let i = index"
-            class="sp-row"
-            [class.sp-row--active]="i === turnIndex()"
+        <div class="sw__task-list">
+          <button
+            *ngFor="let task of candidateTasks(); trackBy: trackTask"
+            class="sw__task-row"
+            [class.sw__task-row--selected]="reviewSelectedTask().id === task.id"
+            (click)="selectTask(task.id)"
+            type="button"
           >
-            <div class="sp-row-label">
-              <div class="sp-row-avatar" [class]="'q-av-' + (i % 5)">
-                {{ member.initials }}
-              </div>
-              <span class="sp-row-name">{{ member.name }}</span>
+            <div class="sw__task-row-top">
+              <span>{{ task.id }}</span>
+              <span class="sw__tag" [class.sw__tag--stretch]="task.commitment === 'stretch'">
+                {{ commitmentLabel(task.commitment) }}
+              </span>
             </div>
+            <strong>{{ task.title }}</strong>
+            <div class="sw__task-row-meta">
+              <span>{{ task.storyPoints ? task.storyPoints + " SP" : "SP missing" }}</span>
+              <span>{{ confidenceLabel(task.confidence) }}</span>
+            </div>
+          </button>
+        </div>
+      </article>
 
-            <div
-              cdkDropList
-              [id]="'sp-mr-' + i"
-              [cdkDropListData]="memberIssues[i]"
-              (cdkDropListDropped)="onDropMember($event)"
-              class="sp-row-drop"
-              [class.sp-row-drop--turn]="i === turnIndex()"
+      <article class="sw__panel sw__panel--inspector">
+        <ng-container *ngIf="reviewSelectedTask() as task">
+          <div class="sw__panel-head sw__panel-head--stack">
+            <span class="sw__panel-label">Task inspector</span>
+            <h2>{{ task.id }}</h2>
+            <p>{{ task.title }}</p>
+          </div>
+
+          <div class="sw__inspector-grid">
+            <div>
+              <span>Assignee</span>
+              <strong>{{ task.assignee || "Unassigned" }}</strong>
+            </div>
+            <div>
+              <span>Type</span>
+              <strong>{{ task.type }}</strong>
+            </div>
+            <div>
+              <span>Priority</span>
+              <strong>{{ task.priority }}</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong>{{ task.status }}</strong>
+            </div>
+          </div>
+
+          <div class="sw__checklist">
+            <button
+              *ngFor="let item of checklistItems"
+              class="sw__check"
+              [class.sw__check--on]="task.checklist[item.key]"
+              (click)="toggleChecklist(task.id, item.key)"
+              [disabled]="readOnly()"
+              type="button"
             >
-              <div
-                *ngFor="let issue of memberIssues[i]"
-                cdkDrag
-                class="sp-task"
-                [class.sp-task--estimating]="estimatingId() === issue.id"
-              >
-                <div class="sp-task-head">
-                  <span class="sp-task-id">{{ issue.id }}</span>
-                  <mat-icon class="sp-task-pri" [matTooltip]="issue.priority">{{
-                    priorityIcon(issue.priority)
-                  }}</mat-icon>
-                </div>
-                <div class="sp-task-title">{{ issue.title }}</div>
-                <div class="sp-task-foot">
-                  <span
-                    class="sp-sc"
-                    [class]="statusChipClass(issue.statusCategory)"
-                    >{{ issue.status }}</span
-                  >
-                  <span class="sp-task-sp" *ngIf="storyPoints[issue.id]"
-                    >{{ storyPoints[issue.id] }} SP</span
-                  >
-                </div>
-
-                <!-- Estimation popover -->
-                <div
-                  *ngIf="estimatingId() === issue.id"
-                  class="sp-est-pop"
-                  (click)="$event.stopPropagation()"
-                >
-                  <p class="sp-est-title">
-                    <mat-icon>stars</mat-icon> Story Points?
-                  </p>
-                  <div class="sp-est-opts">
-                    <button
-                      *ngFor="let opt of SP_OPTIONS"
-                      class="sp-est-opt"
-                      (click)="setEstimation(issue.id, opt)"
-                    >
-                      {{ opt }}
-                    </button>
-                  </div>
-                  <button class="sp-est-skip" (click)="dismissEstimation()">
-                    Skip
-                  </button>
-                </div>
-
-                <!-- CDK drag preview -->
-                <div *cdkDragPreview class="sp-task-preview">
-                  <span class="sp-task-preview-id">{{ issue.id }}</span>
-                  <span class="sp-task-preview-title">{{ issue.title }}</span>
-                </div>
-              </div>
-
-              <!-- Current-turn drop hint when row is empty -->
-              <div
-                *ngIf="i === turnIndex() && memberIssues[i].length === 0"
-                class="sp-drop-hint"
-              >
-                <mat-icon>add_circle_outline</mat-icon>
-                <span
-                  >{{ member.name.split(" ")[0] }}'s turn — drag a task
-                  here</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty state when no active sprint -->
-          <div *ngIf="members.length === 0" class="sp-canvas-empty">
-            <mat-icon>calendar_today</mat-icon>
-            <p>No active sprint found for board {{ BOARD_ID }}.</p>
-            <button class="sp-btn sp-btn--outline" (click)="load()">
-              <mat-icon>refresh</mat-icon> Reload
+              <mat-icon>{{
+                task.checklist[item.key] ? "check_circle" : "radio_button_unchecked"
+              }}</mat-icon>
+              {{ item.label }}
             </button>
           </div>
+
+          <div class="sw__toggle-group">
+            <button
+              class="sw__chip-btn"
+              [class.sw__chip-btn--active]="task.commitment === 'must'"
+              (click)="setCommitment(task.id, 'must')"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              Must-have
+            </button>
+            <button
+              class="sw__chip-btn"
+              [class.sw__chip-btn--active]="task.commitment === 'stretch'"
+              (click)="setCommitment(task.id, 'stretch')"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              Stretch
+            </button>
+          </div>
+
+          <div class="sw__inspector-actions">
+            <button
+              *ngIf="task.bucket === 'backlog'"
+              class="sw__btn sw__btn--primary"
+              (click)="addToCandidates(task.id)"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              <mat-icon>playlist_add</mat-icon>
+              Add to candidates
+            </button>
+            <button
+              *ngIf="task.bucket !== 'backlog'"
+              class="sw__btn sw__btn--ghost"
+              (click)="moveToBacklog(task.id)"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              <mat-icon>undo</mat-icon>
+              Move back to backlog
+            </button>
+          </div>
+        </ng-container>
+      </article>
+    </section>
+
+    <section *ngIf="currentStep() === 'estimate'" class="sw__stage sw__stage--estimate">
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Estimation queue</span>
+            <h2>{{ estimateQueue().length }} candidate tasks</h2>
+          </div>
         </div>
 
-        <!-- Sprint overview footer -->
-        <div class="sp-overview" *ngIf="activeSprint()">
-          <span class="sp-ov-label">Sprint Overview</span>
-          <div class="sp-ov-stats">
-            <span class="sp-ov-stat"
-              >Total SP: <strong>{{ totalSP }}</strong></span
-            >
-            <span class="sp-ov-divider">·</span>
-            <span class="sp-ov-stat"
-              >{{ activeSprint()!.stats.done }} /
-              {{ activeSprint()!.stats.total }} done</span
-            >
-          </div>
-          <div class="sp-ov-bar">
-            <div
-              class="sp-ov-fill"
-              [style.width.%]="sprintProgress"
-              [class.sp-ov-fill--complete]="sprintProgress >= 80"
-            ></div>
-          </div>
-          <span class="sp-ov-pct">{{ sprintProgress }}%</span>
-          <button class="sp-btn sp-btn--sm sp-btn--outline">
-            Start Estimation
-          </button>
-        </div>
-      </main>
-
-      <!-- RIGHT: Capacity drawer (overlay) ─────────────────────────────────-->
-      <!-- Backdrop -->
-      <div
-        class="sp-cap-backdrop"
-        *ngIf="capacityDrawerOpen()"
-        (click)="capacityDrawerOpen.set(false)"
-      ></div>
-
-      <!-- Drawer panel -->
-      <aside
-        class="sp-cap-drawer"
-        [class.sp-cap-drawer--open]="capacityDrawerOpen()"
-      >
-        <div class="sp-cap-drawer-header">
-          <div class="sp-cap-drawer-title">
-            <mat-icon>people_alt</mat-icon>
-            <span>Team Capacity</span>
-          </div>
+        <div class="sw__task-list">
           <button
-            class="sp-cap-drawer-close"
-            (click)="capacityDrawerOpen.set(false)"
-            matTooltip="Close"
+            *ngFor="let task of estimateQueue(); trackBy: trackTask"
+            class="sw__task-row"
+            [class.sw__task-row--selected]="estimateSelectedTask().id === task.id"
+            (click)="selectTask(task.id)"
+            type="button"
           >
-            <mat-icon>close</mat-icon>
+            <div class="sw__task-row-top">
+              <span>{{ task.id }}</span>
+              <span class="sw__pill sw__pill--muted">{{ task.type }}</span>
+            </div>
+            <strong>{{ task.title }}</strong>
+            <div class="sw__task-row-meta">
+              <span>{{ task.storyPoints ? task.storyPoints + " SP" : "Unestimated" }}</span>
+              <span>{{ confidenceLabel(task.confidence) }}</span>
+            </div>
           </button>
         </div>
+      </article>
 
-        <!-- Overloaded warning -->
-        <div class="sp-cap-warn-card" *ngIf="overloadedMember">
-          <mat-icon class="sp-cap-warn-icon">warning_amber</mat-icon>
-          <div class="sp-cap-warn-text">
-            <strong>Overloaded</strong>
-            <span
-              >{{ overloadedMember }} has too many tasks. Consider
-              rebalancing.</span
+      <article class="sw__panel sw__panel--focus">
+        <ng-container *ngIf="estimateSelectedTask() as task; else noEstimateTask">
+          <div class="sw__panel-head sw__panel-head--stack">
+            <span class="sw__panel-label">Estimate focus</span>
+            <h2>{{ task.id }}</h2>
+            <p>{{ task.title }}</p>
+          </div>
+
+          <div class="sw__focus-meta">
+            <span>{{ task.assignee || "Unassigned" }}</span>
+            <span>{{ task.priority }}</span>
+            <span>{{ commitmentLabel(task.commitment) }}</span>
+          </div>
+
+          <div class="sw__estimate-grid">
+            <button
+              *ngFor="let option of spOptions"
+              class="sw__estimate-btn"
+              [class.sw__estimate-btn--active]="task.storyPoints === option"
+              (click)="setStoryPoints(task.id, option)"
+              [disabled]="readOnly()"
+              type="button"
             >
+              {{ option }}
+            </button>
+          </div>
+
+          <div class="sw__toggle-group sw__toggle-group--wide">
+            <button
+              *ngFor="let confidence of confidenceOptions"
+              class="sw__chip-btn"
+              [class.sw__chip-btn--active]="task.confidence === confidence"
+              (click)="setConfidence(task.id, confidence)"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              {{ confidenceLabel(confidence) }}
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #noEstimateTask>
+          <div class="sw__empty-inline">
+            <mat-icon>done_all</mat-icon>
+            <p>No candidate tasks left to estimate.</p>
+          </div>
+        </ng-template>
+      </article>
+
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Estimate snapshot</span>
+            <h2>Confidence and gaps</h2>
           </div>
         </div>
 
-        <!-- Capacity rows -->
-        <div class="sp-cap-drawer-body">
-          <div
-            *ngFor="let cap of capacities; let i = index"
-            class="sp-cap-row"
-            [class.sp-cap-row--over]="cap.level === 'over'"
+        <div class="sw__mini-stats">
+          <div>
+            <strong>{{ summary().estimatedTasks ?? 0 }}</strong>
+            <span>Estimated</span>
+          </div>
+          <div>
+            <strong>{{ summary().missingStoryPoints }}</strong>
+            <span>Missing SP</span>
+          </div>
+          <div>
+            <strong>{{ summary().uncertainTasks ?? 0 }}</strong>
+            <span>Uncertain</span>
+          </div>
+          <div>
+            <strong>{{ summary().blockedTasks ?? 0 }}</strong>
+            <span>Blocked</span>
+          </div>
+        </div>
+
+        <div class="sw__warning-list" *ngIf="warnings().length > 0">
+          <div *ngFor="let warning of warnings()">{{ warning }}</div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="currentStep() === 'plan'" class="sw__stage sw__stage--plan">
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Plan pool</span>
+            <h2>{{ estimatedCandidateTasks().length }} estimated candidates</h2>
+          </div>
+        </div>
+
+        <div class="sw__task-list">
+          <button
+            *ngFor="let task of estimatedCandidateTasks(); trackBy: trackTask"
+            class="sw__task-row"
+            [class.sw__task-row--selected]="planSelectedTask().id === task.id"
+            (click)="selectTask(task.id)"
+            type="button"
           >
-            <div class="sp-cap-avatar" [class]="'q-av-' + (i % 5)">
-              {{ cap.initials }}
+            <div class="sw__task-row-top">
+              <span>{{ task.id }}</span>
+              <span class="sw__pill">{{ task.storyPoints }} SP</span>
             </div>
-            <div class="sp-cap-info">
-              <div class="sp-cap-name-row">
-                <span class="sp-cap-name">{{ cap.name }}</span>
-                <span class="sp-cap-pct" [class]="'sp-pct--' + cap.level">
-                  {{ memberIssues[i].length }} tasks
-                </span>
+            <strong>{{ task.title }}</strong>
+            <div class="sw__task-row-meta">
+              <span>{{ commitmentLabel(task.commitment) }}</span>
+              <span>{{ confidenceLabel(task.confidence) }}</span>
+            </div>
+          </button>
+        </div>
+      </article>
+
+      <article class="sw__panel sw__panel--board">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Capacity board</span>
+            <h2>Click a day cell to place the selected task</h2>
+          </div>
+          <span class="sw__board-help" *ngIf="planSelectedTask() as task">
+            Selected: {{ task.id }}
+          </span>
+        </div>
+
+        <div class="sw__board-scroll">
+          <div class="sw__board-track" [style.min-width]="canvasMinWidth()">
+            <div class="sw__board-head">
+              <div class="sw__board-spacer"></div>
+              <div class="sw__board-day" *ngFor="let day of workDays; let dayIndex = index">
+                <span>{{ day | date: "EEE" }}</span>
+                <strong>{{ day | date: "d" }}</strong>
               </div>
-              <div class="sp-cap-bar">
-                <div
-                  class="sp-cap-fill"
-                  [class]="'sp-cap-fill--' + cap.level"
-                  [style.width.%]="cap.pct"
-                ></div>
+            </div>
+
+            <div class="sw__board-row" *ngFor="let member of members(); let memberIndex = index; trackBy: trackMember">
+              <div class="sw__board-member">
+                <div class="sw__avatar">{{ member.initials }}</div>
+                <div>
+                  <strong>{{ member.name }}</strong>
+                  <span
+                    [class.sw__board-load--over]="participantLoads()[memberIndex].overload"
+                  >
+                    {{ participantLoads()[memberIndex].sp }} SP
+                  </span>
+                </div>
+              </div>
+
+              <div class="sw__board-lane">
+                <div class="sw__board-cells">
+                  <button
+                    *ngFor="let day of workDays; let dayIndex = index"
+                    class="sw__board-cell"
+                    (click)="placeSelectedTask(memberIndex, dayIndex)"
+                    [disabled]="!planSelectedTask() || readOnly()"
+                    type="button"
+                  ></button>
+                </div>
+
+                <button
+                  *ngFor="let task of laneTasks(memberIndex); trackBy: trackTask"
+                  class="sw__plan-card"
+                  [class.sw__plan-card--selected]="planSelectedTask().id === task.id"
+                  [style.left]="taskLeft(task)"
+                  [style.width]="taskWidth(task)"
+                  (click)="selectTask(task.id)"
+                  type="button"
+                >
+                  <div class="sw__plan-card-top">
+                    <span>{{ task.id }}</span>
+                    <span>{{ task.storyPoints }} SP</span>
+                  </div>
+                  <strong>{{ task.title }}</strong>
+                  <div class="sw__plan-card-foot">
+                    <span>{{ dayLabel(task.dayStartIdx ?? 0) }}</span>
+                    <span>{{ dayLabel(task.dayEndIdx ?? 0) }}</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
-          <div *ngIf="members.length === 0" class="sp-cap-drawer-empty">
-            No team members in this sprint.
+        </div>
+      </article>
+
+      <article class="sw__panel sw__panel--inspector">
+        <ng-container *ngIf="planSelectedTask() as task">
+          <div class="sw__panel-head sw__panel-head--stack">
+            <span class="sw__panel-label">Planning controls</span>
+            <h2>{{ task.id }}</h2>
+            <p>{{ task.title }}</p>
+          </div>
+
+          <div class="sw__mini-stats">
+            <div>
+              <strong>{{ task.storyPoints || "?" }}</strong>
+              <span>Story points</span>
+            </div>
+            <div>
+              <strong>{{ taskDuration(task) }}</strong>
+              <span>Days</span>
+            </div>
+          </div>
+
+          <div class="sw__inspector-actions">
+            <button
+              class="sw__btn sw__btn--primary"
+              (click)="autoPlaceSelectedTask()"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              <mat-icon>auto_fix_high</mat-icon>
+              Auto place
+            </button>
+            <button
+              *ngIf="task.bucket === 'planned'"
+              class="sw__btn sw__btn--ghost"
+              (click)="removeFromPlan(task.id)"
+              [disabled]="readOnly()"
+              type="button"
+            >
+              <mat-icon>undo</mat-icon>
+              Return to pool
+            </button>
+          </div>
+
+          <div class="sw__control-row" *ngIf="task.bucket === 'planned'">
+            <span>Move in time</span>
+            <div>
+              <button class="sw__icon-btn" (click)="shiftSelectedTask(-1)" [disabled]="readOnly()" type="button">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button class="sw__icon-btn" (click)="shiftSelectedTask(1)" [disabled]="readOnly()" type="button">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="sw__control-row" *ngIf="task.bucket === 'planned'">
+            <span>Change duration</span>
+            <div>
+              <button class="sw__icon-btn" (click)="changeSelectedDuration(-1)" [disabled]="readOnly()" type="button">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <button class="sw__icon-btn" (click)="changeSelectedDuration(1)" [disabled]="readOnly()" type="button">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="sw__warning-list" *ngIf="participantLoads().length > 0">
+            <div *ngFor="let load of participantLoads()">
+              {{ load.member.name }} · {{ load.sp }} SP
+            </div>
+          </div>
+        </ng-container>
+      </article>
+    </section>
+
+    <section *ngIf="currentStep() === 'review-sprint'" class="sw__stage sw__stage--summary">
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Sprint summary</span>
+            <h2>Ready to commit</h2>
           </div>
         </div>
 
-        <!-- Footer stats -->
-        <div class="sp-cap-drawer-footer" *ngIf="activeSprint()">
-          <div class="sp-cap-drawer-stat">
-            <span class="sp-cap-drawer-stat-val">{{ sprintTotalIssues }}</span>
-            <span class="sp-cap-drawer-stat-lbl">assigned</span>
+        <div class="sw__summary-grid">
+          <div>
+            <strong>{{ summary().plannedTasks }}</strong>
+            <span>Planned tasks</span>
           </div>
-          <div class="sp-cap-drawer-sep"></div>
-          <div class="sp-cap-drawer-stat">
-            <span class="sp-cap-drawer-stat-val sp-cap-drawer-stat-val--sp">{{
-              totalSP
-            }}</span>
-            <span class="sp-cap-drawer-stat-lbl">story points</span>
+          <div>
+            <strong>{{ summary().totalStoryPoints }}</strong>
+            <span>Total story points</span>
           </div>
-          <div class="sp-cap-drawer-sep"></div>
-          <div class="sp-cap-drawer-stat">
-            <span class="sp-cap-drawer-stat-val">{{
-              backlogIssues.length
-            }}</span>
-            <span class="sp-cap-drawer-stat-lbl">in backlog</span>
+          <div>
+            <strong>{{ summary().stretchTasks ?? 0 }}</strong>
+            <span>Stretch tasks</span>
+          </div>
+          <div>
+            <strong>{{ summary().readyTasks ?? 0 }}</strong>
+            <span>Ready issues</span>
           </div>
         </div>
-      </aside>
-    </div>
+
+        <div class="sw__warning-list" *ngIf="warnings().length > 0; else allGood">
+          <div *ngFor="let warning of warnings()">{{ warning }}</div>
+        </div>
+
+        <ng-template #allGood>
+          <div class="sw__success">
+            <mat-icon>verified</mat-icon>
+            <p>The sprint plan looks balanced and ready to commit.</p>
+          </div>
+        </ng-template>
+      </article>
+
+      <article class="sw__panel">
+        <div class="sw__panel-head">
+          <div>
+            <span class="sw__panel-label">Participant loads</span>
+            <h2>Who carries the sprint</h2>
+          </div>
+        </div>
+
+        <div class="sw__load-list">
+          <div class="sw__load-row" *ngFor="let load of participantLoads()">
+            <div>
+              <strong>{{ load.member.name }}</strong>
+              <span>{{ load.sp }} SP</span>
+            </div>
+            <div class="sw__load-bar">
+              <div
+                class="sw__load-fill"
+                [class.sw__load-fill--over]="load.overload"
+                [style.width.%]="load.pct"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="sw__footer">
+      <button class="sw__btn sw__btn--ghost" (click)="prevStep()" [disabled]="steps[0].id === currentStep()" type="button">
+        <mat-icon>chevron_left</mat-icon>
+        Previous
+      </button>
+      <button class="sw__btn sw__btn--ghost" (click)="nextStep()" [disabled]="steps[steps.length - 1].id === currentStep()" type="button">
+        Next
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </footer>
   </ng-container>
 </div>

@@ -3,6 +3,11 @@ const { ensureAuthenticated } = require("../shared/auth");
 const { getJiraConfig } = require("../shared/jiraConfig");
 
 function mapIssue(issue) {
+  const sp =
+    issue.fields?.story_points ??
+    issue.fields?.customfield_10016 ??
+    issue.fields?.customfield_10028 ??
+    null;
   return {
     id: issue.key,
     title: issue.fields?.summary ?? "(no title)",
@@ -12,11 +17,12 @@ function mapIssue(issue) {
     priority: issue.fields?.priority?.name ?? "Medium",
     type: issue.fields?.issuetype?.name ?? "Task",
     assignee: issue.fields?.assignee?.displayName ?? null,
+    storyPoints: typeof sp === "number" ? sp : null,
   };
 }
 
 async function fetchSprintIssues(sprintId, baseUrl, basicAuth) {
-  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue?maxResults=100&fields=summary,status,priority,issuetype,assignee`;
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue?maxResults=100&fields=summary,status,priority,issuetype,assignee,story_points,customfield_10016,customfield_10028`;
   const res = await fetch(url, {
     headers: {
       Authorization: `Basic ${basicAuth}`,

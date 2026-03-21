@@ -20,6 +20,7 @@ export interface JiraSprintIssue {
   priority: string;
   type: string;
   assignee: string | null;
+  storyPoints: number | null;
 }
 
 export interface JiraSprint {

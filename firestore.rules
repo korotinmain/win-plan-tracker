@@ -136,5 +136,12 @@ service cloud.firestore {
     match /jiraCredentials/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
     }
+
+    // ─── planning sessions ──────────────────────────────────────────────────
+    // Sprint planning drafts and completed snapshots are collaborative team
+    // artifacts. Any authenticated user may read/write for now.
+    match /planningSessions/{sessionId} {
+      allow read, write: if signedIn();
+    }
   }
 }

@@ -1,314 +1,351 @@
-<div class="jp">
-  <!-- HEADER -->
-  <div class="jp-header">
-    <div class="jp-brand">
-      <div class="jp-brand-icon">
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M16.002 2L2 16.002 16.002 30l14.001-13.998L16.002 2zm0 4.243l9.758 9.759-9.758 9.757-9.758-9.757 9.758-9.759z"
-            fill="url(#jp-grad)"
-          />
-          <path
-            d="M16.002 10.485l-5.517 5.517 5.517 5.516 5.516-5.516-5.516-5.517z"
-            fill="url(#jp-grad)"
-          />
-          <defs>
-            <linearGradient
-              id="jp-grad"
-              x1="2"
-              y1="2"
-              x2="30"
-              y2="30"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stop-color="#6366f1" />
-              <stop offset="1" stop-color="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <div class="jp-brand-text">
-        <h1 class="jp-brand-title">Jira Integration</h1>
-        <p class="jp-brand-sub">
-          <span *ngIf="configuredDomain()" class="jp-domain-pill">
-            <mat-icon class="jp-domain-icon">check_circle</mat-icon>
-            {{ configuredDomain() }}
-          </span>
-          <span
-            *ngIf="configured() === false"
-            class="jp-domain-pill jp-domain-pill--warn"
-          >
-            <mat-icon class="jp-domain-icon">warning</mat-icon>
-            Not configured
-          </span>
-          <span
-            *ngIf="configured() === null"
-            class="jp-domain-pill jp-domain-pill--loading"
-          >
-            Checking…
-          </span>
-        </p>
-      </div>
-    </div>
+<div class="sp-hub">
+  <div class="sp-hub__accent"></div>
 
-    <div class="jp-header-actions">
-      <button
-        class="jp-btn jp-btn--ghost"
-        (click)="checkConfig()"
-        [disabled]="connecting()"
-        type="button"
-        matTooltip="Re-check Jira config"
-      >
-        <mat-spinner *ngIf="connecting()" diameter="16"></mat-spinner>
-        <mat-icon *ngIf="!connecting()">sync</mat-icon>
-      </button>
-      <button
-        class="jp-btn jp-btn--primary"
-        (click)="refresh()"
-        [disabled]="loadingSprints() || !configured()"
-        type="button"
-      >
-        <mat-spinner *ngIf="loadingSprints()" diameter="16"></mat-spinner>
-        <mat-icon *ngIf="!loadingSprints()">refresh</mat-icon>
-        Refresh
-      </button>
-      <button
-        class="jp-btn jp-btn--planning"
-        (click)="goToPlanning()"
-        [disabled]="!configured()"
-        type="button"
-        matTooltip="Open interactive sprint planning board"
-      >
-        <mat-icon>rocket_launch</mat-icon>
-        Start Planning
-      </button>
-    </div>
-  </div>
+  <section class="sp-hub__hero">
+    <div class="sp-hub__hero-copy">
+      <span class="sp-hub__eyebrow">Sprint Workspace</span>
+      <h1>Plan the next sprint as a workflow, not a spreadsheet.</h1>
+      <p>
+        Review candidate work, estimate with confidence, balance capacity, and
+        keep a clear planning history for every sprint.
+      </p>
 
-  <!-- NOT CONFIGURED -->
-  <div *ngIf="configured() === false" class="jp-unconfigured">
-    <div class="jp-unconfigured-icon">
-      <mat-icon>cloud_off</mat-icon>
-    </div>
-    <h2>Jira is not configured</h2>
-    <p>
-      Ask an admin to set <code>JIRA_DOMAIN</code> and
-      <code>JIRA_TOKEN</code> in the Cloud Functions environment.
-    </p>
-  </div>
-
-  <!-- CONFIGURED CONTENT -->
-  <div *ngIf="configured()" class="jp-content">
-    <!-- STAT STRIP (active sprint stats) -->
-    <div class="jp-stats">
-      <div class="jp-stat">
-        <span class="jp-stat-value">{{ sprintStats().total }}</span>
-        <span class="jp-stat-label">Sprint Total</span>
-      </div>
-      <div class="jp-stat">
-        <span class="jp-stat-value jp-stat-value--prog">{{
-          sprintStats().inProgress
-        }}</span>
-        <span class="jp-stat-label">In Progress</span>
-      </div>
-      <div class="jp-stat">
-        <span class="jp-stat-value jp-stat-value--done">{{
-          sprintStats().done
-        }}</span>
-        <span class="jp-stat-label">Done</span>
-      </div>
-      <div class="jp-stat">
-        <span class="jp-stat-value jp-stat-value--todo">{{
-          sprintStats().todo
-        }}</span>
-        <span class="jp-stat-label">To Do</span>
-      </div>
-    </div>
-
-    <!-- SPRINT LIST -->
-    <div class="jp-pane">
-      <!-- Loading -->
-      <div *ngIf="loadingSprints()" class="jp-loading">
-        <mat-spinner diameter="36"></mat-spinner>
-        <span>Loading sprints…</span>
-      </div>
-
-      <!-- Empty -->
-      <div *ngIf="!loadingSprints() && sprints().length === 0" class="jp-empty">
-        <mat-icon>sprint</mat-icon>
-        <p>No sprints found. Click Refresh to load.</p>
-      </div>
-
-      <!-- Sprint cards -->
-      <div *ngIf="!loadingSprints()" class="jp-sprint-list">
-        <div
-          *ngFor="let sprint of sprints()"
-          class="jp-sprint"
-          [class]="'sprint-' + sprint.state"
-        >
-          <div class="jp-sprint-head">
-            <div class="jp-sprint-info">
-              <span
-                class="jp-sprint-state-badge"
-                [class]="'sb-' + sprint.state"
-                >{{ sprint.state }}</span
-              >
-              <h3 class="jp-sprint-name">{{ sprint.name }}</h3>
-              <p *ngIf="sprint.goal" class="jp-sprint-goal">
-                {{ sprint.goal }}
-              </p>
-            </div>
-            <div class="jp-sprint-dates">
-              <span *ngIf="sprint.startDate">{{
-                sprint.startDate | date: "MMM d"
-              }}</span>
-              <span *ngIf="sprint.startDate && sprint.endDate"> → </span>
-              <span *ngIf="sprint.endDate">{{
-                sprint.endDate | date: "MMM d, y"
-              }}</span>
-            </div>
-          </div>
-
-          <!-- Progress bar -->
-          <div class="jp-progress-wrap">
-            <div class="jp-progress-bar">
-              <div
-                class="jp-progress-fill"
-                [style.width.%]="sprintProgress(sprint)"
-              ></div>
-            </div>
-            <span class="jp-progress-label"
-              >{{ sprint.stats.done }} / {{ sprint.stats.total }} done ·
-              {{ sprintProgress(sprint) }}%</span
-            >
-          </div>
-
-          <!-- Issues -->
-          <div *ngIf="sprint.issues.length > 0" class="jp-sprint-issues">
-            <a
-              *ngFor="let issue of sprint.issues"
-              class="jp-si"
-              href="https://{{ configuredDomain() }}/browse/{{ issue.id }}"
-              target="_blank"
-              rel="noopener"
-            >
-              <mat-icon
-                class="jp-si-type"
-                [class]="'type-' + issue.type.toLowerCase()"
-                [matTooltip]="issue.type"
-                >{{ typeIcon(issue.type) }}</mat-icon
-              >
-              <span class="jp-si-id">{{ issue.id }}</span>
-              <span class="jp-si-title">{{ issue.title }}</span>
-              <span class="jp-si-assignee" *ngIf="issue.assignee">{{
-                issue.assignee
-              }}</span>
-              <span
-                class="jp-si-status"
-                [class]="'sc-' + issue.statusCategory"
-                >{{ issue.status }}</span
-              >
-            </a>
-          </div>
-          <div *ngIf="sprint.issues.length === 0" class="jp-sprint-empty">
-            No issues in this sprint.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── PLANNING HISTORY ───────────────────────────────────────────── -->
-    <div class="jp-history">
-      <div class="jp-history-header">
-        <div class="jp-history-title">
-          <mat-icon class="jp-history-icon">history</mat-icon>
-          <h3>Planning History</h3>
-        </div>
+      <div class="sp-hub__hero-actions">
         <button
-          class="jp-btn jp-btn--ghost jp-btn--sm"
-          (click)="loadHistory()"
-          [disabled]="loadingHistory()"
+          class="sp-hub__btn sp-hub__btn--primary"
+          (click)="startPlanning()"
+          [disabled]="planningButtonState() === 'hidden' || checkingPlanningState()"
           type="button"
-          matTooltip="Refresh history"
         >
-          <mat-spinner *ngIf="loadingHistory()" diameter="14"></mat-spinner>
-          <mat-icon *ngIf="!loadingHistory()">refresh</mat-icon>
+          <mat-spinner
+            *ngIf="checkingPlanningState()"
+            diameter="16"
+          ></mat-spinner>
+          <mat-icon *ngIf="!checkingPlanningState()">
+            {{
+              planningButtonState() === "resume"
+                ? "play_circle"
+                : planningButtonState() === "planned"
+                  ? "visibility"
+                  : "rocket_launch"
+            }}
+          </mat-icon>
+          {{
+            planningButtonState() === "resume"
+              ? "Resume Draft"
+              : planningButtonState() === "planned"
+                ? "View Completed Plan"
+                : "Start Planning"
+          }}
+        </button>
+
+        <button
+          class="sp-hub__btn sp-hub__btn--ghost"
+          (click)="refreshAll()"
+          [disabled]="loadingSprints() || loadingHistory()"
+          type="button"
+        >
+          <mat-spinner
+            *ngIf="loadingSprints() || loadingHistory()"
+            diameter="16"
+          ></mat-spinner>
+          <mat-icon *ngIf="!loadingSprints() && !loadingHistory()"
+            >refresh</mat-icon
+          >
+          Refresh
         </button>
       </div>
 
-      <!-- Loading -->
-      <div *ngIf="loadingHistory()" class="jp-history-loading">
-        <mat-spinner diameter="28"></mat-spinner>
-        <span>Loading history…</span>
-      </div>
-
-      <!-- Empty -->
-      <div
-        *ngIf="!loadingHistory() && planningHistory().length === 0"
-        class="jp-history-empty"
-      >
-        <mat-icon>event_note</mat-icon>
-        <p>No planning sessions yet. Start your first one!</p>
-      </div>
-
-      <!-- Session list -->
-      <div
-        *ngIf="!loadingHistory() && planningHistory().length > 0"
-        class="jp-history-list"
-      >
-        <div *ngFor="let session of planningHistory()" class="jp-history-card">
-          <div class="jp-hc-left">
-            <div class="jp-hc-icon">
-              <mat-icon>rocket_launch</mat-icon>
-            </div>
-            <div class="jp-hc-info">
-              <span class="jp-hc-sprint">{{ session.sprintName }}</span>
-              <span class="jp-hc-meta">
-                {{ session.createdAt.toDate() | date: "MMM d, y · HH:mm" }} · by
-                {{ session.createdByName }}
-              </span>
-            </div>
-          </div>
-          <div class="jp-hc-right">
-            <div class="jp-hc-stat">
-              <span class="jp-hc-stat-val">{{ session.issueCount }}</span>
-              <span class="jp-hc-stat-lbl">issues</span>
-            </div>
-            <div class="jp-hc-stat">
-              <span class="jp-hc-stat-val jp-hc-sp">{{
-                session.totalStoryPoints
-              }}</span>
-              <span class="jp-hc-stat-lbl">SP</span>
-            </div>
-            <div class="jp-hc-participants">
-              <div
-                *ngFor="
-                  let p of session.participants.slice(0, 4);
-                  let pi = index
-                "
-                class="jp-hc-av"
-                [style.marginLeft]="pi > 0 ? '-6px' : '0'"
-                [matTooltip]="p"
-              >
-                {{ p.split(" ")[0][0] }}{{ (p.split(" ")[1] || "")[0] }}
-              </div>
-              <div
-                *ngIf="session.participants.length > 4"
-                class="jp-hc-av jp-hc-av--more"
-                [style.marginLeft]="'-6px'"
-              >
-                +{{ session.participants.length - 4 }}
-              </div>
-            </div>
-          </div>
+      <div class="sp-hub__steps">
+        <div class="sp-hub__step">
+          <span>1</span>
+          <strong>Review backlog</strong>
+        </div>
+        <div class="sp-hub__step">
+          <span>2</span>
+          <strong>Estimate candidates</strong>
+        </div>
+        <div class="sp-hub__step">
+          <span>3</span>
+          <strong>Plan by capacity</strong>
+        </div>
+        <div class="sp-hub__step">
+          <span>4</span>
+          <strong>Review and commit</strong>
         </div>
       </div>
     </div>
+
+    <div class="sp-hub__status-card">
+      <div class="sp-hub__status-head">
+        <span class="sp-hub__status-label">Next sprint</span>
+        <span class="sp-hub__domain" *ngIf="configuredDomain()">{{
+          configuredDomain()
+        }}</span>
+      </div>
+
+      <ng-container *ngIf="nextSprint() as next; else noNextSprint">
+        <h2>{{ next.name }}</h2>
+        <p class="sp-hub__status-meta">
+          {{ next.issues.length }} issues
+          <span *ngIf="next.startDate && next.endDate">
+            · {{ next.startDate | date: "MMM d" }} -
+            {{ next.endDate | date: "MMM d" }}
+          </span>
+        </p>
+
+        <div class="sp-hub__status-pill-row">
+          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'resume'">
+            Draft available
+          </span>
+          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'planned'">
+            Plan completed
+          </span>
+          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'start'">
+            Ready to plan
+          </span>
+          <span
+            class="sp-hub__pill sp-hub__pill--warn"
+            *ngIf="planningButtonState() === 'no-issues'"
+          >
+            No issues in sprint
+          </span>
+        </div>
+
+        <div class="sp-hub__metrics">
+          <div>
+            <strong>{{ draftCount() }}</strong>
+            <span>Drafts</span>
+          </div>
+          <div>
+            <strong>{{ completedCount() }}</strong>
+            <span>Completed plans</span>
+          </div>
+          <div>
+            <strong>{{ next.issues.length }}</strong>
+            <span>Candidate issues</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #noNextSprint>
+        <h2>No future sprint found</h2>
+        <p class="sp-hub__status-meta">
+          Jira did not return a future sprint for this board.
+        </p>
+      </ng-template>
+    </div>
+  </section>
+
+  <div *ngIf="configured() === false" class="sp-hub__empty">
+    <mat-icon>cloud_off</mat-icon>
+    <h2>Jira is not configured</h2>
+    <p>
+      Set <code>JIRA_DOMAIN</code>, <code>JIRA_EMAIL</code>, and
+      <code>JIRA_TOKEN</code> in Cloud Functions to enable sprint planning.
+    </p>
   </div>
+
+  <ng-container *ngIf="configured()">
+    <section class="sp-hub__overview">
+      <article class="sp-hub__panel sp-hub__panel--active">
+        <div class="sp-hub__panel-head">
+          <div>
+            <span class="sp-hub__panel-label">Current sprint</span>
+            <h3>{{ activeSprint()?.name ?? "No active sprint" }}</h3>
+          </div>
+          <span
+            class="sp-hub__badge"
+            *ngIf="daysRemaining(activeSprint()) !== null"
+          >
+            {{ daysRemaining(activeSprint()) }}d left
+          </span>
+        </div>
+
+        <div class="sp-hub__progress" *ngIf="activeSprint()">
+          <div class="sp-hub__progress-bar">
+            <div
+              class="sp-hub__progress-fill"
+              [style.width.%]="sprintProgress(activeSprint())"
+            ></div>
+          </div>
+          <span>{{ sprintProgress(activeSprint()) }}% done</span>
+        </div>
+
+        <div class="sp-hub__stat-grid">
+          <div>
+            <strong>{{ activeStats().total }}</strong>
+            <span>Total</span>
+          </div>
+          <div>
+            <strong>{{ activeStats().inProgress }}</strong>
+            <span>In progress</span>
+          </div>
+          <div>
+            <strong>{{ activeStats().done }}</strong>
+            <span>Done</span>
+          </div>
+          <div>
+            <strong>{{ activeStats().todo }}</strong>
+            <span>To do</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="sp-hub__panel sp-hub__panel--flow">
+        <div class="sp-hub__panel-head">
+          <div>
+            <span class="sp-hub__panel-label">Planning process</span>
+            <h3>Designed for decision-making</h3>
+          </div>
+        </div>
+
+        <div class="sp-hub__flow-list">
+          <div>
+            <mat-icon>playlist_add_check</mat-icon>
+            <strong>Review</strong>
+            <p>Shortlist the right work and check readiness before planning.</p>
+          </div>
+          <div>
+            <mat-icon>calculate</mat-icon>
+            <strong>Estimate</strong>
+            <p>Work through candidate issues in a focused estimation queue.</p>
+          </div>
+          <div>
+            <mat-icon>calendar_view_week</mat-icon>
+            <strong>Plan</strong>
+            <p>Balance participants and workdays with clear sprint context.</p>
+          </div>
+          <div>
+            <mat-icon>rule</mat-icon>
+            <strong>Review</strong>
+            <p>Validate risks, overload, and stretch work before committing.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="sp-hub__content-grid">
+      <article class="sp-hub__panel sp-hub__issues">
+        <div class="sp-hub__panel-head">
+          <div>
+            <span class="sp-hub__panel-label">Next sprint inbox</span>
+            <h3>{{ nextSprint()?.issues?.length ?? 0 }} issues ready for review</h3>
+          </div>
+        </div>
+
+        <div *ngIf="loadingSprints()" class="sp-hub__loading">
+          <mat-spinner diameter="28"></mat-spinner>
+          <span>Loading sprint issues…</span>
+        </div>
+
+        <div
+          *ngIf="!loadingSprints() && (nextSprint()?.issues?.length ?? 0) === 0"
+          class="sp-hub__empty-inline"
+        >
+          <mat-icon>inbox</mat-icon>
+          <p>No issues available for the next sprint.</p>
+        </div>
+
+        <div class="sp-hub__issue-list" *ngIf="(nextSprint()?.issues?.length ?? 0) > 0">
+          <a
+            *ngFor="let issue of nextSprint()!.issues.slice(0, 8)"
+            class="sp-hub__issue"
+            href="https://{{ configuredDomain() }}/browse/{{ issue.id }}"
+            target="_blank"
+            rel="noopener"
+          >
+            <div class="sp-hub__issue-top">
+              <span>{{ issue.id }}</span>
+              <mat-icon [class]="'type-' + issue.type.toLowerCase()">{{
+                typeIcon(issue.type)
+              }}</mat-icon>
+            </div>
+            <strong>{{ issue.title }}</strong>
+            <div class="sp-hub__issue-meta">
+              <span>{{ issue.type }}</span>
+              <span *ngIf="issue.assignee">{{ issue.assignee }}</span>
+              <span *ngIf="issue.storyPoints">{{ issue.storyPoints }} SP</span>
+            </div>
+          </a>
+        </div>
+      </article>
+
+      <article class="sp-hub__panel sp-hub__history">
+        <div class="sp-hub__panel-head">
+          <div>
+            <span class="sp-hub__panel-label">Planning history</span>
+            <h3>Drafts and completed sprint plans</h3>
+          </div>
+          <button
+            class="sp-hub__btn sp-hub__btn--ghost sp-hub__btn--small"
+            (click)="loadHistory()"
+            [disabled]="loadingHistory()"
+            type="button"
+          >
+            <mat-spinner *ngIf="loadingHistory()" diameter="14"></mat-spinner>
+            <mat-icon *ngIf="!loadingHistory()">refresh</mat-icon>
+          </button>
+        </div>
+
+        <div *ngIf="loadingHistory()" class="sp-hub__loading">
+          <mat-spinner diameter="28"></mat-spinner>
+          <span>Loading planning sessions…</span>
+        </div>
+
+        <div
+          *ngIf="!loadingHistory() && planningHistory().length === 0"
+          class="sp-hub__empty-inline"
+        >
+          <mat-icon>event_note</mat-icon>
+          <p>No planning sessions yet.</p>
+        </div>
+
+        <div class="sp-hub__history-list" *ngIf="planningHistory().length > 0">
+          <button
+            *ngFor="let session of planningHistory(); trackBy: trackSession"
+            class="sp-hub__history-card"
+            [class.sp-hub__history-card--draft]="session.status === 'draft'"
+            [class.sp-hub__history-card--done]="session.status === 'completed'"
+            (click)="viewSession(session)"
+            type="button"
+          >
+            <div class="sp-hub__history-top">
+              <div>
+                <span class="sp-hub__history-name">{{ session.sprintName }}</span>
+                <span class="sp-hub__history-date">
+                  {{ session.updatedAt.toDate() | date: "MMM d, y · HH:mm" }}
+                </span>
+              </div>
+              <span class="sp-hub__history-status">{{
+                session.status === "draft" ? "Draft" : "Completed"
+              }}</span>
+            </div>
+
+            <div class="sp-hub__history-stats">
+              <div>
+                <strong>{{ session.summary.plannedTasks }}</strong>
+                <span>Planned</span>
+              </div>
+              <div>
+                <strong>{{ session.summary.totalStoryPoints }}</strong>
+                <span>SP</span>
+              </div>
+              <div>
+                <strong>{{ session.summary.unplannedTasks }}</strong>
+                <span>Left</span>
+              </div>
+            </div>
+
+            <div class="sp-hub__history-foot">
+              <span>{{ session.participants.length }} participants</span>
+              <span *ngIf="session.workflowStep">
+                Step: {{ session.workflowStep }}
+              </span>
+            </div>
+          </button>
+        </div>
+      </article>
+    </section>
+  </ng-container>
 </div>
