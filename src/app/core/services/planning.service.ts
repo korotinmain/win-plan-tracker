@@ -67,7 +67,9 @@ export interface PlanningSession {
   sprintId: string | number;
   sprintName: string;
   status: 'draft' | 'completed' | 'cancelled';
+  teamId?: string;
   participants: string[];
+  participantIds?: string[];
   turnOrder: string[];
   turnOrderIndex?: number;
   guidedModeEnabled: boolean;
@@ -86,7 +88,9 @@ export interface PlanningSession {
 export interface DraftSavePayload {
   sprintId: string | number;
   sprintName: string;
+  teamId?: string;
   participants: string[];
+  participantIds?: string[];
   turnOrder: string[];
   guidedModeEnabled: boolean;
   workflowStep: PlanningStep;
