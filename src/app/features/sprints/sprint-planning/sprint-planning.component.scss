@@ -7,8 +7,16 @@
   min-height: 100%;
   padding: 2rem 1.5rem 2.5rem;
   background:
-    radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.16), transparent 34%),
-    radial-gradient(circle at 86% 6%, rgba(16, 185, 129, 0.12), transparent 28%),
+    radial-gradient(
+      circle at 10% 15%,
+      rgba(99, 102, 241, 0.16),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 86% 6%,
+      rgba(16, 185, 129, 0.12),
+      transparent 28%
+    ),
     var(--c-bg);
   color: var(--c-text);
 }
@@ -292,11 +300,17 @@
 
 .sw__stage--review,
 .sw__stage--plan {
-  grid-template-columns: minmax(260px, 0.8fr) minmax(260px, 0.8fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(260px, 0.8fr) minmax(260px, 0.8fr) minmax(
+      320px,
+      0.9fr
+    );
 }
 
 .sw__stage--estimate {
-  grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1fr) minmax(260px, 0.8fr);
+  grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1fr) minmax(
+      260px,
+      0.8fr
+    );
 }
 
 .sw__stage--summary {
@@ -370,8 +384,7 @@
   border-radius: 1rem;
   border: 1px solid var(--c-border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
-    var(--c-bg);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent), var(--c-bg);
   text-align: left;
   cursor: pointer;
   display: grid;
