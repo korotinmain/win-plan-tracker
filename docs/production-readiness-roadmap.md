@@ -112,7 +112,7 @@ Status scale:
 
 | ID | Severity | Area | Type | Summary | Phase | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| PR-001 | critical | firebase-rules | security | `planningSessions` are world-readable/writable to any signed-in user | Phase 1 | in_progress |
+| PR-001 | critical | firebase-rules | security | `planningSessions` are world-readable/writable to any signed-in user | Phase 1 | done |
 | PR-002 | high | firebase-rules | security | `users` and `teams` reads are broader than role/team-oriented product intent | Phase 1 | open |
 | PR-003 | high | planning | architecture | Sprint planning surface is oversized and mixes workflow, state, placement logic, and persistence orchestration | Phase 2 | open |
 | PR-004 | high | frontend | architecture | Calendar grid mixes rendering, calendar math, team loading, holiday fetch, and dialog orchestration | Phase 2 | open |
@@ -152,13 +152,13 @@ Status scale:
     - legacy docs without `teamId` are temporarily readable only by `createdBy`
     - writes require authenticated membership in the referenced team
   - status:
-    - rule model agreed and implementation is in progress in `firestore.rules`
-    - follow-up emulator verification remains required before closing PR-001
+    - rule model is implemented in `firestore.rules`
+    - emulator verification passed for same-team read allow, cross-team read deny, legacy creator read allow, and legacy non-creator read deny
 - Validation:
   - emulator verification of allowed and denied access paths
   - caller/service behavior checks after rules changes
 - Phase: `Phase 1`
-- Status: `in_progress`
+- Status: `done`
 
 #### PR-002
 
@@ -505,7 +505,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is now explicit; rules tightening is underway |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `users` / `teams` broad-read inventory remains next |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |

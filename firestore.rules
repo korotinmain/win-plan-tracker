@@ -142,9 +142,10 @@ service cloud.firestore {
     // Legacy docs without teamId remain readable by their creator only.
     match /planningSessions/{sessionId} {
       allow read: if signedIn()
-                  && ((resource.data.teamId is string
+                  && (((resource.data.keys().hasAny(['teamId']))
+                       && resource.data.teamId is string
                        && isMember(resource.data.teamId))
-                      || (!(resource.data.teamId is string)
+                      || (!(resource.data.keys().hasAny(['teamId']))
                           && resource.data.createdBy == request.auth.uid));
       allow create: if signedIn()
                     && request.resource.data.teamId is string
