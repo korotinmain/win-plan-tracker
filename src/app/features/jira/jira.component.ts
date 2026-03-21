@@ -165,15 +165,16 @@ export class JiraComponent implements OnInit {
       this.completedSession.set(null);
       return;
     }
+    if (!teamId) {
+      this.draftSession.set(null);
+      this.completedSession.set(null);
+      return;
+    }
     this.checkingPlanningState.set(true);
     try {
       const [draft, completed] = await Promise.all([
-        teamId
-          ? this.planningService.getActiveDraftForSprint(teamId, next.name)
-          : this.planningService.getActiveDraftForSprint(next.name),
-        teamId
-          ? this.planningService.getCompletedForSprint(teamId, next.name)
-          : this.planningService.getCompletedForSprint(next.name),
+        this.planningService.getActiveDraftForSprint(teamId, next.name),
+        this.planningService.getCompletedForSprint(teamId, next.name),
       ]);
       this.draftSession.set(draft);
       this.completedSession.set(completed);
