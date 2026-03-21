@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import {
+  QueryConstraint,
   Timestamp,
   addDoc,
   collection,
@@ -13,7 +14,11 @@ import {
 } from '@firebase/firestore';
 import { db } from '../../firebase';
 import { AuthService } from './auth.service';
-import { buildPlanningSessionAccessFields } from './planning-session-access.util';
+import {
+  buildPlanningSessionAccessFields,
+  canReadLegacyPlanningSession,
+  mergePlanningSessions,
+} from './planning-session-access.util';
 
 export type PlanningStep = 'review' | 'estimate' | 'plan' | 'review-sprint';
 export type PlanningBucket = 'backlog' | 'candidate' | 'planned';
@@ -225,13 +230,17 @@ export class PlanningService {
   }
 
   async getSessionsForTeam(teamId: string): Promise<PlanningSession[]> {
-    const q = query(
-      this.col,
-      where('teamId', '==', teamId),
-      orderBy('updatedAt', 'desc'),
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PlanningSession);
+    const [scoped, legacy] = await Promise.all([
+      teamId
+        ? this.getSessionsByConstraints([
+            where('teamId', '==', teamId),
+            orderBy('updatedAt', 'desc'),
+          ])
+        : Promise.resolve([]),
+      this.getLegacySessionsForCurrentUser(),
+    ]);
+
+    return mergePlanningSessions(scoped, legacy);
   }
 
   private async getLatestSession(
@@ -239,19 +248,66 @@ export class PlanningService {
     sprintName: string,
     status: PlanningSession['status'],
   ): Promise<PlanningSession | null> {
-    const constraints = [
+    const scoped = teamId
+      ? await this.getFirstSessionByConstraints([
+          where('teamId', '==', teamId),
+          where('sprintName', '==', sprintName),
+          where('status', '==', status),
+          orderBy('createdAt', 'desc'),
+        ])
+      : null;
+
+    if (scoped) {
+      return scoped;
+    }
+
+    return this.getLegacySessionForSprint(sprintName, status);
+  }
+
+  private async getLegacySessionForSprint(
+    sprintName: string,
+    status: PlanningSession['status'],
+  ): Promise<PlanningSession | null> {
+    const uid = this.auth.currentUser?.uid;
+    if (!uid) return null;
+
+    const sessions = await this.getSessionsByConstraints([
+      where('createdBy', '==', uid),
       where('sprintName', '==', sprintName),
       where('status', '==', status),
       orderBy('createdAt', 'desc'),
-    ];
+    ]);
 
-    if (teamId) {
-      constraints.unshift(where('teamId', '==', teamId));
-    }
+    return (
+      sessions.find((session) => canReadLegacyPlanningSession(session, uid)) ?? null
+    );
+  }
 
+  private async getLegacySessionsForCurrentUser(): Promise<PlanningSession[]> {
+    const uid = this.auth.currentUser?.uid;
+    if (!uid) return [];
+
+    const sessions = await this.getSessionsByConstraints([
+      where('createdBy', '==', uid),
+      orderBy('updatedAt', 'desc'),
+    ]);
+
+    return sessions.filter((session) => canReadLegacyPlanningSession(session, uid));
+  }
+
+  private async getFirstSessionByConstraints(
+    constraints: QueryConstraint[],
+  ): Promise<PlanningSession | null> {
     const snap = await getDocs(query(this.col, ...constraints));
     if (snap.empty) return null;
     const d = snap.docs[0];
     return { id: d.id, ...d.data() } as PlanningSession;
+  }
+
+  private async getSessionsByConstraints(
+    constraints: QueryConstraint[],
+  ): Promise<PlanningSession[]> {
+    const snap = await getDocs(query(this.col, ...constraints));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PlanningSession);
   }
 }

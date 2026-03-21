@@ -41,8 +41,8 @@
     <button
       *ngFor="let m of data.members; let i = index"
       class="psd-member"
-      [class.psd-member--on]="isSelected(m.name)"
-      (click)="toggle(m.name)"
+      [class.psd-member--on]="isSelected(m, i)"
+      (click)="toggle(m, i)"
       type="button"
     >
       <!-- Avatar -->
@@ -58,7 +58,7 @@
       <span class="psd-member-name">{{ m.name }}</span>
 
       <!-- Check badge -->
-      <div class="psd-check" [class.psd-check--visible]="isSelected(m.name)">
+      <div class="psd-check" [class.psd-check--visible]="isSelected(m, i)">
         <mat-icon>check</mat-icon>
       </div>
     </button>

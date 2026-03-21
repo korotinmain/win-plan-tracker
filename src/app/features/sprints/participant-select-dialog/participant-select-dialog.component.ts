@@ -16,6 +16,10 @@ export interface ParticipantSelectDialogData {
   sprintName: string;
 }
 
+function memberKey(member: PlanMemberOption, index: number): string {
+  return member.uid?.trim() || `${index}:${member.name}`;
+}
+
 const AV_COLORS = [
   { bg: '#eef2ff', text: '#4f46e5' },
   { bg: '#f0fdf4', text: '#16a34a' },
@@ -38,20 +42,25 @@ export class ParticipantSelectDialogComponent {
   private dialogRef = inject(MatDialogRef<ParticipantSelectDialogComponent>);
   readonly data: ParticipantSelectDialogData = inject(MAT_DIALOG_DATA);
 
-  selected = signal<Set<string>>(new Set(this.data.members.map((m) => m.name)));
+  selected = signal<Set<string>>(
+    new Set(this.data.members.map((member, index) => memberKey(member, index))),
+  );
 
-  isSelected(name: string): boolean {
-    return this.selected().has(name);
+  isSelected(member: PlanMemberOption, index: number): boolean {
+    return this.selected().has(memberKey(member, index));
   }
 
-  toggle(name: string): void {
+  toggle(member: PlanMemberOption, index: number): void {
+    const key = memberKey(member, index);
     const s = new Set(this.selected());
-    s.has(name) ? s.delete(name) : s.add(name);
+    s.has(key) ? s.delete(key) : s.add(key);
     this.selected.set(s);
   }
 
   selectAll(): void {
-    this.selected.set(new Set(this.data.members.map((m) => m.name)));
+    this.selected.set(
+      new Set(this.data.members.map((member, index) => memberKey(member, index))),
+    );
   }
 
   clearAll(): void {
@@ -67,7 +76,9 @@ export class ParticipantSelectDialogComponent {
   }
 
   get selectedMembers(): PlanMemberOption[] {
-    return this.data.members.filter((m) => this.selected().has(m.name));
+    return this.data.members.filter((member, index) =>
+      this.selected().has(memberKey(member, index)),
+    );
   }
 
   confirm(): void {

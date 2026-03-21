@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { Subject, debounceTime } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { JiraService, JiraSprint, JiraSprintIssue } from '../../../core/services/jira.service';
+import { mapPlanningParticipants } from '../../../core/services/planning-session-access.util';
 import {
   CommitmentLevel,
   EstimateConfidence,
@@ -20,7 +21,6 @@ import {
   PlanningSummary,
   TaskPlacement,
 } from '../../../core/services/planning.service';
-import { TeamService } from '../../../core/services/team.service';
 
 interface PlanMember {
   uid?: string;
@@ -106,7 +106,6 @@ export class SprintPlanningComponent {
   private authService = inject(AuthService);
   private jiraService = inject(JiraService);
   private planningService = inject(PlanningService);
-  private teamService = inject(TeamService);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
@@ -581,7 +580,7 @@ export class SprintPlanningComponent {
   }
 
   trackMember(_index: number, member: PlanMember): string {
-    return member.name;
+    return member.uid ?? `${_index}:${member.name}`;
   }
 
   issueTypeIcon(type: string): string {
@@ -675,10 +674,12 @@ export class SprintPlanningComponent {
   ): void {
     if (!this.members().length) {
       this.members.set(
-        (session.participants ?? []).map((name, index) => ({
-          name,
-          initials: initials(name),
-          uid: session.participantIds?.[index],
+        mapPlanningParticipants(
+          session.participants ?? [],
+          session.participantIds,
+        ).map((participant) => ({
+          ...participant,
+          initials: initials(participant.name),
         })),
       );
     }
@@ -923,28 +924,8 @@ export class SprintPlanningComponent {
   }
 
   private async resolveParticipantIds(): Promise<string[]> {
-    const directIds = this.members()
-      .map((member) => member.uid?.trim())
-      .filter((uid): uid is string => !!uid);
-
-    if (directIds.length === this.members().length) {
-      return directIds;
-    }
-
-    const teamId = this.authService.currentUser?.teamId?.trim();
-    if (!teamId) {
-      return directIds;
-    }
-
-    const teamMembers = await this.teamService.getTeamMembers(teamId);
-    const uidByName = new Map(
-      teamMembers
-        .filter((member) => member.displayName)
-        .map((member) => [member.displayName, member.uid] as const),
-    );
-
     return this.members()
-      .map((member) => member.uid?.trim() || uidByName.get(member.name) || '')
+      .map((member) => member.uid?.trim())
       .filter((uid): uid is string => !!uid);
   }
 }

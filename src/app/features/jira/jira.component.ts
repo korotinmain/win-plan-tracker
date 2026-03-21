@@ -8,6 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { mapPlanningParticipants } from '../../core/services/planning-session-access.util';
 import {
   PlanningService,
   PlanningSession,
@@ -138,14 +139,10 @@ export class JiraComponent implements OnInit {
   async loadHistory(): Promise<void> {
     this.loadingHistory.set(true);
     try {
-      const teamId = this.authService.currentUser?.teamId;
-      if (!teamId) {
-        this.planningHistory.set([]);
-        return;
-      }
-
       this.planningHistory.set(
-        await this.planningService.getSessionsForTeam(teamId),
+        await this.planningService.getSessionsForTeam(
+          this.authService.currentUser?.teamId ?? '',
+        ),
       );
     } catch {
       this.snackBar.open('Failed to load planning history.', 'Dismiss', {
@@ -168,16 +165,15 @@ export class JiraComponent implements OnInit {
       this.completedSession.set(null);
       return;
     }
-    if (!teamId) {
-      this.draftSession.set(null);
-      this.completedSession.set(null);
-      return;
-    }
     this.checkingPlanningState.set(true);
     try {
       const [draft, completed] = await Promise.all([
-        this.planningService.getActiveDraftForSprint(teamId, next.name),
-        this.planningService.getCompletedForSprint(teamId, next.name),
+        teamId
+          ? this.planningService.getActiveDraftForSprint(teamId, next.name)
+          : this.planningService.getActiveDraftForSprint(next.name),
+        teamId
+          ? this.planningService.getCompletedForSprint(teamId, next.name)
+          : this.planningService.getCompletedForSprint(next.name),
       ]);
       this.draftSession.set(draft);
       this.completedSession.set(completed);
@@ -195,10 +191,12 @@ export class JiraComponent implements OnInit {
       this.router.navigate(['/sprints/planning'], {
         state: {
           sessionId: session.id,
-          participants: (session.participants ?? []).map((name, index) => ({
-            name,
-            initials: this.initials(name),
-            uid: session.participantIds?.[index],
+          participants: mapPlanningParticipants(
+            session.participants ?? [],
+            session.participantIds,
+          ).map((participant) => ({
+            ...participant,
+            initials: this.initials(participant.name),
           })),
         },
       });

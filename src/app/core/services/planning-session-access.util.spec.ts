@@ -1,6 +1,8 @@
 import {
   buildPlanningSessionAccessFields,
   canReadLegacyPlanningSession,
+  mapPlanningParticipants,
+  mergePlanningSessions,
 } from './planning-session-access.util';
 
 describe('planning-session-access.util', () => {
@@ -73,5 +75,43 @@ describe('planning-session-access.util', () => {
     expect(
       canReadLegacyPlanningSession({ teamId: undefined }, 'user-1'),
     ).toBeFalse();
+  });
+
+  it('mapPlanningParticipants does not assign ids when the saved ids are not positionally aligned', () => {
+    expect(
+      mapPlanningParticipants(['Alex', 'Sam', 'Taylor'], ['uid-alex', 'uid-taylor']),
+    ).toEqual([
+      { name: 'Alex' },
+      { name: 'Sam' },
+      { name: 'Taylor' },
+    ]);
+  });
+
+  it('mapPlanningParticipants preserves aligned ids by participant position', () => {
+    expect(
+      mapPlanningParticipants(['Alex', 'Sam'], ['uid-alex', 'uid-sam']),
+    ).toEqual([
+      { name: 'Alex', uid: 'uid-alex' },
+      { name: 'Sam', uid: 'uid-sam' },
+    ]);
+  });
+
+  it('mergePlanningSessions keeps scoped sessions first and appends unique legacy sessions', () => {
+    expect(
+      mergePlanningSessions(
+        [
+          { id: 'scoped-2', updatedAt: { seconds: 20, nanoseconds: 0 } },
+          { id: 'shared', updatedAt: { seconds: 10, nanoseconds: 0 } },
+        ],
+        [
+          { id: 'legacy-1', updatedAt: { seconds: 15, nanoseconds: 0 } },
+          { id: 'shared', updatedAt: { seconds: 5, nanoseconds: 0 } },
+        ],
+      ),
+    ).toEqual([
+      { id: 'scoped-2', updatedAt: { seconds: 20, nanoseconds: 0 } },
+      { id: 'legacy-1', updatedAt: { seconds: 15, nanoseconds: 0 } },
+      { id: 'shared', updatedAt: { seconds: 10, nanoseconds: 0 } },
+    ]);
   });
 });
