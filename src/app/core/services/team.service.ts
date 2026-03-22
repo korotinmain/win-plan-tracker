@@ -43,7 +43,7 @@ interface UpdateTeamMembershipResponse {
   action: MembershipAction;
   teamId: string;
   userId: string;
-  status: string;
+  status: 'noop' | 'updated';
 }
 
 export const teamMembershipCallable = {
@@ -296,6 +296,14 @@ export class TeamService {
       ...(userId ? { userId } : {}),
     };
 
-    await teamMembershipCallable.updateTeamMembership(this.functions, payload);
+    const result = await teamMembershipCallable.updateTeamMembership(
+      this.functions,
+      payload,
+    );
+    if (result.status !== 'updated') {
+      throw new Error(
+        'This membership change no longer applied. Refresh and try again.',
+      );
+    }
   }
 }

@@ -69,4 +69,29 @@ describe('TeamService membership mutations', () => {
       userId: 'user-1',
     });
   });
+
+  it('rejects noop callable responses for addMember', async () => {
+    callable.and.returnValue(
+      Promise.resolve({
+        action: 'add',
+        teamId: 'team-1',
+        userId: 'user-1',
+        status: 'noop',
+      }),
+    );
+
+    await expectAsync(
+      service.addMember('team-1', 'user-1', []),
+    ).toBeRejectedWithError(
+      'This membership change no longer applied. Refresh and try again.',
+    );
+  });
+
+  it('propagates callable backend failures', async () => {
+    callable.and.returnValue(Promise.reject(new Error('backend failed')));
+
+    await expectAsync(
+      service.joinTeam('team-1', 'user-1', []),
+    ).toBeRejectedWithError('backend failed');
+  });
 });
