@@ -457,7 +457,7 @@ export class TeamsComponent {
     );
     snackRef.onAction().subscribe(async () => {
       try {
-        await this.teamService.removeMember(team.id, user.uid, team.memberIds);
+        await this.teamService.leaveTeam(team.id, user.uid);
         this.authService.patchCurrentUser({ teamId: '' });
         this.snackBar.open('You have left the team', 'Dismiss', {
           duration: 3000,

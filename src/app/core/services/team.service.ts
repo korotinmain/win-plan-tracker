@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { Functions, httpsCallable } from '@angular/fire/functions';
 import {
   collection,
   doc,
-  runTransaction,
   setDoc,
   updateDoc,
   getDoc,
@@ -26,118 +26,43 @@ export const firestoreApi = {
   getDoc,
   getDocs,
   query,
-  runTransaction,
   setDoc,
   updateDoc,
   where,
 };
 
-export interface MembershipMutationPlan {
-  teamMemberIds: string[];
-  updateTeam: boolean;
-  updateUserTeamId?: string;
+type MembershipAction = 'add' | 'join' | 'remove' | 'leave';
+
+interface UpdateTeamMembershipRequest {
+  action: MembershipAction;
+  teamId: string;
+  userId?: string;
 }
 
-export function resolveAddMemberMutation(
-  team: Team,
-  teamId: string,
-  user: AppUser,
-): MembershipMutationPlan {
-  const teamMemberIds = team.memberIds ?? [];
-  const inTeam = teamMemberIds.includes(user.uid);
-
-  if (user.teamId && user.teamId !== teamId) {
-    throw new Error('This member is already on a team. Leave it first.');
-  }
-
-  if (user.teamId === teamId) {
-    if (inTeam) {
-      throw new Error('This member is already on the team.');
-    }
-    return {
-      teamMemberIds: [...teamMemberIds, user.uid],
-      updateTeam: true,
-    };
-  }
-
-  if (inTeam) {
-    return {
-      teamMemberIds,
-      updateTeam: false,
-      updateUserTeamId: teamId,
-    };
-  }
-
-  return {
-    teamMemberIds: [...teamMemberIds, user.uid],
-    updateTeam: true,
-    updateUserTeamId: teamId,
-  };
+interface UpdateTeamMembershipResponse {
+  action: MembershipAction;
+  teamId: string;
+  userId: string;
+  status: string;
 }
 
-export function resolveJoinTeamMutation(
-  team: Team,
-  teamId: string,
-  user: AppUser,
-): MembershipMutationPlan {
-  const teamMemberIds = team.memberIds ?? [];
-  const inTeam = teamMemberIds.includes(user.uid);
-
-  if (user.teamId) {
-    throw new Error('You are already a member of a team. Leave it first.');
-  }
-
-  if (inTeam) {
-    return {
-      teamMemberIds,
-      updateTeam: false,
-      updateUserTeamId: teamId,
-    };
-  }
-
-  return {
-    teamMemberIds: [...teamMemberIds, user.uid],
-    updateTeam: true,
-    updateUserTeamId: teamId,
-  };
-}
-
-export function resolveRemoveMemberMutation(
-  team: Team,
-  teamId: string,
-  user: AppUser,
-): MembershipMutationPlan {
-  const teamMemberIds = team.memberIds ?? [];
-  const inTeam = teamMemberIds.includes(user.uid);
-
-  if (user.teamId && user.teamId !== teamId) {
-    throw new Error('This member belongs to another team.');
-  }
-
-  const nextTeamMemberIds = teamMemberIds.filter((id) => id !== user.uid);
-  return {
-    teamMemberIds: nextTeamMemberIds,
-    updateTeam: inTeam,
-    updateUserTeamId: user.teamId === teamId ? '' : undefined,
-  };
-}
-
-async function hasConflictingTeamMembership(
-  userId: string,
-  targetTeamId: string,
-): Promise<boolean> {
-  const snap = await firestoreApi.getDocs(
-    firestoreApi.query(
-      firestoreApi.collection(db, 'teams'),
-      firestoreApi.where('memberIds', 'array-contains', userId),
-    ),
-  );
-  return snap.docs.some((docSnap) => docSnap.id !== targetTeamId);
-}
+export const teamMembershipCallable = {
+  updateTeamMembership(
+    functions: Functions,
+    payload: UpdateTeamMembershipRequest,
+  ): Promise<UpdateTeamMembershipResponse> {
+    const fn = httpsCallable<
+      UpdateTeamMembershipRequest,
+      UpdateTeamMembershipResponse
+    >(functions, 'updateTeamMembership');
+    return fn(payload).then((result) => result.data);
+  },
+};
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   private readonly teamDirectoryService = inject(TeamDirectoryService);
+  private readonly functions = inject(Functions);
 
   getTeamsForUser(uid: string): Observable<Team[]> {
     const managed = snapObservable<Team>(
@@ -244,41 +169,7 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    const userRef = firestoreApi.doc(db, `users/${userId}`);
-    const userSnap = await firestoreApi.getDoc(userRef);
-    if (!userSnap.exists()) {
-      throw new Error('User not found.');
-    }
-
-    const user = userSnap.data() as AppUser;
-    if (user.teamId && user.teamId !== teamId) {
-      throw new Error('This member is already on a team. Leave it first.');
-    }
-
-    await firestoreApi.runTransaction(db, async (transaction) => {
-      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
-      const userRef = firestoreApi.doc(db, `users/${userId}`);
-
-      const teamSnap = await transaction.get(teamRef);
-      if (!teamSnap.exists()) {
-        throw new Error('Team not found.');
-      }
-
-      const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) {
-        throw new Error('User not found.');
-      }
-
-      const team = teamSnap.data() as Team;
-      const user = userSnap.data() as AppUser;
-      const mutation = resolveAddMemberMutation(team, teamId, user);
-      if (mutation.updateTeam) {
-        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
-      }
-      if (mutation.updateUserTeamId !== undefined) {
-        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
-      }
-    });
+    await this.updateTeamMembership('add', teamId, userId);
   }
 
   async joinTeam(
@@ -286,45 +177,7 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    const userRef = firestoreApi.doc(db, `users/${userId}`);
-    const userSnap = await firestoreApi.getDoc(userRef);
-    if (!userSnap.exists()) {
-      throw new Error('User not found.');
-    }
-
-    const user = userSnap.data() as AppUser;
-    if (user.teamId) {
-      throw new Error('You are already a member of a team. Leave it first.');
-    }
-
-    if (await hasConflictingTeamMembership(userId, teamId)) {
-      throw new Error('You are already a member of a team. Leave it first.');
-    }
-
-    await firestoreApi.runTransaction(db, async (transaction) => {
-      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
-      const userRef = firestoreApi.doc(db, `users/${userId}`);
-
-      const teamSnap = await transaction.get(teamRef);
-      if (!teamSnap.exists()) {
-        throw new Error('Team not found.');
-      }
-
-      const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) {
-        throw new Error('User not found.');
-      }
-
-      const team = teamSnap.data() as Team;
-      const user = userSnap.data() as AppUser;
-      const mutation = resolveJoinTeamMutation(team, teamId, user);
-      if (mutation.updateTeam) {
-        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
-      }
-      if (mutation.updateUserTeamId !== undefined) {
-        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
-      }
-    });
+    await this.updateTeamMembership('join', teamId, userId);
   }
 
   async removeMember(
@@ -332,30 +185,11 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    await firestoreApi.runTransaction(db, async (transaction) => {
-      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
-      const userRef = firestoreApi.doc(db, `users/${userId}`);
+    await this.updateTeamMembership('remove', teamId, userId);
+  }
 
-      const teamSnap = await transaction.get(teamRef);
-      if (!teamSnap.exists()) {
-        throw new Error('Team not found.');
-      }
-
-      const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) {
-        throw new Error('User not found.');
-      }
-
-      const team = teamSnap.data() as Team;
-      const user = userSnap.data() as AppUser;
-      const mutation = resolveRemoveMemberMutation(team, teamId, user);
-      if (mutation.updateTeam) {
-        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
-      }
-      if (mutation.updateUserTeamId !== undefined) {
-        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
-      }
-    });
+  async leaveTeam(teamId: string, userId: string): Promise<void> {
+    await this.updateTeamMembership('leave', teamId, userId);
   }
 
   async getTeam(teamId: string): Promise<Team | null> {
@@ -449,5 +283,19 @@ export class TeamService {
     } catch {
       // Enrichment doc may not exist — no-op
     }
+  }
+
+  private async updateTeamMembership(
+    action: MembershipAction,
+    teamId: string,
+    userId?: string,
+  ): Promise<void> {
+    const payload: UpdateTeamMembershipRequest = {
+      action,
+      teamId,
+      ...(userId ? { userId } : {}),
+    };
+
+    await teamMembershipCallable.updateTeamMembership(this.functions, payload);
   }
 }

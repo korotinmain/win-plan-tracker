@@ -154,7 +154,7 @@ export class SettingsComponent {
     this.actingTeamId.set(team.id);
     this.teamError.set(null);
     try {
-      await this.teamService.removeMember(team.id, user.uid, team.memberIds);
+      await this.teamService.leaveTeam(team.id, user.uid);
       this.authService.patchCurrentUser({ teamId: '' });
       this.snackBar.open(`Left "${team.name}"`, 'OK', { duration: 3000 });
     } catch (e: unknown) {
