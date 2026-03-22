@@ -34,6 +34,10 @@ export function filterCandidateUsers(
       return false;
     }
 
+    if ((user.teamId ?? '').trim()) {
+      return false;
+    }
+
     if (!queryText) {
       return true;
     }
