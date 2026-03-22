@@ -1,47 +1,67 @@
 import {
-  resolveAddMemberMemberIds,
-  resolveJoinTeamMemberIds,
-  resolveRemoveMemberMemberIds,
+  resolveAddMemberMutation,
+  resolveJoinTeamMutation,
+  resolveRemoveMemberMutation,
 } from './team.service';
 import { Team } from '../models/team.model';
 import { AppUser } from '../models/user.model';
 
 describe('TeamService membership mutations', () => {
-  it('adds members from the latest team state and rejects assigned users', () => {
-    const team = createTeam(['existing-member']);
-    const noTeamUser = createUser('');
-    const assignedUser = createUser('other-team');
+  it('addMember rejects other-team users but repairs a missing team-side membership for same-team users', () => {
+    const missingTeamMember = createTeam([]);
+    const sameTeamUser = createUser('team-1');
+    const otherTeamUser = createUser('other-team');
 
-    expect(resolveAddMemberMemberIds(team, 'team-1', noTeamUser)).toEqual([
-      'existing-member',
-      'user-1',
-    ]);
+    expect(resolveAddMemberMutation(missingTeamMember, 'team-1', sameTeamUser)).toEqual(
+      {
+        teamMemberIds: ['user-1'],
+        updateTeam: true,
+      },
+    );
     expect(() =>
-      resolveAddMemberMemberIds(team, 'team-1', assignedUser),
+      resolveAddMemberMutation(missingTeamMember, 'team-1', otherTeamUser),
     ).toThrowError('This member is already on a team. Leave it first.');
   });
 
-  it('keeps joinTeam no-team-only', () => {
-    const team = createTeam(['existing-member']);
+  it('joinTeam remains no-team-only and repairs a missing user-side membership when the team already contains the user', () => {
+    const splitStateTeam = createTeam(['user-1']);
     const noTeamUser = createUser('');
-    const assignedUser = createUser('other-team');
+    const otherTeamUser = createUser('other-team');
 
-    expect(resolveJoinTeamMemberIds(team, 'team-1', noTeamUser)).toEqual([
-      'existing-member',
-      'user-1',
-    ]);
+    expect(resolveJoinTeamMutation(splitStateTeam, 'team-1', noTeamUser)).toEqual(
+      {
+        teamMemberIds: ['user-1'],
+        updateTeam: false,
+        updateUserTeamId: 'team-1',
+      },
+    );
     expect(() =>
-      resolveJoinTeamMemberIds(team, 'team-1', assignedUser),
+      resolveJoinTeamMutation(splitStateTeam, 'team-1', otherTeamUser),
     ).toThrowError('You are already a member of a team. Leave it first.');
   });
 
-  it('removes members while preserving other team memberships', () => {
-    const team = createTeam(['user-1', 'other-member']);
-    const user = createUser('team-1');
+  it('removeMember cleans up a stale team-side membership without forcing a user-doc write', () => {
+    const splitStateTeam = createTeam(['user-1', 'other-member']);
+    const noTeamUser = createUser('');
 
-    expect(resolveRemoveMemberMemberIds(team, 'team-1', user)).toEqual([
-      'other-member',
-    ]);
+    expect(resolveRemoveMemberMutation(splitStateTeam, 'team-1', noTeamUser)).toEqual(
+      {
+        teamMemberIds: ['other-member'],
+        updateTeam: true,
+        updateUserTeamId: undefined,
+      },
+    );
+  });
+
+  it('removeMember clears the user-side membership when the team record is already clean', () => {
+    const cleanTeam = createTeam(['other-member']);
+    const sameTeamUser = createUser('team-1');
+
+    expect(resolveRemoveMemberMutation(cleanTeam, 'team-1', sameTeamUser)).toEqual({
+      teamMemberIds: ['other-member'],
+      updateTeam: false,
+      updateUserTeamId: '',
+    });
   });
 
   it('rejects removeMember when the user belongs to another team', () => {
@@ -49,7 +69,7 @@ describe('TeamService membership mutations', () => {
     const user = createUser('other-team');
 
     expect(() =>
-      resolveRemoveMemberMemberIds(team, 'team-1', user),
+      resolveRemoveMemberMutation(team, 'team-1', user),
     ).toThrowError('This member belongs to another team.');
   });
 });

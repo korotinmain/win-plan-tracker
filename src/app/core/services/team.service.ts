@@ -19,49 +19,94 @@ import { db } from '../../firebase';
 import { docObservable, snapObservable } from '../../shared/utils/firestore.util';
 import { TeamDirectoryService } from './team-directory.service';
 
-export function resolveAddMemberMemberIds(
+export interface MembershipMutationPlan {
+  teamMemberIds: string[];
+  updateTeam: boolean;
+  updateUserTeamId?: string;
+}
+
+export function resolveAddMemberMutation(
   team: Team,
   teamId: string,
   user: AppUser,
-): string[] {
+): MembershipMutationPlan {
   const teamMemberIds = team.memberIds ?? [];
+  const inTeam = teamMemberIds.includes(user.uid);
 
-  if (teamMemberIds.includes(user.uid) || user.teamId === teamId) {
-    throw new Error('This member is already on the team.');
-  }
-  if (user.teamId) {
+  if (user.teamId && user.teamId !== teamId) {
     throw new Error('This member is already on a team. Leave it first.');
   }
 
-  return Array.from(new Set([...teamMemberIds, user.uid]));
+  if (user.teamId === teamId) {
+    if (inTeam) {
+      throw new Error('This member is already on the team.');
+    }
+    return {
+      teamMemberIds: [...teamMemberIds, user.uid],
+      updateTeam: true,
+    };
+  }
+
+  if (inTeam) {
+    return {
+      teamMemberIds,
+      updateTeam: false,
+      updateUserTeamId: teamId,
+    };
+  }
+
+  return {
+    teamMemberIds: [...teamMemberIds, user.uid],
+    updateTeam: true,
+    updateUserTeamId: teamId,
+  };
 }
 
-export function resolveJoinTeamMemberIds(
+export function resolveJoinTeamMutation(
   team: Team,
   teamId: string,
   user: AppUser,
-): string[] {
+): MembershipMutationPlan {
   const teamMemberIds = team.memberIds ?? [];
+  const inTeam = teamMemberIds.includes(user.uid);
 
-  if (teamMemberIds.includes(user.uid) || user.teamId) {
+  if (user.teamId) {
     throw new Error('You are already a member of a team. Leave it first.');
   }
 
-  return Array.from(new Set([...teamMemberIds, user.uid]));
+  if (inTeam) {
+    return {
+      teamMemberIds,
+      updateTeam: false,
+      updateUserTeamId: teamId,
+    };
+  }
+
+  return {
+    teamMemberIds: [...teamMemberIds, user.uid],
+    updateTeam: true,
+    updateUserTeamId: teamId,
+  };
 }
 
-export function resolveRemoveMemberMemberIds(
+export function resolveRemoveMemberMutation(
   team: Team,
   teamId: string,
   user: AppUser,
-): string[] {
+): MembershipMutationPlan {
   const teamMemberIds = team.memberIds ?? [];
+  const inTeam = teamMemberIds.includes(user.uid);
 
   if (user.teamId && user.teamId !== teamId) {
     throw new Error('This member belongs to another team.');
   }
 
-  return teamMemberIds.filter((id) => id !== user.uid);
+  const nextTeamMemberIds = teamMemberIds.filter((id) => id !== user.uid);
+  return {
+    teamMemberIds: nextTeamMemberIds,
+    updateTeam: inTeam,
+    updateUserTeamId: user.teamId === teamId ? '' : undefined,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -171,9 +216,13 @@ export class TeamService {
 
       const team = teamSnap.data() as Team;
       const user = userSnap.data() as AppUser;
-      const updated = resolveAddMemberMemberIds(team, teamId, user);
-      transaction.update(teamRef, { memberIds: updated });
-      transaction.update(userRef, { teamId });
+      const mutation = resolveAddMemberMutation(team, teamId, user);
+      if (mutation.updateTeam) {
+        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
+      }
+      if (mutation.updateUserTeamId !== undefined) {
+        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
+      }
     });
   }
 
@@ -198,9 +247,13 @@ export class TeamService {
 
       const team = teamSnap.data() as Team;
       const user = userSnap.data() as AppUser;
-      const updated = resolveJoinTeamMemberIds(team, teamId, user);
-      transaction.update(teamRef, { memberIds: updated });
-      transaction.update(userRef, { teamId });
+      const mutation = resolveJoinTeamMutation(team, teamId, user);
+      if (mutation.updateTeam) {
+        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
+      }
+      if (mutation.updateUserTeamId !== undefined) {
+        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
+      }
     });
   }
 
@@ -225,9 +278,13 @@ export class TeamService {
 
       const team = teamSnap.data() as Team;
       const user = userSnap.data() as AppUser;
-      const updated = resolveRemoveMemberMemberIds(team, teamId, user);
-      transaction.update(teamRef, { memberIds: updated });
-      transaction.update(userRef, { teamId: '' });
+      const mutation = resolveRemoveMemberMutation(team, teamId, user);
+      if (mutation.updateTeam) {
+        transaction.update(teamRef, { memberIds: mutation.teamMemberIds });
+      }
+      if (mutation.updateUserTeamId !== undefined) {
+        transaction.update(userRef, { teamId: mutation.updateUserTeamId });
+      }
     });
   }
 
