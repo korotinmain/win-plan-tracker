@@ -105,7 +105,7 @@ function resolveTeamMembershipMutation({
       );
     }
 
-    if (otherTeamIds.length > 0) {
+    if (otherTeamIds.length > 0 && userTeamId !== normalizedTeamId) {
       throw new MembershipError(
         "failed-precondition",
         "This user is already listed on another team. Clean up the stale membership first.",
@@ -154,6 +154,19 @@ function resolveTeamMembershipMutation({
   };
 }
 
+function normalizeCallableError(error, HttpsErrorCtor) {
+  if (error && error.name === "HttpsError" && typeof error.code === "string") {
+    return error;
+  }
+  if (error instanceof MembershipError) {
+    return new HttpsErrorCtor(error.code, error.message);
+  }
+  return new HttpsErrorCtor(
+    "unknown",
+    error?.message || "Unknown membership mutation failure.",
+  );
+}
+
 async function loadMembershipState(transaction, teamId, userId, action) {
   const admin = require("firebase-admin");
   const db = admin.firestore();
@@ -186,6 +199,7 @@ async function loadMembershipState(transaction, teamId, userId, action) {
 }
 
 exports.resolveTeamMembershipMutation = resolveTeamMembershipMutation;
+exports.normalizeCallableError = normalizeCallableError;
 exports.createUpdateTeamMembershipCallable = createUpdateTeamMembershipCallable;
 
 function createUpdateTeamMembershipCallable() {
@@ -193,22 +207,12 @@ function createUpdateTeamMembershipCallable() {
   const admin = require("firebase-admin");
   const { ensureAuthenticated } = require("../shared/auth");
 
-  function toHttpsError(error) {
-    if (error instanceof MembershipError) {
-      return new functions.https.HttpsError(error.code, error.message);
-    }
-    return new functions.https.HttpsError(
-      "unknown",
-      error?.message || "Unknown membership mutation failure.",
-    );
-  }
-
   return functions.https.onCall(async (data, context) => {
     let auth;
     try {
       auth = ensureAuthenticated(context);
     } catch (error) {
-      throw toHttpsError(error);
+      throw normalizeCallableError(error, functions.https.HttpsError);
     }
 
     const action = normalizeAction(data?.action);
@@ -280,7 +284,7 @@ function createUpdateTeamMembershipCallable() {
         };
       });
     } catch (error) {
-      throw toHttpsError(error);
+      throw normalizeCallableError(error, functions.https.HttpsError);
     }
   });
 }

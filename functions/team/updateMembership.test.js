@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   resolveTeamMembershipMutation,
+  normalizeCallableError,
 } = require("./updateMembership");
 
 test("join creates a fresh self-membership when no stale conflicts exist", () => {
@@ -77,6 +78,27 @@ test("add repairs same-team stale membership without reassigning the user", () =
   });
 });
 
+test("add allows same-team repair even when other teams still list the user", () => {
+  const plan = resolveTeamMembershipMutation({
+    action: "add",
+    teamId: "team-a",
+    callerUid: "manager-a",
+    userId: "user-a",
+    team: { id: "team-a", managerId: "manager-a", memberIds: [] },
+    user: { uid: "user-a", teamId: "team-a" },
+    conflictingTeamIds: ["team-b"],
+  });
+
+  assert.deepEqual(plan, {
+    action: "add",
+    teamId: "team-a",
+    userId: "user-a",
+    teamMemberIds: ["user-a"],
+    userTeamId: undefined,
+    status: "updated",
+  });
+});
+
 test("remove allows safe stale cleanup when the user still points at another team", () => {
   const plan = resolveTeamMembershipMutation({
     action: "remove",
@@ -116,4 +138,14 @@ test("leave clears stale self-membership even when the team doc is missing the c
     userTeamId: "",
     status: "updated",
   });
+});
+
+test("normalizeCallableError preserves an existing unauthenticated HttpsError", () => {
+  const existingError = {
+    name: "HttpsError",
+    code: "unauthenticated",
+    message: "The function must be called while authenticated.",
+  };
+
+  assert.equal(normalizeCallableError(existingError), existingError);
 });
