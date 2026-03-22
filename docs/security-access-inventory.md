@@ -1,6 +1,6 @@
 # Security Access Inventory
 
-This inventory captures the current broad authenticated reads of the top-level `users` and `teams` collections. The objective for Phase 1 Task 4 is to make those reads explicit and isolated, not to tighten Firestore rules yet.
+This inventory captures the remaining broad authenticated reads of the top-level `users` collection and the now-scoped join/discovery read surface for `teams`. Phase 1 first isolated those reads behind explicit contracts and then narrowed `teams` rules once the query surface was reduced.
 
 ## Broad Collection Read Surface
 
@@ -18,8 +18,8 @@ This inventory captures the current broad authenticated reads of the top-level `
 
 ## Notes
 
-- Current Firestore rules still allow signed-in reads of `users/{uid}` and `teams/{teamId}` broadly; this task does not change those rules.
+- Current Firestore rules still allow signed-in reads of `users/{uid}` broadly, but `teams/{teamId}` reads are now limited to team members, no-team discovery users, and elevated roles.
 - Code search in the current worktree found the only full-collection reads at the data-access layer in the explicit directory seam and the temporary `TeamService` compatibility methods. The remaining entries above are feature-level callers that now depend directly on `TeamDirectoryService` or its shared pure helpers.
 - `TeamService.getTeamsForUser(...)`, `getMembersByIds(...)`, and per-document `getTeam(...)` / `getTeamMembers(...)` are not counted as broad reads here because they already use narrower queries or direct document reads.
-- Broad `teams` reads are now understood as a join/discovery concern, not a requirement for already-joined route surfaces. The current settings and teams screens now unsubscribe from the full directory once a user already belongs to a team.
+- Broad `teams` reads are now understood as a join/discovery concern, not a requirement for already-joined route surfaces. The current settings and teams screens now unsubscribe from the full directory once a user already belongs to a team, and the narrowed rule contract has been emulator-verified against both direct reads and live query shapes.
 - `users` hardening remains blocked by two current dependencies in `src/app/core/services/team.service.ts`: full-directory candidate pickers still use `getDocs(collection(db, 'users'))`, and `addMember(...)` / `removeMember(...)` / `joinTeam(...)` still update another user's `users/{uid}.teamId`, which does not match the current self-write-only rule.
