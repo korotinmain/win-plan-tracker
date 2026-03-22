@@ -9,7 +9,11 @@ admin.initializeApp();
 const { checkJiraConfig } = require("./jira/checkConfig");
 const { getJiraTasks } = require("./jira/getTasks");
 const { getJiraSprints } = require("./jira/getSprints");
+const {
+  createUpdateTeamMembershipCallable,
+} = require("./team/updateMembership");
 
 exports.checkJiraConfig = checkJiraConfig;
 exports.getJiraTasks = getJiraTasks;
 exports.getJiraSprints = getJiraSprints;
+exports.updateTeamMembership = createUpdateTeamMembershipCallable();
