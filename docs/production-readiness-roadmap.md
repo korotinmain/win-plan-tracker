@@ -113,7 +113,7 @@ Status scale:
 | ID | Severity | Area | Type | Summary | Phase | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | PR-001 | critical | firebase-rules | security | `planningSessions` are world-readable/writable to any signed-in user | Phase 1 | done |
-| PR-002 | high | firebase-rules | security | `users` and `teams` reads are broader than role/team-oriented product intent | Phase 1 | in_progress |
+| PR-002 | high | firebase-rules | security | `users` reads remain broader than role/team-oriented product intent; `teams` reads have been narrowed to membership, no-team discovery, and elevated roles | Phase 1 | in_progress |
 | PR-003 | high | planning | architecture | Sprint planning surface is oversized and mixes workflow, state, placement logic, and persistence orchestration | Phase 2 | open |
 | PR-004 | high | frontend | architecture | Calendar grid mixes rendering, calendar math, team loading, holiday fetch, and dialog orchestration | Phase 2 | open |
 | PR-005 | high | frontend | architecture | Teams surface mixes data aggregation, filtering, presence, team actions, and dialog coordination | Phase 2 | open |
@@ -166,26 +166,27 @@ Status scale:
 - Severity: `high`
 - Area: `firebase-rules`
 - Type: `security`
-- Summary: `users` and `teams` read access is globally open to all signed-in users.
+- Summary: `users` read access is still globally open to all signed-in users, while `teams` reads have been narrowed to the smallest safe contract that preserves join/discovery and membership-scoped access.
 - Evidence:
   - `firestore.rules:65-83`
   - `users/{uid}`: `allow read: if signedIn();`
-  - `teams/{teamId}`: `allow read: if signedIn();`
+  - `teams/{teamId}`: `allow read: if signedIn() && (isMember(teamId) || hasNoTeam() || isAdminOrManager());`
 - Current Risk:
-  - the system currently relies on broad collection visibility to power UI flows
-  - this makes later tightening harder and may exceed intended least-privilege boundaries
+  - the system still relies on broad `users` visibility for candidate-picking flows
+  - `teams` no longer needs full signed-in visibility for joined users, but the remaining `users` contract still exceeds intended least-privilege boundaries
 - Recommended Direction:
   - document the minimum required read surfaces by feature
-  - decide whether global reads are an intentional product choice or a temporary implementation shortcut
-  - tighten rules only after required UI queries are refactored
+  - keep `teams` reads aligned with the now-scoped join/discovery and membership queries
+  - tighten `users` reads only after required UI queries are refactored
 - Current Phase 1 Progress:
   - broad-read inventory is now captured in `docs/security-access-inventory.md`
   - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
   - all currently known directory-style callers now use explicit directory contracts or compatibility shims
   - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
+  - `teams/{teamId}` reads are now narrowed to team members, no-team discovery, and elevated roles
   - `users/{uid}` narrowing is still blocked by current candidate-picker reads and a separate membership-write mismatch
 - Validation:
-  - Firestore emulator checks for user/team reads across roles
+  - Firestore emulator checks for user/team reads across roles and actual query shapes
   - feature-by-feature smoke verification for team management and directory flows
 - Phase: `Phase 1`
 - Status: `in_progress`
@@ -530,9 +531,9 @@ Status scale:
 | 2026-03-21 | Use `low-risk incremental delivery` | Avoid broad rewrites and preserve correctness while improving architecture |
 | 2026-03-21 | `planningSessions` rules move to same-team access with creator-only legacy fallback | Narrowest compatible way to close the broad authenticated read/write exposure without breaking legacy docs immediately |
 | 2026-03-22 | Isolate broad `users` / `teams` reads behind an explicit directory seam before tightening rules | Keeps Phase 1 low-risk while making current directory dependencies explicit and inventoried |
-| 2026-03-22 | Broad signed-in reads of `users` and `teams` remain temporarily intentional until narrowed contracts are designed | Current join/manage/directory flows still depend on those reads even after isolation behind `TeamDirectoryService` |
+| 2026-03-22 | Broad signed-in reads of `users` remain temporarily intentional while `teams` reads are narrowed to membership, no-team discovery, and elevated roles | Current join/manage/directory flows no longer need full `teams` visibility after Task 2 scoped joined-user directory subscriptions away from the full collection |
 | 2026-03-22 | Route remaining join/manage callers through `TeamDirectoryService` helpers before any rules changes | Removes ambiguous `TeamService.getAllUsers()` / `getAllTeams()` ownership from active feature code while preserving current behavior |
-| 2026-03-22 | `teams` and `users` hardening under PR-002 must be verified against live Angular query shapes, not just direct document reads | Firestore rule changes can appear safe in isolated allow/deny checks while still breaking real collection queries |
+| 2026-03-22 | `teams` hardening under PR-002 must be verified against live Angular query shapes, not just direct document reads | Firestore rule changes can appear safe in isolated allow/deny checks while still breaking real collection queries |
 | 2026-03-22 | `users/{uid}` hardening cannot be marked done until the cross-user membership write path has an explicit authority model | `TeamService.addMember(...)`, `joinTeam(...)`, and `removeMember(...)` currently mutate another user's team membership, which conflicts with the self-write-only rule |
 | 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
 
@@ -543,7 +544,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; joined-user `teams` subscriptions are now scoped away from the full directory, and `users` narrowing is still blocked on membership-write authority |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles, and `users` narrowing is still blocked on membership-write authority |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -552,7 +553,7 @@ Status scale:
 ### Immediate Next Steps
 
 1. Review and confirm the roadmap findings and phase order.
-2. Validate any follow-up `teams/{teamId}` rule tightening against the now-scoped settings and teams query shapes.
+2. Validate any follow-up `users/{uid}` rule tightening against the current candidate-picking query shapes.
 3. Validate any future PR-002 rule changes with emulator allow/deny coverage, real query-shape checks, and team-management/join-team smoke checks.
 
 ## Open Questions / Blockers

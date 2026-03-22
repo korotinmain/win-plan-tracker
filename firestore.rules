@@ -71,11 +71,16 @@ service cloud.firestore {
     }
 
     // ─── teams ─────────────────────────────────────────────────────────────
-    // Any authenticated user can read teams (getTeamsForUser query).
+    // Team members can read their team, no-team users can browse for join/discovery,
+    // and elevated roles can read broadly.
     // Only the user creating the team (who must set themselves as manager) can
     // create it. Only the current manager can update or delete.
     match /teams/{teamId} {
-      allow read:   if signedIn();
+      allow read:   if signedIn()
+                    && (isAdminOrManager()
+                        || hasNoTeam()
+                        || resource.data.managerId == request.auth.uid
+                        || request.auth.uid in resource.data.memberIds);
       allow create: if signedIn()
                     && isAdminOrManager()
                     && request.resource.data.managerId == request.auth.uid;
