@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import {
   collection,
   doc,
+  runTransaction,
   setDoc,
   updateDoc,
   getDoc,
@@ -17,6 +18,51 @@ import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
 import { docObservable, snapObservable } from '../../shared/utils/firestore.util';
 import { TeamDirectoryService } from './team-directory.service';
+
+export function resolveAddMemberMemberIds(
+  team: Team,
+  teamId: string,
+  user: AppUser,
+): string[] {
+  const teamMemberIds = team.memberIds ?? [];
+
+  if (teamMemberIds.includes(user.uid) || user.teamId === teamId) {
+    throw new Error('This member is already on the team.');
+  }
+  if (user.teamId) {
+    throw new Error('This member is already on a team. Leave it first.');
+  }
+
+  return Array.from(new Set([...teamMemberIds, user.uid]));
+}
+
+export function resolveJoinTeamMemberIds(
+  team: Team,
+  teamId: string,
+  user: AppUser,
+): string[] {
+  const teamMemberIds = team.memberIds ?? [];
+
+  if (teamMemberIds.includes(user.uid) || user.teamId) {
+    throw new Error('You are already a member of a team. Leave it first.');
+  }
+
+  return Array.from(new Set([...teamMemberIds, user.uid]));
+}
+
+export function resolveRemoveMemberMemberIds(
+  team: Team,
+  teamId: string,
+  user: AppUser,
+): string[] {
+  const teamMemberIds = team.memberIds ?? [];
+
+  if (user.teamId && user.teamId !== teamId) {
+    throw new Error('This member belongs to another team.');
+  }
+
+  return teamMemberIds.filter((id) => id !== user.uid);
+}
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
@@ -109,9 +155,26 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    const updated = Array.from(new Set([...currentMemberIds, userId]));
-    await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
-    await updateDoc(doc(db, `users/${userId}`), { teamId });
+    await runTransaction(db, async (transaction) => {
+      const teamRef = doc(db, `teams/${teamId}`);
+      const userRef = doc(db, `users/${userId}`);
+
+      const teamSnap = await transaction.get(teamRef);
+      if (!teamSnap.exists()) {
+        throw new Error('Team not found.');
+      }
+
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error('User not found.');
+      }
+
+      const team = teamSnap.data() as Team;
+      const user = userSnap.data() as AppUser;
+      const updated = resolveAddMemberMemberIds(team, teamId, user);
+      transaction.update(teamRef, { memberIds: updated });
+      transaction.update(userRef, { teamId });
+    });
   }
 
   async joinTeam(
@@ -119,16 +182,26 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    const userSnap = await getDoc(doc(db, `users/${userId}`));
-    const existingTeamId = userSnap.exists()
-      ? (userSnap.data() as any)?.teamId
-      : null;
-    if (existingTeamId) {
-      throw new Error('You are already a member of a team. Leave it first.');
-    }
-    const updated = Array.from(new Set([...currentMemberIds, userId]));
-    await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
-    await updateDoc(doc(db, `users/${userId}`), { teamId });
+    await runTransaction(db, async (transaction) => {
+      const teamRef = doc(db, `teams/${teamId}`);
+      const userRef = doc(db, `users/${userId}`);
+
+      const teamSnap = await transaction.get(teamRef);
+      if (!teamSnap.exists()) {
+        throw new Error('Team not found.');
+      }
+
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error('User not found.');
+      }
+
+      const team = teamSnap.data() as Team;
+      const user = userSnap.data() as AppUser;
+      const updated = resolveJoinTeamMemberIds(team, teamId, user);
+      transaction.update(teamRef, { memberIds: updated });
+      transaction.update(userRef, { teamId });
+    });
   }
 
   async removeMember(
@@ -136,9 +209,26 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    const updated = currentMemberIds.filter((id) => id !== userId);
-    await updateDoc(doc(db, `teams/${teamId}`), { memberIds: updated });
-    await updateDoc(doc(db, `users/${userId}`), { teamId: '' });
+    await runTransaction(db, async (transaction) => {
+      const teamRef = doc(db, `teams/${teamId}`);
+      const userRef = doc(db, `users/${userId}`);
+
+      const teamSnap = await transaction.get(teamRef);
+      if (!teamSnap.exists()) {
+        throw new Error('Team not found.');
+      }
+
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error('User not found.');
+      }
+
+      const team = teamSnap.data() as Team;
+      const user = userSnap.data() as AppUser;
+      const updated = resolveRemoveMemberMemberIds(team, teamId, user);
+      transaction.update(teamRef, { memberIds: updated });
+      transaction.update(userRef, { teamId: '' });
+    });
   }
 
   async getTeam(teamId: string): Promise<Team | null> {
