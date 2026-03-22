@@ -502,6 +502,8 @@ Status scale:
 | 2026-03-21 | Use `low-risk incremental delivery` | Avoid broad rewrites and preserve correctness while improving architecture |
 | 2026-03-21 | `planningSessions` rules move to same-team access with creator-only legacy fallback | Narrowest compatible way to close the broad authenticated read/write exposure without breaking legacy docs immediately |
 | 2026-03-22 | Isolate broad `users` / `teams` reads behind an explicit directory seam before tightening rules | Keeps Phase 1 low-risk while making current directory dependencies explicit and inventoried |
+| 2026-03-22 | Broad signed-in reads of `users` and `teams` remain temporarily intentional until narrowed contracts are designed | Current join/manage/directory flows still depend on those reads even after isolation behind `TeamDirectoryService` |
+| 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
 
 ## Progress Tracker
 
