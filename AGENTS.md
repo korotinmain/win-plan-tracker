@@ -136,6 +136,7 @@ These constraints are critical and should be treated as repository invariants un
 - `planningSessions` are stored in Firestore; new docs are team-scoped in rules, and legacy docs without `teamId` currently fall back to creator-only access
 - Presence is stored in Realtime Database under `presence/{uid}`
 - Jira callable functions require authenticated callers
+- Team membership mutations are now server-authoritative through the `updateTeamMembership` callable; do not reintroduce direct browser writes to another user's `users/{uid}.teamId`
 
 ### Firestore rules
 

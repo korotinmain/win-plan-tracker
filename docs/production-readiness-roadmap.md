@@ -122,7 +122,7 @@ Status scale:
 | PR-008 | medium | build | performance | Production build exceeds initial bundle warning budget | Phase 5 | open |
 | PR-009 | high | testing | reliability | Project has no effective automated test coverage for critical logic paths | Phase 4 | open |
 | PR-010 | medium | frontend | maintainability | Dashboard route surface is still large and likely to resist safe change | Phase 2 | open |
-| PR-011 | high | firebase-rules | correctness | Team membership flows write another user's profile while `users/{uid}` rules remain self-write only | Phase 1 | open |
+| PR-011 | high | firebase-rules | correctness | Team membership authority was previously client-side and incompatible with self-write-only `users/{uid}` rules; it now moves through a privileged backend callable | Phase 1 | done |
 
 ### Detailed Findings
 
@@ -185,7 +185,7 @@ Status scale:
   - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
   - `teams/{teamId}` reads are now narrowed to team members, no-team discovery, and elevated roles
   - emulator verification passed for member direct read allow, no-team direct read allow, no-team collection query allow, unrelated-team deny, elevated direct read allow, and membership-scoped query-shape allow
-  - `users/{uid}` narrowing is still blocked by current candidate-picker reads and a separate membership-write mismatch
+  - `users/{uid}` narrowing is still blocked by current candidate-picker reads
 - Validation:
   - Firestore emulator checks for user/team reads across roles and actual query shapes
   - feature-by-feature smoke verification for team management and directory flows
@@ -197,25 +197,27 @@ Status scale:
 - Severity: `high`
 - Area: `firebase-rules`
 - Type: `correctness`
-- Summary: current team membership flows update another user's profile, but `users/{uid}` rules still only allow self-writes.
+- Summary: team membership mutations now run through a privileged backend callable, removing the prior mismatch between client-side cross-user writes and self-write-only `users/{uid}` rules.
 - Evidence:
-  - `src/app/core/services/team.service.ts:107-138`
-  - `addMember(...)`, `joinTeam(...)`, and `removeMember(...)` each call `updateDoc(doc(db, \`users/\${userId}\`), { teamId ... })`
+  - `functions/team/updateMembership.js`
+  - `functions/index.js`
+  - `src/app/core/services/team.service.ts`
   - `firestore.rules:67-70`
   - `match /users/{uid}` still says `allow write: if signedIn() && request.auth.uid == uid;`
+  - frontend membership mutations now call `updateTeamMembership` instead of writing `users/{uid}` directly
 - Current Risk:
-  - manager/admin team-management flows are not aligned with the enforced user-document write contract
-  - future PR-002 hardening could incorrectly claim join/manage behavior is preserved while this mismatch remains
+  - the original client/rules mismatch is removed, but future changes must keep membership authority on the backend or redesign the flows entirely
+  - backend and frontend contracts now need to stay aligned on `action`, `status`, and error semantics
 - Recommended Direction:
-  - choose one explicit authority model for team membership changes
-  - either keep membership writes self-service only and redesign flows accordingly
-  - or move membership mutation behind a rules-compatible manager/admin contract or privileged backend path
-  - validate the chosen path with emulator coverage before tightening `users/{uid}` further
+  - keep team membership mutations behind the privileged callable unless product requirements explicitly move them back into a self-service-only model
+  - treat callable response semantics (`updated` vs `noop`) as part of the stable contract
+  - tighten `users/{uid}` rules only against the remaining candidate-picker read surfaces
 - Validation:
-  - Firestore emulator verification for allowed and denied membership writes
-  - smoke verification for join-team, leave-team, and add/remove member flows
+  - `node --test functions/team/updateMembership.test.js` -> `8 pass / 0 fail`
+  - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/core/services/team.service.spec.ts` -> `TOTAL: 6 SUCCESS`
+  - `npm run build` -> pass with pre-existing initial bundle budget warning
 - Phase: `Phase 1`
-- Status: `open`
+- Status: `done`
 
 #### PR-003
 
@@ -536,6 +538,7 @@ Status scale:
 | 2026-03-22 | Route remaining join/manage callers through `TeamDirectoryService` helpers before any rules changes | Removes ambiguous `TeamService.getAllUsers()` / `getAllTeams()` ownership from active feature code while preserving current behavior |
 | 2026-03-22 | `teams` hardening under PR-002 must be verified against live Angular query shapes, not just direct document reads | Firestore rule changes can appear safe in isolated allow/deny checks while still breaking real collection queries |
 | 2026-03-22 | `users/{uid}` hardening cannot be marked done until the cross-user membership write path has an explicit authority model | `TeamService.addMember(...)`, `joinTeam(...)`, and `removeMember(...)` currently mutate another user's team membership, which conflicts with the self-write-only rule |
+| 2026-03-22 | Team membership authority moves to a privileged backend callable instead of expanding client-side cross-user write rights | This resolves PR-011 without weakening `users/{uid}` rules and keeps stale-membership validation on a server-authoritative path |
 | 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
 
 ## Progress Tracker
@@ -545,7 +548,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles, and `users` narrowing is still blocked on membership-write authority |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles; PR-011 is closed via privileged membership callable; `users` narrowing is still blocked on broad candidate-picker reads |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -554,13 +557,12 @@ Status scale:
 ### Immediate Next Steps
 
 1. Review and confirm the roadmap findings and phase order.
-2. Validate any follow-up `users/{uid}` rule tightening against the current candidate-picking query shapes.
-3. Validate any future PR-002 rule changes with emulator allow/deny coverage, real query-shape checks, and team-management/join-team smoke checks.
+2. Design the smallest safe replacement for broad candidate-picker reads from `users`.
+3. Validate any future PR-002 rule changes with emulator allow/deny coverage, real query-shape checks, Functions-backed membership smoke checks, and team-management/join-team smoke checks.
 
 ## Open Questions / Blockers
 
 - Is broad signed-in read access to `users` still a deliberate product requirement or a temporary implementation shortcut?
-- Which authority model should own team membership updates to `users/{uid}.teamId`: self-service only, manager/admin rules, or a privileged backend path?
 - When should legacy `planningSessions` documents without `teamId` be backfilled or retired so the creator-only fallback can be removed?
 - Should presence remain globally readable to all signed-in users, or only to relevant teammates?
 - Is the current Jira board binding (`BOARD_ID = 1671` in sprint surfaces) expected to remain static, or should it become team/config driven?
