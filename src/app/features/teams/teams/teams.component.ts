@@ -16,7 +16,15 @@ import {
   MenuItemComponent,
   MenuDividerComponent,
 } from '../../../shared/components/dropdown-menu/dropdown-menu.component';
-import { switchMap, combineLatest, of, map, distinctUntilChanged } from 'rxjs';
+import {
+  EMPTY,
+  switchMap,
+  combineLatest,
+  of,
+  map,
+  distinctUntilChanged,
+  tap,
+} from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   TeamDirectoryService,
@@ -242,11 +250,21 @@ export class TeamsComponent {
         takeUntilDestroyed(this.destroyRef),
         map((u) => u?.teamId ?? null),
         distinctUntilChanged(),
-        switchMap((teamId) =>
-          teamId ? of([]) : this.teamDirectoryService.getDirectoryTeams(),
-        ),
+        switchMap((teamId) => {
+          if (teamId) {
+            this.teams.set([]);
+            return EMPTY;
+          }
+          this.loading.set(true);
+          return this.teamDirectoryService.getDirectoryTeams().pipe(
+            tap((teams) => {
+              this.teams.set(teams);
+              this.loading.set(false);
+            }),
+          );
+        }),
       )
-      .subscribe((teams) => this.teams.set(teams));
+      .subscribe();
 
     // Main data: react when the user's teamId changes
     this.authService.currentUser$
@@ -256,7 +274,7 @@ export class TeamsComponent {
         distinctUntilChanged(),
         switchMap((teamId) => {
           if (!teamId) {
-            this.loading.set(false);
+            this.loading.set(true);
             return of(null);
           }
           const uid = this.authService.currentUser?.uid ?? '';
@@ -277,7 +295,6 @@ export class TeamsComponent {
       )
       .subscribe(async (data) => {
         if (!data) {
-          this.loading.set(false);
           return;
         }
         const { team, enrichments, events } = data;
