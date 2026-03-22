@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   TeamDirectoryService,
@@ -48,6 +49,7 @@ export class SettingsComponent {
   currentUser = signal<AppUser | null>(this.authService.currentUser);
 
   teams = signal<Team[]>([]);
+  currentTeam = signal<Team | null>(null);
   teamsLoading = signal(true);
   actingTeamId = signal<string | null>(null);
   teamError = signal<string | null>(null);
@@ -67,13 +69,7 @@ export class SettingsComponent {
   });
 
   myTeam = computed(() => {
-    const tid = this.currentUser()?.teamId;
-    if (!tid) return null;
-    return (
-      this.teams().find(
-        (t) => t.id === tid || t.memberIds.includes(this.currentUser()!.uid),
-      ) ?? null
-    );
+    return this.currentTeam();
   });
 
   isTeamAdmin = computed(() => {
@@ -96,20 +92,47 @@ export class SettingsComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((u) => this.currentUser.set(u));
 
-    this.teamDirectoryService
-      .getDirectoryTeams()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((teams) => {
-        this.teams.set(teams);
-        this.teamsLoading.set(false);
-        const tid = this.currentUser()?.teamId;
-        const team = tid ? teams.find((t) => t.id === tid) : null;
-        if (team) {
-          this.ceremonyConfig.set({
-            ...DEFAULT_CEREMONY_CONFIG,
-            ...(team.ceremonyConfig ?? {}),
-          });
+    this.authService.currentUser$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((user) => user?.teamId ?? null),
+        distinctUntilChanged(),
+        switchMap((teamId) => {
+          this.teamsLoading.set(true);
+          if (!teamId) {
+            this.currentTeam.set(null);
+            this.ceremonyConfig.set({ ...DEFAULT_CEREMONY_CONFIG });
+            return this.teamDirectoryService
+              .getDirectoryTeams()
+              .pipe(map((teams) => ({ kind: 'directory' as const, teams })));
+          }
+
+          const uid = this.authService.currentUser?.uid ?? '';
+          return this.teamService.getTeamsForUser(uid).pipe(
+            map((teams) => ({
+              kind: 'team' as const,
+              team: teams.find((team) => team.id === teamId) ?? null,
+            })),
+          );
+        }),
+      )
+      .subscribe((result) => {
+        if (result.kind === 'directory') {
+          this.teams.set(result.teams);
+          this.currentTeam.set(null);
+        } else {
+          this.currentTeam.set(result.team);
+          this.teams.set([]);
+          if (result.team) {
+            this.ceremonyConfig.set({
+              ...DEFAULT_CEREMONY_CONFIG,
+              ...(result.team.ceremonyConfig ?? {}),
+            });
+          } else {
+            this.ceremonyConfig.set({ ...DEFAULT_CEREMONY_CONFIG });
+          }
         }
+        this.teamsLoading.set(false);
       });
   }
 

@@ -237,10 +237,16 @@ export class TeamsComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((uids) => this.onlineUids.set(uids));
 
-    this.teamDirectoryService
-      .getDirectoryTeams()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((t) => this.teams.set(t));
+    this.authService.currentUser$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((u) => u?.teamId ?? null),
+        distinctUntilChanged(),
+        switchMap((teamId) =>
+          teamId ? of([]) : this.teamDirectoryService.getDirectoryTeams(),
+        ),
+      )
+      .subscribe((teams) => this.teams.set(teams));
 
     // Main data: react when the user's teamId changes
     this.authService.currentUser$

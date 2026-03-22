@@ -182,7 +182,7 @@ Status scale:
   - broad-read inventory is now captured in `docs/security-access-inventory.md`
   - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
   - all currently known directory-style callers now use explicit directory contracts or compatibility shims
-  - next safe step is to remove unconditional post-join `teams` directory subscriptions before any `teams/{teamId}` rule tightening
+  - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
   - `users/{uid}` narrowing is still blocked by current candidate-picker reads and a separate membership-write mismatch
 - Validation:
   - Firestore emulator checks for user/team reads across roles
@@ -543,7 +543,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; directory ownership is explicit, but `teams` narrowing still needs query-surface reduction and `users` narrowing is blocked on membership-write authority |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; joined-user `teams` subscriptions are now scoped away from the full directory, and `users` narrowing is still blocked on membership-write authority |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -552,7 +552,7 @@ Status scale:
 ### Immediate Next Steps
 
 1. Review and confirm the roadmap findings and phase order.
-2. Remove unconditional post-join `teams` directory subscriptions from settings and teams surfaces.
+2. Validate any follow-up `teams/{teamId}` rule tightening against the now-scoped settings and teams query shapes.
 3. Validate any future PR-002 rule changes with emulator allow/deny coverage, real query-shape checks, and team-management/join-team smoke checks.
 
 ## Open Questions / Blockers
