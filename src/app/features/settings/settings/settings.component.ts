@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { distinctUntilChanged, from, map, switchMap } from 'rxjs';
+import { distinctUntilChanged, map, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   TeamDirectoryService,
@@ -107,7 +107,7 @@ export class SettingsComponent {
               .pipe(map((teams) => ({ kind: 'directory' as const, teams })));
           }
 
-          return from(this.teamService.getTeam(teamId)).pipe(
+          return this.teamService.watchTeam(teamId).pipe(
             map((team) => ({ kind: 'team' as const, team })),
           );
         }),

@@ -10,12 +10,12 @@ import {
   query,
   where,
 } from '@firebase/firestore';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, map, of } from 'rxjs';
 import { Team, SprintCeremonyConfig } from '../models/team.model';
 import { TeamMember } from '../models/team-member.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
-import { snapObservable } from '../../shared/utils/firestore.util';
+import { docObservable, snapObservable } from '../../shared/utils/firestore.util';
 import { TeamDirectoryService } from './team-directory.service';
 
 @Injectable({ providedIn: 'root' })
@@ -145,6 +145,11 @@ export class TeamService {
     if (!teamId) return null;
     const snap = await getDoc(doc(db, `teams/${teamId}`));
     return snap.exists() ? (snap.data() as Team) : null;
+  }
+
+  watchTeam(teamId: string): Observable<Team | null> {
+    if (!teamId) return of(null);
+    return docObservable<Team>(doc(db, `teams/${teamId}`));
   }
 
   async updateHolidayCountry(
