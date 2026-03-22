@@ -19,6 +19,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
+import {
+  TeamDirectoryService,
+  filterCandidateUsers,
+} from '../../../core/services/team-directory.service';
 import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
@@ -56,6 +60,7 @@ export interface AddMemberDialogData {
 })
 export class AddMemberDialogComponent implements OnInit {
   private teamService = inject(TeamService);
+  private teamDirectoryService = inject(TeamDirectoryService);
   private ref = inject(MatDialogRef<AddMemberDialogComponent>);
   readonly data: AddMemberDialogData = inject(MAT_DIALOG_DATA);
 
@@ -74,20 +79,16 @@ export class AddMemberDialogComponent implements OnInit {
   timezone = signal(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
 
   availableUsers = computed(() => {
-    const existing = new Set(this.data.currentMemberIds);
-    const q = this.search().toLowerCase();
-    return this.allUsers().filter(
-      (u) =>
-        !existing.has(u.uid) &&
-        (!q ||
-          u.displayName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)),
+    return filterCandidateUsers(
+      this.allUsers(),
+      this.data.currentMemberIds,
+      this.search(),
     );
   });
 
   async ngOnInit(): Promise<void> {
     try {
-      const users = await this.teamService.getAllUsers();
+      const users = await this.teamDirectoryService.getDirectoryUsers();
       this.allUsers.set(users);
     } catch (e: unknown) {
       this.error.set(getErrorMessage(e, 'Failed to load users'));

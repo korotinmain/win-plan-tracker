@@ -113,7 +113,7 @@ Status scale:
 | ID | Severity | Area | Type | Summary | Phase | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | PR-001 | critical | firebase-rules | security | `planningSessions` are world-readable/writable to any signed-in user | Phase 1 | done |
-| PR-002 | high | firebase-rules | security | `users` and `teams` reads are broader than role/team-oriented product intent | Phase 1 | open |
+| PR-002 | high | firebase-rules | security | `users` and `teams` reads are broader than role/team-oriented product intent | Phase 1 | in_progress |
 | PR-003 | high | planning | architecture | Sprint planning surface is oversized and mixes workflow, state, placement logic, and persistence orchestration | Phase 2 | open |
 | PR-004 | high | frontend | architecture | Calendar grid mixes rendering, calendar math, team loading, holiday fetch, and dialog orchestration | Phase 2 | open |
 | PR-005 | high | frontend | architecture | Teams surface mixes data aggregation, filtering, presence, team actions, and dialog coordination | Phase 2 | open |
@@ -177,11 +177,15 @@ Status scale:
   - document the minimum required read surfaces by feature
   - decide whether global reads are an intentional product choice or a temporary implementation shortcut
   - tighten rules only after required UI queries are refactored
+- Current Phase 1 Progress:
+  - broad-read inventory is now captured in `docs/security-access-inventory.md`
+  - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
+  - Firestore rules are intentionally unchanged in this task; narrowing remains follow-up work
 - Validation:
   - Firestore emulator checks for user/team reads across roles
   - feature-by-feature smoke verification for team management and directory flows
 - Phase: `Phase 1`
-- Status: `open`
+- Status: `in_progress`
 
 #### PR-003
 
@@ -497,6 +501,7 @@ Status scale:
 | 2026-03-21 | Use `audit-first roadmap` | Lowest-risk path for wide-scope production hardening |
 | 2026-03-21 | Use `low-risk incremental delivery` | Avoid broad rewrites and preserve correctness while improving architecture |
 | 2026-03-21 | `planningSessions` rules move to same-team access with creator-only legacy fallback | Narrowest compatible way to close the broad authenticated read/write exposure without breaking legacy docs immediately |
+| 2026-03-22 | Isolate broad `users` / `teams` reads behind an explicit directory seam before tightening rules | Keeps Phase 1 low-risk while making current directory dependencies explicit and inventoried |
 
 ## Progress Tracker
 
@@ -505,7 +510,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `users` / `teams` broad-read inventory remains next |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; broad `users` / `teams` reads are inventoried and isolated, but rules are not tightened yet |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -514,8 +519,8 @@ Status scale:
 ### Immediate Next Steps
 
 1. Review and confirm the roadmap findings and phase order.
-2. Continue Phase 1 with emulator validation for tightened `planningSessions` access.
-3. Finish the rules-and-contract inventory for the remaining broad read surfaces.
+2. Use the new directory inventory/seam to define the smallest safe narrowed read contracts for PR-002.
+3. Validate any future PR-002 rule changes with emulator allow/deny coverage plus team-management and join-team smoke checks.
 
 ## Open Questions / Blockers
 

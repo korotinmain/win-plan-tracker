@@ -18,6 +18,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { TeamService } from '../../../core/services/team.service';
+import {
+  TeamDirectoryService,
+  filterCandidateUsers,
+} from '../../../core/services/team-directory.service';
 import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
 import { AppUser } from '../../../core/models/user.model';
@@ -51,6 +55,7 @@ export interface ManageTeamDialogData {
 })
 export class ManageTeamDialogComponent {
   private teamService = inject(TeamService);
+  private teamDirectoryService = inject(TeamDirectoryService);
   private holidayService = inject(HolidayService);
   private ref = inject(MatDialogRef<ManageTeamDialogComponent>);
   readonly data: ManageTeamDialogData = inject(MAT_DIALOG_DATA);
@@ -70,13 +75,10 @@ export class ManageTeamDialogComponent {
   countrySaveError = signal<string | null>(null);
 
   filteredUsers = computed(() => {
-    const q = this.search().toLowerCase();
-    const ids = new Set(this.team().memberIds);
-    return this.allUsers().filter(
-      (u) =>
-        !ids.has(u.uid) &&
-        (u.displayName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)),
+    return filterCandidateUsers(
+      this.allUsers(),
+      this.team().memberIds,
+      this.search(),
     );
   });
 
@@ -97,7 +99,7 @@ export class ManageTeamDialogComponent {
     try {
       const [members, allUsers] = await Promise.all([
         this.teamService.getTeamMembers(this.team().id),
-        this.teamService.getAllUsers(),
+        this.teamDirectoryService.getDirectoryUsers(),
       ]);
       this.members.set(members);
       this.allUsers.set(allUsers);

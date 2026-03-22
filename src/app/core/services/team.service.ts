@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   collection,
   doc,
@@ -16,9 +16,12 @@ import { TeamMember } from '../models/team-member.model';
 import { AppUser } from '../models/user.model';
 import { db } from '../../firebase';
 import { snapObservable } from '../../shared/utils/firestore.util';
+import { TeamDirectoryService } from './team-directory.service';
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
+  private readonly teamDirectoryService = inject(TeamDirectoryService);
+
   getTeamsForUser(uid: string): Observable<Team[]> {
     const managed = snapObservable<Team>(
       query(collection(db, 'teams'), where('managerId', '==', uid)),
@@ -38,8 +41,12 @@ export class TeamService {
     );
   }
 
+  /**
+   * Compatibility shim for legacy broad team-directory reads.
+   * Prefer TeamDirectoryService.getDirectoryTeams() for intentional full-directory access.
+   */
   getAllTeams(): Observable<Team[]> {
-    return snapObservable<Team>(query(collection(db, 'teams')));
+    return this.teamDirectoryService.getDirectoryTeams();
   }
 
   async createTeam(team: Omit<Team, 'id'>): Promise<string> {
@@ -56,9 +63,12 @@ export class TeamService {
     return ref.id;
   }
 
+  /**
+   * Compatibility shim for legacy broad user-directory reads.
+   * Prefer TeamDirectoryService.getDirectoryUsers() for intentional full-directory access.
+   */
   async getAllUsers(): Promise<AppUser[]> {
-    const snap = await getDocs(collection(db, 'users'));
-    return snap.docs.map((d) => d.data() as AppUser);
+    return this.teamDirectoryService.getDirectoryUsers();
   }
 
   /** Fetch only specific users by UID — avoids a full collection scan. */
