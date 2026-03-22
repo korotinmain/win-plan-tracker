@@ -79,6 +79,7 @@ export class ManageTeamDialogComponent {
       this.allUsers(),
       this.team().memberIds,
       this.search(),
+      this.team().id,
     );
   });
 

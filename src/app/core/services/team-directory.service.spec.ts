@@ -6,7 +6,7 @@ import {
 } from './team-directory.service';
 
 describe('team-directory.service helpers', () => {
-  it('filters out existing members and matches the search term against name or email', () => {
+  it('filters out existing members and assigned users by default', () => {
     const users: AppUser[] = [
       {
         uid: 'user-1',
@@ -32,6 +32,14 @@ describe('team-directory.service helpers', () => {
         teamId: '',
         createdAt: new Date('2026-01-01'),
       },
+      {
+        uid: 'user-4',
+        displayName: 'Taylor Stone',
+        email: 'taylor@example.com',
+        role: 'employee',
+        teamId: 'team-2',
+        createdAt: new Date('2026-01-01'),
+      },
     ];
 
     expect(
@@ -39,7 +47,7 @@ describe('team-directory.service helpers', () => {
     ).toEqual(['user-3']);
   });
 
-  it('excludes users who are already assigned to another team', () => {
+  it('allows same-team repair candidates when a current team id is provided', () => {
     const users: AppUser[] = [
       {
         uid: 'user-1',
@@ -57,11 +65,19 @@ describe('team-directory.service helpers', () => {
         teamId: 'team-2',
         createdAt: new Date('2026-01-01'),
       },
+      {
+        uid: 'user-3',
+        displayName: 'Sam Taylor',
+        email: 'sam.taylor@example.com',
+        role: 'employee',
+        teamId: 'team-1',
+        createdAt: new Date('2026-01-01'),
+      },
     ];
 
-    expect(filterCandidateUsers(users, [], 'sam').map((user) => user.uid)).toEqual([
-      'user-1',
-    ]);
+    expect(
+      filterCandidateUsers(users, [], 'sam', 'team-1').map((user) => user.uid),
+    ).toEqual(['user-1', 'user-3']);
   });
 
   it('filters joinable teams for a user and matches search text', () => {

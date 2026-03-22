@@ -19,6 +19,19 @@ import { db } from '../../firebase';
 import { docObservable, snapObservable } from '../../shared/utils/firestore.util';
 import { TeamDirectoryService } from './team-directory.service';
 
+export const firestoreApi = {
+  collection,
+  deleteField,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  runTransaction,
+  setDoc,
+  updateDoc,
+  where,
+};
+
 export interface MembershipMutationPlan {
   teamMemberIds: string[];
   updateTeam: boolean;
@@ -109,16 +122,35 @@ export function resolveRemoveMemberMutation(
   };
 }
 
+async function hasConflictingTeamMembership(
+  userId: string,
+  targetTeamId: string,
+): Promise<boolean> {
+  const snap = await firestoreApi.getDocs(
+    firestoreApi.query(
+      firestoreApi.collection(db, 'teams'),
+      firestoreApi.where('memberIds', 'array-contains', userId),
+    ),
+  );
+  return snap.docs.some((docSnap) => docSnap.id !== targetTeamId);
+}
+
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   private readonly teamDirectoryService = inject(TeamDirectoryService);
 
   getTeamsForUser(uid: string): Observable<Team[]> {
     const managed = snapObservable<Team>(
-      query(collection(db, 'teams'), where('managerId', '==', uid)),
+      firestoreApi.query(
+        firestoreApi.collection(db, 'teams'),
+        firestoreApi.where('managerId', '==', uid),
+      ),
     );
     const member = snapObservable<Team>(
-      query(collection(db, 'teams'), where('memberIds', 'array-contains', uid)),
+      firestoreApi.query(
+        firestoreApi.collection(db, 'teams'),
+        firestoreApi.where('memberIds', 'array-contains', uid),
+      ),
     );
     return combineLatest([managed, member]).pipe(
       map(([a, b]) => {
@@ -142,16 +174,19 @@ export class TeamService {
   }
 
   async createTeam(team: Omit<Team, 'id'>): Promise<string> {
-    const iconCheck = await getDocs(
-      query(collection(db, 'teams'), where('icon', '==', team.icon)),
+    const iconCheck = await firestoreApi.getDocs(
+      firestoreApi.query(
+        firestoreApi.collection(db, 'teams'),
+        firestoreApi.where('icon', '==', team.icon),
+      ),
     );
     if (!iconCheck.empty) {
       throw new Error(
         'This icon is already used by another team. Please choose a different one.',
       );
     }
-    const ref = doc(collection(db, 'teams'));
-    await setDoc(ref, { ...team, id: ref.id });
+    const ref = firestoreApi.doc(firestoreApi.collection(db, 'teams'));
+    await firestoreApi.setDoc(ref, { ...team, id: ref.id });
     return ref.id;
   }
 
@@ -173,9 +208,16 @@ export class TeamService {
     }
     const results = await Promise.all(
       chunks.map((chunk) =>
-        getDocs(query(collection(db, 'users'), where('uid', 'in', chunk))).then(
+        firestoreApi
+          .getDocs(
+            firestoreApi.query(
+              firestoreApi.collection(db, 'users'),
+              firestoreApi.where('uid', 'in', chunk),
+            ),
+          )
+          .then(
           (snap) => snap.docs.map((d) => d.data() as AppUser),
-        ),
+          ),
       ),
     );
     return results.flat();
@@ -183,12 +225,14 @@ export class TeamService {
 
   async getTeamMembers(teamId: string): Promise<AppUser[]> {
     if (!teamId) return [];
-    const snap = await getDoc(doc(db, `teams/${teamId}`));
+    const snap = await firestoreApi.getDoc(firestoreApi.doc(db, `teams/${teamId}`));
     if (!snap.exists()) return [];
     const team = snap.data() as Team;
     const members = await Promise.all(
       team.memberIds.map(async (uid) => {
-        const userSnap = await getDoc(doc(db, `users/${uid}`));
+        const userSnap = await firestoreApi.getDoc(
+          firestoreApi.doc(db, `users/${uid}`),
+        );
         return userSnap.data() as AppUser;
       }),
     );
@@ -200,9 +244,24 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    await runTransaction(db, async (transaction) => {
-      const teamRef = doc(db, `teams/${teamId}`);
-      const userRef = doc(db, `users/${userId}`);
+    const userRef = firestoreApi.doc(db, `users/${userId}`);
+    const userSnap = await firestoreApi.getDoc(userRef);
+    if (!userSnap.exists()) {
+      throw new Error('User not found.');
+    }
+
+    const user = userSnap.data() as AppUser;
+    if (user.teamId && user.teamId !== teamId) {
+      throw new Error('This member is already on a team. Leave it first.');
+    }
+
+    if (await hasConflictingTeamMembership(userId, teamId)) {
+      throw new Error('This member is already on a team. Leave it first.');
+    }
+
+    await firestoreApi.runTransaction(db, async (transaction) => {
+      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
+      const userRef = firestoreApi.doc(db, `users/${userId}`);
 
       const teamSnap = await transaction.get(teamRef);
       if (!teamSnap.exists()) {
@@ -231,9 +290,24 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    await runTransaction(db, async (transaction) => {
-      const teamRef = doc(db, `teams/${teamId}`);
-      const userRef = doc(db, `users/${userId}`);
+    const userRef = firestoreApi.doc(db, `users/${userId}`);
+    const userSnap = await firestoreApi.getDoc(userRef);
+    if (!userSnap.exists()) {
+      throw new Error('User not found.');
+    }
+
+    const user = userSnap.data() as AppUser;
+    if (user.teamId) {
+      throw new Error('You are already a member of a team. Leave it first.');
+    }
+
+    if (await hasConflictingTeamMembership(userId, teamId)) {
+      throw new Error('You are already a member of a team. Leave it first.');
+    }
+
+    await firestoreApi.runTransaction(db, async (transaction) => {
+      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
+      const userRef = firestoreApi.doc(db, `users/${userId}`);
 
       const teamSnap = await transaction.get(teamRef);
       if (!teamSnap.exists()) {
@@ -262,9 +336,9 @@ export class TeamService {
     userId: string,
     currentMemberIds: string[],
   ): Promise<void> {
-    await runTransaction(db, async (transaction) => {
-      const teamRef = doc(db, `teams/${teamId}`);
-      const userRef = doc(db, `users/${userId}`);
+    await firestoreApi.runTransaction(db, async (transaction) => {
+      const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
+      const userRef = firestoreApi.doc(db, `users/${userId}`);
 
       const teamSnap = await transaction.get(teamRef);
       if (!teamSnap.exists()) {
@@ -290,21 +364,21 @@ export class TeamService {
 
   async getTeam(teamId: string): Promise<Team | null> {
     if (!teamId) return null;
-    const snap = await getDoc(doc(db, `teams/${teamId}`));
+    const snap = await firestoreApi.getDoc(firestoreApi.doc(db, `teams/${teamId}`));
     return snap.exists() ? (snap.data() as Team) : null;
   }
 
   watchTeam(teamId: string): Observable<Team | null> {
     if (!teamId) return of(null);
-    return docObservable<Team>(doc(db, `teams/${teamId}`));
+    return docObservable<Team>(firestoreApi.doc(db, `teams/${teamId}`));
   }
 
   async updateHolidayCountry(
     teamId: string,
     countryCode: string,
   ): Promise<void> {
-    await updateDoc(doc(db, `teams/${teamId}`), {
-      holidayCountryCode: countryCode || deleteField(),
+    await firestoreApi.updateDoc(firestoreApi.doc(db, `teams/${teamId}`), {
+      holidayCountryCode: countryCode || firestoreApi.deleteField(),
     });
   }
 
@@ -312,13 +386,15 @@ export class TeamService {
     teamId: string,
     config: SprintCeremonyConfig,
   ): Promise<void> {
-    await updateDoc(doc(db, `teams/${teamId}`), { ceremonyConfig: config });
+    await firestoreApi.updateDoc(firestoreApi.doc(db, `teams/${teamId}`), {
+      ceremonyConfig: config,
+    });
   }
 
   /** Real-time listener on teams/{teamId}/members subcollection. */
   getTeamMembersEnrichments(teamId: string): Observable<TeamMember[]> {
     return snapObservable<TeamMember>(
-      query(collection(db, `teams/${teamId}/members`)),
+      firestoreApi.query(firestoreApi.collection(db, `teams/${teamId}/members`)),
     );
   }
 
@@ -328,8 +404,8 @@ export class TeamService {
     memberId: string,
     data: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<void> {
-    await setDoc(
-      doc(db, `teams/${teamId}/members/${memberId}`),
+    await firestoreApi.setDoc(
+      firestoreApi.doc(db, `teams/${teamId}/members/${memberId}`),
       { ...data, id: memberId, createdAt: new Date(), updatedAt: new Date() },
       { merge: true },
     );
@@ -342,14 +418,17 @@ export class TeamService {
     data: Partial<Omit<TeamMember, 'id' | 'createdAt'>>,
   ): Promise<void> {
     try {
-      await updateDoc(doc(db, `teams/${teamId}/members/${memberId}`), {
-        ...data,
-        updatedAt: new Date(),
-      });
+      await firestoreApi.updateDoc(
+        firestoreApi.doc(db, `teams/${teamId}/members/${memberId}`),
+        {
+          ...data,
+          updatedAt: new Date(),
+        },
+      );
     } catch {
       // Doc may not exist yet — fall back to setDoc
-      await setDoc(
-        doc(db, `teams/${teamId}/members/${memberId}`),
+      await firestoreApi.setDoc(
+        firestoreApi.doc(db, `teams/${teamId}/members/${memberId}`),
         { ...data, id: memberId, createdAt: new Date(), updatedAt: new Date() },
         { merge: true },
       );
@@ -364,10 +443,13 @@ export class TeamService {
   ): Promise<void> {
     await this.removeMember(teamId, userId, currentMemberIds);
     try {
-      await updateDoc(doc(db, `teams/${teamId}/members/${userId}`), {
-        isActive: false,
-        updatedAt: new Date(),
-      });
+      await firestoreApi.updateDoc(
+        firestoreApi.doc(db, `teams/${teamId}/members/${userId}`),
+        {
+          isActive: false,
+          updatedAt: new Date(),
+        },
+      );
     } catch {
       // Enrichment doc may not exist — no-op
     }

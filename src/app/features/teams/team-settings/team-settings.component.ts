@@ -69,6 +69,7 @@ export class TeamSettingsComponent {
       this.allUsers(),
       team.memberIds,
       this.search(),
+      team.id,
     );
   });
 

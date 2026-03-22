@@ -25,16 +25,19 @@ export function filterCandidateUsers(
   users: AppUser[],
   existingMemberIds: readonly string[],
   search = '',
+  currentTeamId = '',
 ): AppUser[] {
   const existingIds = new Set(existingMemberIds);
   const queryText = normalizeDirectoryText(search.trim());
+  const normalizedTeamId = currentTeamId.trim();
 
   return users.filter((user) => {
     if (existingIds.has(user.uid)) {
       return false;
     }
 
-    if ((user.teamId ?? '').trim()) {
+    const userTeamId = (user.teamId ?? '').trim();
+    if (userTeamId && userTeamId !== normalizedTeamId) {
       return false;
     }
 

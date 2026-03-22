@@ -83,6 +83,7 @@ export class AddMemberDialogComponent implements OnInit {
       this.allUsers(),
       this.data.currentMemberIds,
       this.search(),
+      this.data.teamId,
     );
   });
 
