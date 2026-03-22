@@ -44,6 +44,7 @@ export class TeamService {
   /**
    * Compatibility shim for legacy broad team-directory reads.
    * Prefer TeamDirectoryService.getDirectoryTeams() for intentional full-directory access.
+   * Do not add new callers here.
    */
   getAllTeams(): Observable<Team[]> {
     return this.teamDirectoryService.getDirectoryTeams();
@@ -66,6 +67,7 @@ export class TeamService {
   /**
    * Compatibility shim for legacy broad user-directory reads.
    * Prefer TeamDirectoryService.getDirectoryUsers() for intentional full-directory access.
+   * Do not add new callers here.
    */
   async getAllUsers(): Promise<AppUser[]> {
     return this.teamDirectoryService.getDirectoryUsers();

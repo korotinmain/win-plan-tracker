@@ -44,3 +44,23 @@ export function filterCandidateUsers(
     );
   });
 }
+
+export function filterJoinableTeams(
+  teams: Team[],
+  userId: string,
+  search = '',
+): Team[] {
+  const queryText = normalizeDirectoryText(search.trim());
+
+  return teams.filter((team) => {
+    if (team.memberIds.includes(userId)) {
+      return false;
+    }
+
+    if (!queryText) {
+      return true;
+    }
+
+    return normalizeDirectoryText(team.name).includes(queryText);
+  });
+}

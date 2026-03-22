@@ -180,6 +180,7 @@ Status scale:
 - Current Phase 1 Progress:
   - broad-read inventory is now captured in `docs/security-access-inventory.md`
   - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
+  - all currently known directory-style callers now use explicit directory contracts or compatibility shims
   - Firestore rules are intentionally unchanged in this task; narrowing remains follow-up work
 - Validation:
   - Firestore emulator checks for user/team reads across roles
@@ -503,6 +504,7 @@ Status scale:
 | 2026-03-21 | `planningSessions` rules move to same-team access with creator-only legacy fallback | Narrowest compatible way to close the broad authenticated read/write exposure without breaking legacy docs immediately |
 | 2026-03-22 | Isolate broad `users` / `teams` reads behind an explicit directory seam before tightening rules | Keeps Phase 1 low-risk while making current directory dependencies explicit and inventoried |
 | 2026-03-22 | Broad signed-in reads of `users` and `teams` remain temporarily intentional until narrowed contracts are designed | Current join/manage/directory flows still depend on those reads even after isolation behind `TeamDirectoryService` |
+| 2026-03-22 | Route remaining join/manage callers through `TeamDirectoryService` helpers before any rules changes | Removes ambiguous `TeamService.getAllUsers()` / `getAllTeams()` ownership from active feature code while preserving current behavior |
 | 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
 
 ## Progress Tracker
@@ -512,7 +514,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; broad `users` / `teams` reads are inventoried and isolated, but rules are not tightened yet |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; all known broad `users` / `teams` callers now route through explicit directory contracts, but rules are not tightened yet |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -521,7 +523,7 @@ Status scale:
 ### Immediate Next Steps
 
 1. Review and confirm the roadmap findings and phase order.
-2. Use the new directory inventory/seam to define the smallest safe narrowed read contracts for PR-002.
+2. Tighten `users` and `teams` Firestore read rules against the now-explicit `TeamDirectoryService` contract surface.
 3. Validate any future PR-002 rule changes with emulator allow/deny coverage plus team-management and join-team smoke checks.
 
 ## Open Questions / Blockers

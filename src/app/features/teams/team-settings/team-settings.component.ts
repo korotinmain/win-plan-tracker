@@ -8,6 +8,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  TeamDirectoryService,
+  filterCandidateUsers,
+} from '../../../core/services/team-directory.service';
 import { TeamService } from '../../../core/services/team.service';
 import { getErrorMessage } from '../../../shared/utils/error.util';
 import { AuthService } from '../../../core/services/auth.service';
@@ -37,6 +41,7 @@ import { getRoleColor, getRoleBg } from '../../../shared/utils/role.util';
   styleUrls: ['./team-settings.component.scss'],
 })
 export class TeamSettingsComponent {
+  private teamDirectoryService = inject(TeamDirectoryService);
   private teamService = inject(TeamService);
   private authService = inject(AuthService);
   private holidayService = inject(HolidayService);
@@ -60,13 +65,10 @@ export class TeamSettingsComponent {
   filteredUsers = computed(() => {
     const team = this.team();
     if (!team) return [];
-    const q = this.search().toLowerCase();
-    const ids = new Set(team.memberIds);
-    return this.allUsers().filter(
-      (u) =>
-        !ids.has(u.uid) &&
-        (u.displayName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)),
+    return filterCandidateUsers(
+      this.allUsers(),
+      team.memberIds,
+      this.search(),
     );
   });
 
@@ -84,7 +86,7 @@ export class TeamSettingsComponent {
     try {
       const [team, allUsers] = await Promise.all([
         this.teamService.getTeam(teamId),
-        this.teamService.getAllUsers(),
+        this.teamDirectoryService.getDirectoryUsers(),
       ]);
       if (team) {
         this.team.set(team);

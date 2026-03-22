@@ -18,6 +18,10 @@ import {
 } from '../../../shared/components/dropdown-menu/dropdown-menu.component';
 import { switchMap, combineLatest, of, map, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  TeamDirectoryService,
+  filterJoinableTeams,
+} from '../../../core/services/team-directory.service';
 import { TeamService } from '../../../core/services/team.service';
 import { SprintService } from '../../../core/services/sprint.service';
 import { CalendarService } from '../../../core/services/calendar.service';
@@ -62,6 +66,7 @@ import { getAvatarColor } from '../../../shared/utils/avatar.util';
 })
 export class TeamsComponent {
   private authService = inject(AuthService);
+  private teamDirectoryService = inject(TeamDirectoryService);
   private teamService = inject(TeamService);
   private sprintService = inject(SprintService);
   private readonly _sprintInfo = this.sprintService.getSprintInfo();
@@ -206,9 +211,11 @@ export class TeamsComponent {
     return !!user?.teamId && !!team && team.managerId !== user.uid;
   });
   filteredJoinTeams = computed(() => {
-    const q = this.joinSearchQuery().toLowerCase().trim();
-    if (!q) return this.teams();
-    return this.teams().filter((t) => t.name.toLowerCase().includes(q));
+    return filterJoinableTeams(
+      this.teams(),
+      this.currentUser()?.uid ?? '',
+      this.joinSearchQuery(),
+    );
   });
   hasActiveFilters = computed(
     () =>
@@ -230,8 +237,8 @@ export class TeamsComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((uids) => this.onlineUids.set(uids));
 
-    this.teamService
-      .getAllTeams()
+    this.teamDirectoryService
+      .getDirectoryTeams()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((t) => this.teams.set(t));
 

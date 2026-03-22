@@ -8,6 +8,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  TeamDirectoryService,
+  filterJoinableTeams,
+} from '../../../core/services/team-directory.service';
 import { TeamService } from '../../../core/services/team.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { getErrorMessage } from '../../../shared/utils/error.util';
@@ -35,6 +39,7 @@ import { AppUser } from '../../../core/models/user.model';
 })
 export class SettingsComponent {
   private authService = inject(AuthService);
+  private teamDirectoryService = inject(TeamDirectoryService);
   private teamService = inject(TeamService);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
@@ -83,8 +88,7 @@ export class SettingsComponent {
   });
 
   availableTeams = computed(() => {
-    const uid = this.currentUser()?.uid ?? '';
-    return this.teams().filter((t) => !t.memberIds.includes(uid));
+    return filterJoinableTeams(this.teams(), this.currentUser()?.uid ?? '');
   });
 
   constructor() {
@@ -92,8 +96,8 @@ export class SettingsComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((u) => this.currentUser.set(u));
 
-    this.teamService
-      .getAllTeams()
+    this.teamDirectoryService
+      .getDirectoryTeams()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((teams) => {
         this.teams.set(teams);
