@@ -1,5 +1,15 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const path = require("node:path");
+const { createRequire } = require("node:module");
+
+const requireFromRepoRoot = createRequire(
+  path.join(
+    __dirname,
+    "../../../../functions/node_modules/firebase-functions/package.json",
+  ),
+);
+const functions = requireFromRepoRoot("firebase-functions");
 
 const {
   resolveTeamMembershipMutation,
@@ -141,11 +151,13 @@ test("leave clears stale self-membership even when the team doc is missing the c
 });
 
 test("normalizeCallableError preserves an existing unauthenticated HttpsError", () => {
-  const existingError = {
-    name: "HttpsError",
-    code: "unauthenticated",
-    message: "The function must be called while authenticated.",
-  };
+  const existingError = new functions.https.HttpsError(
+    "unauthenticated",
+    "The function must be called while authenticated.",
+  );
 
-  assert.equal(normalizeCallableError(existingError), existingError);
+  assert.equal(
+    normalizeCallableError(existingError, functions.https.HttpsError),
+    existingError,
+  );
 });

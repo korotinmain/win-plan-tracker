@@ -155,7 +155,7 @@ function resolveTeamMembershipMutation({
 }
 
 function normalizeCallableError(error, HttpsErrorCtor) {
-  if (error && error.name === "HttpsError" && typeof error.code === "string") {
+  if (HttpsErrorCtor && error instanceof HttpsErrorCtor) {
     return error;
   }
   if (error instanceof MembershipError) {
