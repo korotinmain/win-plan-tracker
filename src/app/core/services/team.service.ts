@@ -255,10 +255,6 @@ export class TeamService {
       throw new Error('This member is already on a team. Leave it first.');
     }
 
-    if (await hasConflictingTeamMembership(userId, teamId)) {
-      throw new Error('This member is already on a team. Leave it first.');
-    }
-
     await firestoreApi.runTransaction(db, async (transaction) => {
       const teamRef = firestoreApi.doc(db, `teams/${teamId}`);
       const userRef = firestoreApi.doc(db, `users/${userId}`);

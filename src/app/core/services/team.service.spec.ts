@@ -76,6 +76,18 @@ describe('TeamService membership mutations', () => {
     ]);
   });
 
+  it('addMember writes both docs on the normal success path', async () => {
+    state.team = createTeam([]);
+    state.user = createUser('');
+
+    await service.addMember('team-1', 'user-1', []);
+
+    expect(transaction.update.calls.allArgs()).toEqual([
+      [{ path: 'teams/team-1' }, { memberIds: ['user-1'] }],
+      [{ path: 'users/user-1' }, { teamId: 'team-1' }],
+    ]);
+  });
+
   it('joinTeam repairs a stale team-side membership by writing only the user doc', async () => {
     state.team = createTeam(['user-1']);
     state.user = createUser('');
@@ -99,12 +111,12 @@ describe('TeamService membership mutations', () => {
     ]);
   });
 
-  it('rejects addMember before mutation when the user is listed on another team', async () => {
+  it('joinTeam rejects when the user is listed on another team', async () => {
     state.user = createUser('');
     state.memberships = ['team-2'];
 
-    await expectAsync(service.addMember('team-1', 'user-1', [])).toBeRejectedWithError(
-      'This member is already on a team. Leave it first.',
+    await expectAsync(service.joinTeam('team-1', 'user-1', [])).toBeRejectedWithError(
+      'You are already a member of a team. Leave it first.',
     );
     expect((firestoreApi.runTransaction as jasmine.Spy)).not.toHaveBeenCalled();
   });
