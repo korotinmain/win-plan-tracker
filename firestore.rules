@@ -63,19 +63,25 @@ service cloud.firestore {
     }
 
     // Cross-user membership writes stay on the same authority path as team updates:
-    // only the current manager of the relevant team may move a user between teams.
+    // only the current manager of the relevant team may move a user between teams,
+    // and only when the write changes teamId by itself.
     function isMembershipTeamIdWrite(uid) {
+      let changedOnlyTeamId = request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['teamId']);
+      let currentTeamId = resource.data.get('teamId', '');
+      let requestedTeamId = request.resource.data.get('teamId', '');
+      let currentHasNoTeam = currentTeamId == '';
+      let assigningToManagedTeam = currentHasNoTeam
+          && requestedTeamId != ''
+          && isManager(requestedTeamId);
+      let clearingManagedTeam = currentTeamId != ''
+          && requestedTeamId == ''
+          && isManager(currentTeamId);
+
       return signedIn()
           && request.auth.uid != uid
-          && request.resource.data.teamId is string
-          && (
-               (request.resource.data.teamId != ''
-                && isManager(request.resource.data.teamId))
-               || (request.resource.data.teamId == ''
-                   && resource.data.teamId is string
-                   && resource.data.teamId != ''
-                   && isManager(resource.data.teamId))
-             );
+          && changedOnlyTeamId
+          && (assigningToManagedTeam || clearingManagedTeam);
     }
 
     // ─── users ─────────────────────────────────────────────────────────────
