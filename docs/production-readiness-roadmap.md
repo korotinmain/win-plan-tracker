@@ -184,6 +184,7 @@ Status scale:
   - all currently known directory-style callers now use explicit directory contracts or compatibility shims
   - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
   - `teams/{teamId}` reads are now narrowed to team members, no-team discovery, and elevated roles
+  - emulator verification passed for member direct read allow, no-team direct read allow, no-team collection query allow, unrelated-team deny, elevated direct read allow, and membership-scoped query-shape allow
   - `users/{uid}` narrowing is still blocked by current candidate-picker reads and a separate membership-write mismatch
 - Validation:
   - Firestore emulator checks for user/team reads across roles and actual query shapes
@@ -558,7 +559,7 @@ Status scale:
 
 ## Open Questions / Blockers
 
-- Is broad signed-in read access to `users` and `teams` a deliberate product requirement or a temporary implementation shortcut?
+- Is broad signed-in read access to `users` still a deliberate product requirement or a temporary implementation shortcut?
 - Which authority model should own team membership updates to `users/{uid}.teamId`: self-service only, manager/admin rules, or a privileged backend path?
 - When should legacy `planningSessions` documents without `teamId` be backfilled or retired so the creator-only fallback can be removed?
 - Should presence remain globally readable to all signed-in users, or only to relevant teammates?

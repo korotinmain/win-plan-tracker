@@ -133,7 +133,7 @@ These constraints are critical and should be treated as repository invariants un
 - `events` are keyed as `${userId}_${date}`
 - Team member enrichment docs live in `teams/{teamId}/members/{memberId}`
 - `jiraCredentials` are stored per user at `jiraCredentials/{uid}`
-- `planningSessions` are stored in Firestore and are currently not team-scoped in rules
+- `planningSessions` are stored in Firestore; new docs are team-scoped in rules, and legacy docs without `teamId` currently fall back to creator-only access
 - Presence is stored in Realtime Database under `presence/{uid}`
 - Jira callable functions require authenticated callers
 
@@ -141,7 +141,9 @@ These constraints are critical and should be treated as repository invariants un
 
 - Read `firestore.rules` before changing persistence behavior
 - Treat the checked-in rules as the source of truth, even when UI copy or docs imply something stricter
-- Current rules allow all signed-in users to read `users` and `teams`, create `notifications`, and read/write `planningSessions`
+- Current rules still allow all signed-in users to read `users` and create `notifications`
+- Current rules restrict `teams` reads to team members, no-team discovery users, and elevated roles
+- Current rules scope `planningSessions` to same-team access, with creator-only fallback for legacy docs without `teamId`
 - Never assume a client-side flow is valid unless rules support it
 - UI changes that silently rely on looser access than rules allow are incorrect
 
