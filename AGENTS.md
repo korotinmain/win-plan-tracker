@@ -194,6 +194,8 @@ Do not assume `functions/.env.local` is loaded unless you verify the local tooli
 - Keep business logic out of templates
 - Follow the surrounding file’s existing reactive style when mixing signals and observables
 - Do not force a signals-only rewrite in observable-first code without strong reason
+- Never wrap `@Input()` values in `computed()` — Angular's computed cache does not react to plain object input changes; use plain TypeScript getters instead
+- Use `signal()` only for locally mutable state, never for values derived purely from `@Input()` properties
 
 ### Feature structure
 
@@ -308,6 +310,7 @@ Do not replace these patterns casually.
 
 Before making changes:
 
+- Read `docs/domain-model.md` before any implementation work — it is the authoritative reference for domain vocabulary, data shapes, and model relationships
 - Inspect nearby files and follow the local pattern used in that feature area
 - Prefer modifying existing code over introducing parallel abstractions
 - Reuse existing services, helpers, and shared UI primitives before creating new ones
@@ -322,9 +325,12 @@ While making changes:
 - Avoid broad architectural rewrites
 - Keep domain logic in services instead of templates or purely presentational components
 - Do not silently change data shapes used across features
+- Write unit tests for every new feature or service method introduced
+- Update existing unit tests when changing functionality — never leave tests that pass but no longer reflect the real behavior
 
 After making changes:
 
+- Run `npm run build && npm run test -- --watch=false --browsers=ChromeHeadless` before committing any functional change — do not commit with a known build or test failure
 - Summarize what changed
 - Explain why the change was made
 - Call out risks, tradeoffs, and follow-up work
@@ -495,6 +501,7 @@ Be explicit about uncertainty. Do not claim checks were performed if they were n
 - Start Angular app: `npm run start`
 - Build frontend: `npm run build`
 - Run frontend tests: `npm run test`
+- Run tests headless / CI mode: `npm run test -- --watch=false --browsers=ChromeHeadless`
 
 ### Emulators
 
@@ -506,6 +513,24 @@ Be explicit about uncertainty. Do not claim checks were performed if they were n
 - Install functions deps: `cd functions && npm install`
 
 When working on Jira callable functions, validate both the Angular caller and the function response shape.
+
+---
+
+## Commit Conventions
+
+- Use `inc-N: short description` for incremental feature work (e.g. `inc-3: readiness and context phases`)
+- Use `fix:` for bug fixes, `test:` for test-only changes, `chore:` for tooling/config, `docs:` for documentation
+- Keep the subject line under 72 characters and written in the imperative mood
+
+---
+
+## Testing Conventions
+
+- Use `fixture.debugElement.query(By.css('.class')).nativeElement.click()` for clicking Angular Material buttons in tests — not `querySelector().click()`
+- Use `fakeAsync` + `tick()` for async service calls; provide spy services via `useValue`
+- Trigger `ngOnChanges` manually in tests: `component.ngOnChanges({ session: new SimpleChange(prev, next, isFirst) })`
+- Include `NoopAnimationsModule` in every component test bed
+- One `describe` block per component or utility; group related cases with nested `describe` blocks
 
 ---
 
