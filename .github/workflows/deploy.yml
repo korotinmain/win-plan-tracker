@@ -103,9 +103,15 @@ jobs:
       - name: Write Firebase service account key
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WIN_PLAN_TRACKER }}' > /tmp/sa.json
 
-      - name: Deploy everything to Firebase
+      # Deploy hosting, Firestore rules/indexes, and Realtime Database rules.
+      # Functions are excluded because they require the CI service account to
+      # have the "Service Account User" role on win-plan-tracker@appspot.gserviceaccount.com.
+      # To enable function deploys: grant that role in GCP IAM and change
+      # --only to include "functions".
+      - name: Deploy to Firebase (hosting + rules)
         run: |
           npx firebase deploy \
+            --only hosting,firestore,database \
             --project win-plan-tracker \
             --non-interactive
         env:
