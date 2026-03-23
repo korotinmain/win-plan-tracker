@@ -20,7 +20,6 @@ import {
 import { TemplatePortal } from '@angular/cdk/portal';
 import { ViewContainerRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
 
 export type DropdownMenuYPosition = 'above' | 'below';
 export type DropdownMenuXPosition = 'before' | 'after';

@@ -1,3 +1,8 @@
+// ── Host: always hidden so projected items don't appear in parent layout ────────
+:host {
+  display: none;
+}
+
 // ── Entrance animation ────────────────────────────────────────────────────────
 @keyframes dm-enter {
   from {
