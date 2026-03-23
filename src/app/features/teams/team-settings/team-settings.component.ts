@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import {
   TeamDirectoryService,
+  TeamMembershipCandidate,
   filterCandidateUsers,
 } from '../../../core/services/team-directory.service';
 import { TeamService } from '../../../core/services/team.service';
@@ -50,7 +51,7 @@ export class TeamSettingsComponent {
 
   team = signal<Team | null>(null);
   members = signal<AppUser[]>([]);
-  allUsers = signal<AppUser[]>([]);
+  candidates = signal<TeamMembershipCandidate[]>([]);
   search = signal('');
   loading = signal(true);
   saving = signal<string | null>(null);
@@ -61,12 +62,14 @@ export class TeamSettingsComponent {
   countrySaving = signal(false);
   countrySaved = signal(false);
   countrySaveError = signal<string | null>(null);
+  candidateLoadError = signal<string | null>(null);
+  memberLoadError = signal<string | null>(null);
 
   filteredUsers = computed(() => {
     const team = this.team();
     if (!team) return [];
     return filterCandidateUsers(
-      this.allUsers(),
+      this.candidates(),
       team.memberIds,
       this.search(),
       team.id,
@@ -85,18 +88,47 @@ export class TeamSettingsComponent {
       return;
     }
     try {
-      const [team, allUsers] = await Promise.all([
-        this.teamService.getTeam(teamId),
-        this.teamDirectoryService.getDirectoryUsers(),
-      ]);
-      if (team) {
-        this.team.set(team);
-        this.members.set(
-          allUsers.filter((u) => team.memberIds.includes(u.uid)),
-        );
-        this.selectedCountry.set(team.holidayCountryCode ?? '');
+      const team = await this.teamService.getTeam(teamId);
+      if (!team) {
+        return;
       }
-      this.allUsers.set(allUsers);
+
+      this.team.set(team);
+      this.selectedCountry.set(team.holidayCountryCode ?? '');
+
+      const [membersResult, candidatesResult] = await Promise.allSettled([
+        this.teamService.getTeamMembers(teamId),
+        this.teamDirectoryService.getMembershipCandidates(teamId),
+      ]);
+
+      if (membersResult.status === 'fulfilled') {
+        this.members.set(membersResult.value);
+        this.memberLoadError.set(null);
+      } else {
+        console.error('[TeamSettings] member load failed', membersResult.reason);
+        this.memberLoadError.set(
+          getErrorMessage(
+            membersResult.reason,
+            'Failed to load team members.',
+          ),
+        );
+      }
+
+      if (candidatesResult.status === 'fulfilled') {
+        this.candidates.set(candidatesResult.value);
+        this.candidateLoadError.set(null);
+      } else {
+        console.error(
+          '[TeamSettings] candidate load failed',
+          candidatesResult.reason,
+        );
+        this.candidateLoadError.set(
+          getErrorMessage(
+            candidatesResult.reason,
+            'Failed to load membership candidates.',
+          ),
+        );
+      }
     } catch (e) {
       console.error('[TeamSettings] load failed', e);
     } finally {
@@ -112,7 +144,43 @@ export class TeamSettingsComponent {
     }
   }
 
-  async add(user: AppUser): Promise<void> {
+  private async refreshMembershipData(teamId: string): Promise<void> {
+    const [membersResult, candidatesResult] = await Promise.allSettled([
+      this.teamService.getTeamMembers(teamId),
+      this.teamDirectoryService.getMembershipCandidates(teamId),
+    ]);
+
+    if (membersResult.status === 'fulfilled') {
+      this.members.set(membersResult.value);
+      this.memberLoadError.set(null);
+    } else {
+      console.error('[TeamSettings] member load failed', membersResult.reason);
+      this.memberLoadError.set(
+        getErrorMessage(
+          membersResult.reason,
+          'Failed to load team members.',
+        ),
+      );
+    }
+
+    if (candidatesResult.status === 'fulfilled') {
+      this.candidates.set(candidatesResult.value);
+      this.candidateLoadError.set(null);
+    } else {
+      console.error(
+        '[TeamSettings] candidate load failed',
+        candidatesResult.reason,
+      );
+      this.candidateLoadError.set(
+        getErrorMessage(
+          candidatesResult.reason,
+          'Failed to load membership candidates.',
+        ),
+      );
+    }
+  }
+
+  async add(user: TeamMembershipCandidate): Promise<void> {
     const team = this.team();
     if (!team) return;
     this.saving.set(user.uid);
@@ -121,7 +189,7 @@ export class TeamSettingsComponent {
       this.team.update((t) =>
         t ? { ...t, memberIds: [...t.memberIds, user.uid] } : t,
       );
-      this.members.update((m) => [...m, user]);
+      await this.refreshMembershipData(team.id);
     } catch (e) {
       console.error('[TeamSettings] add member failed', e);
     } finally {
@@ -140,7 +208,7 @@ export class TeamSettingsComponent {
           ? { ...t, memberIds: t.memberIds.filter((id) => id !== user.uid) }
           : t,
       );
-      this.members.update((m) => m.filter((u) => u.uid !== user.uid));
+      await this.refreshMembershipData(team.id);
     } catch (e) {
       console.error('[TeamSettings] remove member failed', e);
     } finally {

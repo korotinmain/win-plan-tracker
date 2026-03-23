@@ -74,12 +74,17 @@ export class TeamDirectoryService {
   }
 }
 
-export function filterCandidateUsers(
-  users: AppUser[],
+type DirectoryCandidateLike = Pick<
+  TeamMembershipCandidate,
+  'uid' | 'displayName' | 'email' | 'teamId'
+>;
+
+export function filterCandidateUsers<T extends DirectoryCandidateLike>(
+  users: T[],
   existingMemberIds: readonly string[],
   search = '',
   currentTeamId = '',
-): AppUser[] {
+): T[] {
   const existingIds = new Set(existingMemberIds);
   const queryText = normalizeDirectoryText(search.trim());
   const normalizedTeamId = currentTeamId.trim();

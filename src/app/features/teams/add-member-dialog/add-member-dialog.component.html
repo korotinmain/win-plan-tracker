@@ -74,7 +74,7 @@
           <span>{{
             search()
               ? 'No users match "' + search() + '"'
-              : "All users are already on this team"
+              : "No available candidates for this team"
           }}</span>
         </div>
         <div
@@ -100,9 +100,6 @@
             <span class="amd-user-name">{{ user.displayName }}</span>
             <span class="amd-user-email">{{ user.email }}</span>
           </div>
-          <span class="amd-user-role amd-user-role--{{ user.role }}">{{
-            user.role | titlecase
-          }}</span>
           <mat-icon class="amd-user-arrow">chevron_right</mat-icon>
         </div>
       </div>

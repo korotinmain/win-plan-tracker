@@ -21,11 +21,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { TeamService } from '../../../core/services/team.service';
 import {
   TeamDirectoryService,
+  TeamMembershipCandidate,
   filterCandidateUsers,
 } from '../../../core/services/team-directory.service';
 import { getErrorMessage } from '../../../shared/utils/error.util';
 import { Team } from '../../../core/models/team.model';
-import { AppUser } from '../../../core/models/user.model';
 import {
   MemberRole,
   MEMBER_ROLES,
@@ -72,15 +72,15 @@ export class AddMemberDialogComponent implements OnInit {
   saving = signal(false);
   error = signal<string | null>(null);
   search = signal('');
-  allUsers = signal<AppUser[]>([]);
-  selectedUser = signal<AppUser | null>(null);
+  candidates = signal<TeamMembershipCandidate[]>([]);
+  selectedUser = signal<TeamMembershipCandidate | null>(null);
   role = signal<MemberRole>('member');
   capacityPoints = signal(8);
   timezone = signal(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
 
   availableUsers = computed(() => {
     return filterCandidateUsers(
-      this.allUsers(),
+      this.candidates(),
       this.data.currentMemberIds,
       this.search(),
       this.data.teamId,
@@ -89,8 +89,10 @@ export class AddMemberDialogComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const users = await this.teamDirectoryService.getDirectoryUsers();
-      this.allUsers.set(users);
+      const candidates = await this.teamDirectoryService.getMembershipCandidates(
+        this.data.teamId,
+      );
+      this.candidates.set(candidates);
     } catch (e: unknown) {
       this.error.set(getErrorMessage(e, 'Failed to load users'));
     } finally {
@@ -98,7 +100,7 @@ export class AddMemberDialogComponent implements OnInit {
     }
   }
 
-  selectUser(user: AppUser): void {
+  selectUser(user: TeamMembershipCandidate): void {
     this.selectedUser.set(user);
     this.step.set(2);
   }

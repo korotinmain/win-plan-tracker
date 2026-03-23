@@ -29,15 +29,20 @@
     <div class="mtd-section-header">
       <span class="mtd-section-icon"><mat-icon>people</mat-icon></span>
       <span class="mtd-section-title">Current Members</span>
-      <span class="mtd-count-badge">{{ members().length }}</span>
+      <span class="mtd-count-badge">{{ team().memberIds.length }}</span>
     </div>
 
-    <div *ngIf="members().length === 0" class="mtd-empty">
+    <div *ngIf="memberLoadError()" class="mtd-empty">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ memberLoadError() }}</span>
+    </div>
+
+    <div *ngIf="!memberLoadError() && members().length === 0" class="mtd-empty">
       <mat-icon>person_off</mat-icon>
       <span>No members yet. Add people below.</span>
     </div>
 
-    <div class="mtd-list" *ngIf="members().length > 0">
+    <div class="mtd-list" *ngIf="!memberLoadError() && members().length > 0">
       <div class="mtd-row" *ngFor="let m of members()">
         <div class="mtd-avatar">{{ initials(m.displayName) }}</div>
         <div class="mtd-user-info">
@@ -82,16 +87,21 @@
       />
     </div>
 
-    <div *ngIf="filteredUsers().length === 0" class="mtd-empty">
+    <div *ngIf="candidateLoadError()" class="mtd-empty">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ candidateLoadError() }}</span>
+    </div>
+
+    <div *ngIf="!candidateLoadError() && filteredUsers().length === 0" class="mtd-empty">
       <mat-icon>search_off</mat-icon>
       <span>{{
         search()
           ? "No matching users found"
-          : "All company users are already in this team"
+          : "No available candidates for this team"
       }}</span>
     </div>
 
-    <div class="mtd-list mtd-add-list" *ngIf="filteredUsers().length > 0">
+    <div class="mtd-list mtd-add-list" *ngIf="!candidateLoadError() && filteredUsers().length > 0">
       <div class="mtd-row" *ngFor="let u of filteredUsers()">
         <div class="mtd-avatar mtd-avatar-muted">
           {{ initials(u.displayName) }}
@@ -100,12 +110,6 @@
           <span class="mtd-name">{{ u.displayName }}</span>
           <span class="mtd-email">{{ u.email }}</span>
         </div>
-        <span
-          class="mtd-role"
-          [style.background]="roleBg(u.role)"
-          [style.color]="roleColor(u.role)"
-          >{{ u.role }}</span
-        >
         <button
           class="mtd-btn-add"
           (click)="add(u)"
