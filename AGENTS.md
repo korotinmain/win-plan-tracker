@@ -142,7 +142,8 @@ These constraints are critical and should be treated as repository invariants un
 
 - Read `firestore.rules` before changing persistence behavior
 - Treat the checked-in rules as the source of truth, even when UI copy or docs imply something stricter
-- Current rules still allow all signed-in users to read `users` and create `notifications`
+- Current rules intentionally allow all signed-in users to read `users`; do not treat that as an open security mismatch without a new product decision
+- Current rules still allow all signed-in users to create `notifications`
 - Current rules restrict `teams` reads to team members, no-team discovery users, and elevated roles
 - Current rules scope `planningSessions` to same-team access, with creator-only fallback for legacy docs without `teamId`
 - Never assume a client-side flow is valid unless rules support it
@@ -210,6 +211,7 @@ Do not assume `functions/.env.local` is loaded unless you verify the local tooli
 - Reuse `snapObservable(...)` for Firestore live queries instead of creating new snapshot wrappers
 - Do not leak raw backend or Firestore document shapes deep into components unless that pattern already exists locally
 - For team member-management candidate pickers, use `TeamDirectoryService.getMembershipCandidates(...)` instead of broad `users` collection reads
+- Broad authenticated profile reads in `users` remain intentional for directory-style flows, but they do not justify reintroducing broad browser member pickers
 
 ### State and async handling
 

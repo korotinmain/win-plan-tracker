@@ -1,12 +1,14 @@
 # PR-002 Server-Backed Candidate Search Design
 
+> Status: Implemented on 2026-03-23. This design landed through `getTeamMembershipCandidates(...)` and `TeamDirectoryService.getMembershipCandidates(...)`. PR-002 was later closed without `users/{uid}` rule tightening after the product decision to keep broad signed-in profile reads intentional and verified.
+
 ## Goal
 
 Remove the remaining broad authenticated `users` collection reads from team member-management flows by replacing client-side full-directory loading with a privileged backend candidate-search callable.
 
 ## Problem
 
-`PR-002` is still open because several team-management screens depend on `TeamDirectoryService.getDirectoryUsers()`, which currently does `getDocs(collection(db, 'users'))` and then filters in the browser.
+`PR-002` was still open when this design was written because several team-management screens depended on `TeamDirectoryService.getDirectoryUsers()`, which did `getDocs(collection(db, 'users'))` and then filtered in the browser.
 
 That broad read still powers:
 
@@ -183,7 +185,7 @@ Frontend:
 
 ### Access Follow-Up
 
-After this candidate API lands, revisit `users/{uid}` rules with emulator checks. That tightening is a separate execution step, not part of the initial candidate-search rollout.
+This candidate API landed. The follow-up decision for `users/{uid}` was not further tightening in Phase 1; broad signed-in profile reads were intentionally retained and emulator-verified as the checked-in contract.
 
 ## Out Of Scope
 
@@ -197,5 +199,5 @@ After this candidate API lands, revisit `users/{uid}` rules with emulator checks
 When this design is implemented:
 
 - team member-management screens no longer need full `users` collection reads
-- `PR-002` is materially reduced to a narrower rules-tightening follow-up
+- `PR-002` is materially reduced to a final contract-closure follow-up
 - the repo keeps a consistent backend ownership model for membership-related authority

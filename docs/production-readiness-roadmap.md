@@ -113,7 +113,7 @@ Status scale:
 | ID | Severity | Area | Type | Summary | Phase | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | PR-001 | critical | firebase-rules | security | `planningSessions` are world-readable/writable to any signed-in user | Phase 1 | done |
-| PR-002 | high | firebase-rules | security | `users` reads remain broader than role/team-oriented product intent; `teams` reads have been narrowed to membership, no-team discovery, and elevated roles | Phase 1 | in_progress |
+| PR-002 | high | firebase-rules | security | Broad signed-in `users` profile reads are an intentional, verified product contract; `teams` reads remain narrowed to membership, no-team discovery, and elevated roles | Phase 1 | done |
 | PR-003 | high | planning | architecture | Sprint planning surface is oversized and mixes workflow, state, placement logic, and persistence orchestration | Phase 2 | open |
 | PR-004 | high | frontend | architecture | Calendar grid mixes rendering, calendar math, team loading, holiday fetch, and dialog orchestration | Phase 2 | open |
 | PR-005 | high | frontend | architecture | Teams surface mixes data aggregation, filtering, presence, team actions, and dialog coordination | Phase 2 | open |
@@ -166,20 +166,21 @@ Status scale:
 - Severity: `high`
 - Area: `firebase-rules`
 - Type: `security`
-- Summary: `users` read access is still globally open to all signed-in users, while `teams` reads have been narrowed to the smallest safe contract that preserves join/discovery and membership-scoped access.
+- Summary: broad signed-in `users` profile reads are intentional and verified, while `teams` reads have been narrowed to the smallest safe contract that preserves join/discovery and membership-scoped access.
 - Evidence:
   - `firestore.rules:65-83`
   - `users/{uid}`: `allow read: if signedIn();`
   - `teams/{teamId}`: `allow read: if signedIn() && (isMember(teamId) || hasNoTeam() || isAdminOrManager());`
 - Current Risk:
-  - `users/{uid}` reads are still globally open to all signed-in users even though active member-management candidate pickers no longer need a broad browser read
-  - `teams` no longer needs full signed-in visibility for joined users, but the remaining `users` contract still exceeds intended least-privilege boundaries
+  - the verified broad `users/{uid}` profile-read contract is easy to misread as a security gap if future work does not keep the documentation and service boundaries in sync
+  - `teams` no longer needs full signed-in visibility for joined users, so the remaining risk is accidental contract drift rather than an unresolved access mismatch
 - Recommended Direction:
-  - document the minimum required read surfaces by feature
+  - keep the intentional broad `users` profile-read contract documented and verified
   - keep `teams` reads aligned with the now-scoped join/discovery and membership queries
-  - tighten `users` reads after validating that only the explicit directory seam and any intentional out-of-band callers still depend on broad visibility
+  - preserve `TeamDirectoryService.getMembershipCandidates(...)` for member-management candidate discovery and treat any future `users` narrowing as a new product decision with paired UI/service changes
 - Current Phase 1 Progress:
   - broad-read inventory is now captured in `docs/security-access-inventory.md`
+  - broad signed-in `users` profile visibility is intentional, documented, and verified
   - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
   - all currently known directory-style callers now use explicit directory contracts or compatibility shims
   - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
@@ -188,16 +189,17 @@ Status scale:
   - member-management candidate discovery now goes through the backend `getTeamMembershipCandidates` callable and `TeamDirectoryService.getMembershipCandidates(...)`
   - add-member, manage-team, and team-settings no longer use `getDirectoryUsers()` for candidate selection
   - the candidate-search rollout includes a legacy `users.teamId` backfill utility for environments that still contain docs without `teamId`
-  - `users/{uid}` hardening is no longer blocked by browser candidate-picker reads; the remaining work is rules tightening verification against the explicit directory seam and any intentional compatibility callers
+  - `getDirectoryUsers()` and `TeamService.getAllUsers()` remain documented compatibility seams rather than unresolved blockers
+  - `users/{uid}` hardening is no longer an open PR-002 mismatch; the remaining work is keeping the intentional contract and compatibility seams documented if future product requirements change
 - Validation:
   - Firestore emulator checks for user/team reads across roles and actual query shapes
-  - feature-by-feature smoke verification for team management and directory flows
+  - source-backed review against `firestore.rules`, the candidate-search rollout, and current team-directory callers
   - `node --test functions/team/getMembershipCandidates.test.js functions/team/backfillMissingUserTeamIds.test.js` -> `11 pass / 0 fail`
   - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/core/services/team-directory.service.spec.ts` -> `TOTAL: 6 SUCCESS`
   - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/features/teams/team-settings/team-settings.component.spec.ts` -> `TOTAL: 3 SUCCESS`
   - `npm run build` -> pass with the pre-existing initial bundle budget warning
 - Phase: `Phase 1`
-- Status: `in_progress`
+- Status: `done`
 
 #### PR-011
 
@@ -218,7 +220,7 @@ Status scale:
 - Recommended Direction:
   - keep team membership mutations behind the privileged callable unless product requirements explicitly move them back into a self-service-only model
   - treat callable response semantics (`updated` vs `noop`) as part of the stable contract
-  - tighten `users/{uid}` rules only against the remaining candidate-picker read surfaces
+  - keep the `users/{uid}` profile-read contract documented separately from PR-011 so future work does not confuse membership authority with profile visibility
 - Validation:
   - `node --test functions/team/updateMembership.test.js` -> `8 pass / 0 fail`
   - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/core/services/team.service.spec.ts` -> `TOTAL: 6 SUCCESS`
@@ -445,7 +447,7 @@ Status scale:
   - planning session access model
 - Initial Backlog:
   - resolve PR-001
-  - resolve PR-002
+  - document PR-002 closure and keep the verified profile-visibility contract stable
   - inventory all client flows that depend on broad reads
 - Acceptance Criteria:
   - rules model is explicit and verified with emulator evidence
@@ -548,6 +550,7 @@ Status scale:
 | 2026-03-22 | Team membership authority moves to a privileged backend callable instead of expanding client-side cross-user write rights | This resolves PR-011 without weakening `users/{uid}` rules and keeps stale-membership validation on a server-authoritative path |
 | 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
 | 2026-03-23 | Member-management candidate discovery moves to a backend callable instead of broad `users` collection reads in the browser | This removes the largest remaining active `users` read dependency without widening the frontend DTO or weakening least-privilege boundaries |
+| 2026-03-23 | Broad signed-in `users` profile reads are intentional and verified | `TeamDirectoryService.getDirectoryUsers()` and `TeamService.getAllUsers()` remain compatibility seams, while member-management candidate pickers use `TeamDirectoryService.getMembershipCandidates(...)` |
 
 ## Progress Tracker
 
@@ -556,7 +559,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles; PR-011 is closed via privileged membership callable; active member-pickers now use backend candidate search, and the remaining PR-002 work is `users/{uid}` rule-tightening verification |
+| Phase 1: Security / Access / Contracts | done | Phase 1 checkpoint is complete: `planningSessions` access is explicit and emulator-verified; broad signed-in `users` profile reads are an intentional verified contract; `teams` reads are scoped to members, no-team discovery, and elevated roles; PR-011 is closed via privileged membership callable; active member-pickers use backend candidate search |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -564,13 +567,13 @@ Status scale:
 
 ### Immediate Next Steps
 
-1. Validate the smallest safe `users/{uid}` rule tightening against the remaining explicit directory seam and any compatibility callers.
-2. Decide whether the temporary broad `getDirectoryUsers()` seam and `TeamService.getAllUsers()` shim can now be narrowed or removed.
-3. Validate the final PR-002 rules change with emulator allow/deny coverage, real query-shape checks, Functions-backed membership smoke checks, and team-management/join-team smoke checks.
+1. Move the Phase 2 decomposition work forward now that PR-002 is closed and the profile-visibility contract is documented.
+2. Keep `getDirectoryUsers()` and `TeamService.getAllUsers()` as compatibility seams only until downstream callers are retired.
+3. Preserve `TeamDirectoryService.getMembershipCandidates(...)` as the required path for member-management candidate discovery.
 
 ## Open Questions / Blockers
 
-- Is broad signed-in read access to `users` still a deliberate product requirement or a temporary implementation shortcut?
+- PR-002 has no open blocker for broad signed-in `users` reads; any future narrowing would need a new product decision and coordinated service/UI changes.
 - When should legacy `planningSessions` documents without `teamId` be backfilled or retired so the creator-only fallback can be removed?
 - Should presence remain globally readable to all signed-in users, or only to relevant teammates?
 - Is the current Jira board binding (`BOARD_ID = 1671` in sprint surfaces) expected to remain static, or should it become team/config driven?

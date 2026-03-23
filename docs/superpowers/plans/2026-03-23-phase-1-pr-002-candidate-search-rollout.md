@@ -1,5 +1,7 @@
 # PR-002 Candidate Search Rollout Implementation Plan
 
+> Status: Landed on 2026-03-23. The backend candidate-search callable and Angular migration are complete. This plan remains as execution history; PR-002 was later closed by documenting intentional broad signed-in `users` profile reads rather than tightening `users/{uid}` rules.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the remaining broad `users` collection reads from team member-management candidate pickers by replacing them with a server-backed candidate-search callable and a narrow frontend service contract.
@@ -282,7 +284,7 @@ git commit -m "refactor: use server-backed membership candidates"
 Record that:
 
 - add/manage/team-settings candidate pickers no longer require `getDocs(collection(db, 'users'))`
-- the remaining `users` hardening blocker is now rules tightening verification, not the browser candidate flow
+- the remaining `users` profile-visibility seam is explicit and documented, not hidden behind browser candidate flows
 
 - [ ] **Step 2: Update the roadmap**
 
@@ -290,7 +292,7 @@ Update `docs/production-readiness-roadmap.md` so `PR-002` reflects:
 
 - `teams` reads already narrowed
 - candidate picker broad `users` reads removed
-- next step is a separate `users/{uid}` rule-tightening validation pass
+- any future `users/{uid}` narrowing is a separate product decision, not part of this rollout
 
 - [ ] **Step 3: Update durable repo guidance if needed**
 
