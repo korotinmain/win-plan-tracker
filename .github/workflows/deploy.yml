@@ -31,6 +31,13 @@ jobs:
         run: npm ci
         working-directory: functions
 
+      # environment.ts and environment.prod.ts are gitignored (contain Firebase
+      # client config). Write them from a repository secret before building.
+      - name: Write environment files
+        run: |
+          echo "${{ secrets.FIREBASE_ENV_PROD }}" > src/environments/environment.prod.ts
+          cp src/environments/environment.prod.ts src/environments/environment.ts
+
       - name: Build Angular app
         run: npm run build
 
@@ -75,6 +82,12 @@ jobs:
       - name: Install functions dependencies
         run: npm ci
         working-directory: functions
+
+      # Write Firebase client config files (gitignored) from repository secret
+      - name: Write environment files
+        run: |
+          echo "${{ secrets.FIREBASE_ENV_PROD }}" > src/environments/environment.prod.ts
+          cp src/environments/environment.prod.ts src/environments/environment.ts
 
       - name: Build Angular app
         run: npm run build
