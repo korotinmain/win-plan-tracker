@@ -85,8 +85,10 @@ service cloud.firestore {
     }
 
     // ─── users ─────────────────────────────────────────────────────────────
-    // Any authenticated user can read any profile (needed for "all users" list
-    // shown in the manage-team dialog). Only the owner may write their own doc.
+    // Any authenticated user can read any profile. This is intentional for
+    // profile surfaces and compatibility; member-management candidate pickers
+    // must use the backend candidate-search path instead of broad browser scans.
+    // Only the owner may write their own doc.
     match /users/{uid} {
       allow read:  if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
@@ -94,8 +96,8 @@ service cloud.firestore {
     }
 
     // ─── teams ─────────────────────────────────────────────────────────────
-    // Team members can read their team, no-team users can browse for join/discovery,
-    // and elevated roles can read broadly.
+    // Team reads stay scoped to team members, no-team discovery users, and
+    // elevated roles.
     // Only the user creating the team (who must set themselves as manager) can
     // create it. Only the current manager can update or delete.
     match /teams/{teamId} {
