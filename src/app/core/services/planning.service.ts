@@ -3,6 +3,7 @@ import {
   QueryConstraint,
   Timestamp,
   addDoc,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -12,7 +13,9 @@ import {
   updateDoc,
   where,
 } from '@firebase/firestore';
+import { Observable } from 'rxjs';
 import { db } from '../../firebase';
+import { docObservable } from '../../shared/utils/firestore.util';
 import { AuthService } from './auth.service';
 import {
   buildPlanningSessionAccessFields,
@@ -20,6 +23,16 @@ import {
   canReadLegacyPlanningSession,
   mergePlanningSessions,
 } from './planning-session-access.util';
+import {
+  CapacityEntry,
+  CreateSessionV2Payload,
+  IssueReview,
+  PlanningPhase,
+  PlanningSessionSummary,
+  PlanningSessionV2,
+  computeSessionSummary,
+  isPlanningSessionV2,
+} from '../models/planning-session.model';
 
 export type PlanningStep = 'review' | 'estimate' | 'plan' | 'review-sprint';
 export type PlanningBucket = 'backlog' | 'candidate' | 'planned';
@@ -321,5 +334,156 @@ export class PlanningService {
   ): Promise<PlanningSession[]> {
     const snap = await getDocs(query(this.col, ...constraints));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PlanningSession);
+  }
+
+  // ─── v2 session management ────────────────────────────────────────────────
+
+  /**
+   * Returns a live Observable that emits the session document whenever it
+   * changes in Firestore. All session participants subscribe to this to keep
+   * their view in sync with the facilitator's actions.
+   */
+  liveSessionV2$(sessionId: string): Observable<PlanningSessionV2 | null> {
+    const ref = doc(this.col, sessionId);
+    return docObservable<PlanningSessionV2>(ref);
+  }
+
+  /** Creates a new v2 planning session and returns its Firestore document ID. */
+  async createSessionV2(payload: CreateSessionV2Payload): Promise<string> {
+    const user = this.auth.currentUser;
+    const teamId = user?.teamId?.trim();
+    if (!teamId) throw new Error('Planning sessions require a teamId.');
+
+    const access = buildPlanningSessionAccessFields({
+      teamId,
+      createdBy: user?.uid ?? 'unknown',
+      participantIds: payload.participantIds,
+    });
+
+    const now = Timestamp.now();
+    const session: Omit<PlanningSessionV2, 'id'> = {
+      schemaVersion: 2,
+      sprintId: payload.sprintId,
+      sprintName: payload.sprintName,
+      sprintGoal: payload.sprintGoal,
+      sprintStartDate: payload.sprintStartDate,
+      sprintEndDate: payload.sprintEndDate,
+      teamId: access.teamId,
+      status: 'draft',
+      phase: 'setup',
+      currentReviewIndex: 0,
+      facilitatorId: user?.uid ?? 'unknown',
+      facilitatorName: user?.displayName ?? user?.email ?? 'Unknown',
+      participantIds: access.participantIds,
+      participantNames: payload.participantNames,
+      issueReviews: payload.issueReviews,
+      issueParticipation: {},
+      readinessWarnings: [],
+      capacityData: [],
+      summary: computeSessionSummary(payload.issueReviews),
+      createdBy: access.createdBy,
+      createdByName: user?.displayName ?? user?.email ?? 'Unknown',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const ref = await addDoc(this.col, session);
+    return ref.id;
+  }
+
+  /**
+   * Reads a v2 session by ID. Returns null when the document does not exist
+   * or is not a v2 session.
+   */
+  async getSessionV2ById(id: string): Promise<PlanningSessionV2 | null> {
+    const ref = doc(this.col, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    const data: Record<string, unknown> = { id: snap.id, ...snap.data() };
+    if (!isPlanningSessionV2(data)) return null;
+    return data as PlanningSessionV2;
+  }
+
+  /**
+   * Facilitator-only. Advances the session to the given phase.
+   * Additional fields (e.g. readinessWarnings) can be merged atomically.
+   */
+  async advancePhase(
+    sessionId: string,
+    phase: PlanningPhase,
+    extraFields: Record<string, unknown> = {},
+  ): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    await updateDoc(ref, { phase, updatedAt: Timestamp.now(), ...extraFields });
+  }
+
+  /** Facilitator-only. Moves the active review index to the given issue position. */
+  async setReviewIndex(sessionId: string, index: number): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    await updateDoc(ref, { currentReviewIndex: index, updatedAt: Timestamp.now() });
+  }
+
+  /**
+   * Replaces the full issueReviews array and recomputes the summary.
+   * Used by the facilitator to persist outcome and notes for reviewed issues.
+   */
+  async updateIssueReviews(
+    sessionId: string,
+    issueReviews: IssueReview[],
+  ): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    await updateDoc(ref, {
+      issueReviews,
+      summary: computeSessionSummary(issueReviews),
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  /**
+   * Participant-only. Atomically adds the given UID to the participation list
+   * for an issue, using Firestore `arrayUnion` so concurrent writes are safe.
+   */
+  async markParticipantWeighed(
+    sessionId: string,
+    issueId: string,
+    uid: string,
+  ): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    await updateDoc(ref, {
+      [`issueParticipation.${issueId}`]: arrayUnion(uid),
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  /** Persists the capacity calculation produced during Phase 5. */
+  async updateCapacityAndSummary(
+    sessionId: string,
+    capacityData: CapacityEntry[],
+    summary: PlanningSessionSummary,
+  ): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    await updateDoc(ref, { capacityData, summary, updatedAt: Timestamp.now() });
+  }
+
+  /**
+   * Facilitator-only. Marks the session as completed and the phase as
+   * 'finalized'. This is the terminal write for a v2 session.
+   */
+  async finalizeSessionV2(
+    sessionId: string,
+    issueReviews: IssueReview[],
+    capacityData: CapacityEntry[],
+  ): Promise<void> {
+    const ref = doc(this.col, sessionId);
+    const now = Timestamp.now();
+    await updateDoc(ref, {
+      status: 'completed',
+      phase: 'finalized' as PlanningPhase,
+      issueReviews,
+      capacityData,
+      summary: computeSessionSummary(issueReviews),
+      updatedAt: now,
+      completedAt: now,
+    });
   }
 }
