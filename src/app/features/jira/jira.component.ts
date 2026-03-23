@@ -98,6 +98,42 @@ export class JiraComponent implements OnInit {
     };
   });
 
+  readonly workflowSteps = [
+    { label: 'Review backlog', icon: 'playlist_add_check' },
+    { label: 'Estimate candidates', icon: 'calculate' },
+    { label: 'Plan by capacity', icon: 'calendar_view_week' },
+    { label: 'Review and commit', icon: 'rule' },
+  ] as const;
+
+  readonly velocityData = computed(() =>
+    this.planningHistory()
+      .filter((s) => s.status === 'completed')
+      .slice(0, 6)
+      .reverse()
+      .map((s) => ({
+        name: s.sprintName,
+        sp: s.summary?.totalStoryPoints ?? 0,
+      })),
+  );
+
+  readonly maxVelocity = computed(() => {
+    const data = this.velocityData();
+    return data.length ? Math.max(...data.map((v) => v.sp), 1) : 1;
+  });
+
+  readonly avgVelocity = computed(() => {
+    const completed = this.planningHistory().filter(
+      (s) => s.status === 'completed',
+    );
+    if (!completed.length) return 0;
+    return Math.round(
+      completed.reduce(
+        (acc, s) => acc + (s.summary?.totalStoryPoints ?? 0),
+        0,
+      ) / completed.length,
+    );
+  });
+
   async ngOnInit(): Promise<void> {
     await this.checkConfig();
     await this.loadHistory();
@@ -247,6 +283,10 @@ export class JiraComponent implements OnInit {
 
   viewSession(session: PlanningSession): void {
     this.router.navigate(['/sprints/planning', session.id]);
+  }
+
+  viewAllHistory(): void {
+    this.router.navigate(['/sprints/history']);
   }
 
   sprintProgress(sprint: JiraSprint | null): number {

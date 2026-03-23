@@ -1,0 +1,197 @@
+<div class="sh">
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="sh__header">
+    <button class="sh__back-btn" type="button" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="sh__header-text">
+      <span class="sh__eyebrow">
+        <span class="sh__eyebrow-dot sh__eyebrow-dot--indigo"></span>Sprint
+        Planning
+      </span>
+      <h1>Planning History</h1>
+    </div>
+    <button
+      class="sh__refresh-btn"
+      type="button"
+      (click)="load()"
+      [disabled]="loading()"
+      matTooltip="Refresh"
+    >
+      <mat-spinner *ngIf="loading()" diameter="16"></mat-spinner>
+      <mat-icon *ngIf="!loading()">refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Full-page loading ──────────────────────────────────────────────── -->
+  <div class="sh__spinner" *ngIf="loading()">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading history…</p>
+  </div>
+
+  <ng-container *ngIf="!loading()">
+    <!-- ── KPI strip ─────────────────────────────────────────────────────── -->
+    <div class="sh__kpi-strip">
+      <div class="sh__kpi">
+        <div class="sh__kpi-icon sh__kpi-icon--purple">
+          <mat-icon>history</mat-icon>
+        </div>
+        <div class="sh__kpi-body">
+          <strong>{{ sessions().length }}</strong>
+          <span>Total sessions</span>
+        </div>
+      </div>
+
+      <div class="sh__kpi">
+        <div class="sh__kpi-icon sh__kpi-icon--green">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="sh__kpi-body">
+          <strong>{{ completedSessions().length }}</strong>
+          <span>Completed</span>
+        </div>
+      </div>
+
+      <div class="sh__kpi">
+        <div class="sh__kpi-icon sh__kpi-icon--indigo">
+          <mat-icon>speed</mat-icon>
+        </div>
+        <div class="sh__kpi-body">
+          <strong>{{ avgVelocity() }}</strong>
+          <span>Avg SP / sprint</span>
+        </div>
+      </div>
+
+      <div class="sh__kpi">
+        <div class="sh__kpi-icon sh__kpi-icon--amber">
+          <mat-icon>auto_awesome</mat-icon>
+        </div>
+        <div class="sh__kpi-body">
+          <strong>{{ totalSP() }}</strong>
+          <span>Total SP delivered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Velocity sparkline ─────────────────────────────────────────────── -->
+    <div class="sh__velocity-card" *ngIf="velocityData().length > 0">
+      <div class="sh__velocity-head">
+        <span class="sh__eyebrow">
+          <span class="sh__eyebrow-dot sh__eyebrow-dot--indigo"></span>
+          Velocity Trend
+        </span>
+        <span class="sh__avg-chip">Avg {{ avgVelocity() }} SP / sprint</span>
+      </div>
+      <div class="sh__velocity-bars">
+        <div
+          *ngFor="let v of velocityData()"
+          class="sh__velocity-bar"
+          [style.height.px]="(v.sp / maxVelocity()) * 80 || 3"
+          [matTooltip]="v.name + ': ' + v.sp + ' SP'"
+        >
+          <span class="sh__velocity-val">{{ v.sp }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Empty state ────────────────────────────────────────────────────── -->
+    <div class="sh__empty" *ngIf="sessions().length === 0">
+      <div class="sh__empty-icon">
+        <mat-icon>event_note</mat-icon>
+      </div>
+      <h2>No planning sessions yet</h2>
+      <p>Start a sprint planning session from the Sprints page.</p>
+      <button class="sh__back-cta" type="button" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Go to Sprints
+      </button>
+    </div>
+
+    <ng-container *ngIf="sessions().length > 0">
+      <!-- ── Filter strip ─────────────────────────────────────────────────── -->
+      <div class="sh__filter-strip">
+        <button
+          class="sh__filter-btn"
+          [class.sh__filter-btn--active]="filter() === 'all'"
+          type="button"
+          (click)="setFilter('all')"
+        >
+          All
+          <span class="sh__filter-count">{{ sessions().length }}</span>
+        </button>
+        <button
+          class="sh__filter-btn"
+          [class.sh__filter-btn--active]="filter() === 'completed'"
+          type="button"
+          (click)="setFilter('completed')"
+        >
+          Completed
+          <span class="sh__filter-count sh__filter-count--green">{{
+            completedSessions().length
+          }}</span>
+        </button>
+        <button
+          class="sh__filter-btn"
+          [class.sh__filter-btn--active]="filter() === 'draft'"
+          type="button"
+          (click)="setFilter('draft')"
+        >
+          Drafts
+          <span class="sh__filter-count sh__filter-count--purple">{{
+            draftCount()
+          }}</span>
+        </button>
+      </div>
+
+      <!-- ── Session grid ──────────────────────────────────────────────────── -->
+      <div class="sh__grid" *ngIf="filteredSessions().length > 0">
+        <button
+          *ngFor="let s of filteredSessions(); trackBy: trackSession"
+          class="sh__session"
+          [class.sh__session--draft]="s.status === 'draft'"
+          [class.sh__session--done]="s.status === 'completed'"
+          type="button"
+          (click)="openSession(s)"
+        >
+          <div
+            class="sh__session-icon"
+            [class.sh__session-icon--done]="s.status === 'completed'"
+          >
+            <mat-icon>{{
+              s.status === "completed" ? "check_circle" : "edit_note"
+            }}</mat-icon>
+          </div>
+
+          <div class="sh__session-body">
+            <div class="sh__session-name">{{ s.sprintName }}</div>
+            <div class="sh__session-date">
+              {{ s.updatedAt.toDate() | date: "MMM d, y · HH:mm" }}
+            </div>
+            <div class="sh__session-chips">
+              <span class="sh__chip">{{ plannedTasks(s) }} tasks</span>
+              <span class="sh__chip sh__chip--sp">{{ spTotal(s) }} SP</span>
+              <span class="sh__chip">{{ participantCount(s) }} people</span>
+            </div>
+          </div>
+
+          <div class="sh__session-right">
+            <span
+              class="sh__badge"
+              [class.sh__badge--draft]="s.status === 'draft'"
+              [class.sh__badge--done]="s.status === 'completed'"
+            >
+              {{ s.status === "draft" ? "Draft" : "Done" }}
+            </span>
+            <mat-icon class="sh__chevron">chevron_right</mat-icon>
+          </div>
+        </button>
+      </div>
+
+      <!-- ── Empty filtered state ────────────────────────────────────────── -->
+      <div class="sh__empty-filter" *ngIf="filteredSessions().length === 0">
+        <mat-icon>filter_list_off</mat-icon>
+        <p>No {{ filter() }} sessions found.</p>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

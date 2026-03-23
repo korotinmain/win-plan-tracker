@@ -18,7 +18,10 @@ import {
   PlanningSessionV2,
 } from '../../../core/models/planning-session.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { JiraSprint, JiraSprintIssue } from '../../../core/services/jira.service';
+import {
+  JiraSprint,
+  JiraSprintIssue,
+} from '../../../core/services/jira.service';
 import { PlanningService } from '../../../core/services/planning.service';
 import { PlanMemberOption } from '../participant-select-dialog/participant-select-dialog.component';
 import { PhaseHeaderComponent } from './shared/phase-header/phase-header.component';
@@ -29,7 +32,10 @@ import { PhaseReviewComponent } from './phases/phase-review/phase-review.compone
 import { PhaseBalancingComponent } from './phases/phase-balancing/phase-balancing.component';
 import { PhaseFinalReviewComponent } from './phases/phase-final-review/phase-final-review.component';
 import { PhaseFinalizedComponent } from './phases/phase-finalized/phase-finalized.component';
-import { ReadinessWarning, computeReadinessWarnings } from './phases/phase-readiness/readiness.util';
+import {
+  ReadinessWarning,
+  computeReadinessWarnings,
+} from './phases/phase-readiness/readiness.util';
 
 // ─── Phase ordering ──────────────────────────────────────────────────────────
 const PHASE_ORDER: PlanningPhase[] = [
@@ -179,7 +185,8 @@ export class PlanningSessionComponent implements OnInit, OnDestroy {
       // Update URL to the bookmarkable canonical form (no component re-init)
       this.location.replaceState(`/sprints/planning/${id}`);
       this.subscribeToSession(id);
-    } catch {
+    } catch (err) {
+      console.error('[PlanningSession] createSessionV2 failed:', err);
       this.error.set('Failed to create planning session. Please try again.');
       this.loading.set(false);
     } finally {
@@ -190,32 +197,30 @@ export class PlanningSessionComponent implements OnInit, OnDestroy {
   // ── Firestore live subscription ───────────────────────────────────────────
   private subscribeToSession(sessionId: string): void {
     this.sessionSub?.unsubscribe();
-    this.sessionSub = this.planningService
-      .liveSessionV2$(sessionId)
-      .subscribe({
-        next: (doc) => {
-          if (!doc) {
-            this.error.set('Session not found.');
-            this.loading.set(false);
-            return;
-          }
-
-          if ((doc as { schemaVersion?: unknown }).schemaVersion !== 2) {
-            this.error.set(
-              'This session was created with an older version of the planning tool. Please start a new session.',
-            );
-            this.loading.set(false);
-            return;
-          }
-
-          this.session.set(doc);
+    this.sessionSub = this.planningService.liveSessionV2$(sessionId).subscribe({
+      next: (doc) => {
+        if (!doc) {
+          this.error.set('Session not found.');
           this.loading.set(false);
-        },
-        error: () => {
-          this.error.set('Failed to load planning session.');
+          return;
+        }
+
+        if ((doc as { schemaVersion?: unknown }).schemaVersion !== 2) {
+          this.error.set(
+            'This session was created with an older version of the planning tool. Please start a new session.',
+          );
           this.loading.set(false);
-        },
-      });
+          return;
+        }
+
+        this.session.set(doc);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to load planning session.');
+        this.loading.set(false);
+      },
+    });
   }
 
   // ── Phase navigation ──────────────────────────────────────────────────────
@@ -238,7 +243,9 @@ export class PlanningSessionComponent implements OnInit, OnDestroy {
     const s = this.session();
     if (!s?.id || !this.isFacilitator()) return;
 
-    const warnings: ReadinessWarning[] = computeReadinessWarnings(s.issueReviews);
+    const warnings: ReadinessWarning[] = computeReadinessWarnings(
+      s.issueReviews,
+    );
     const warningTitles = warnings.map((w) => w.title);
 
     this.advancing.set(true);
@@ -267,6 +274,12 @@ export class PlanningSessionComponent implements OnInit, OnDestroy {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   private getNavState(): Record<string, unknown> | undefined {
+    // window.history.state is the most reliable source in ngOnInit;
+    // lastSuccessfulNavigation may refer to an intermediate lazy-load step.
+    const historyState = window.history.state as Record<string, unknown> | null;
+    if (historyState?.['participants'] && historyState?.['sprint']) {
+      return historyState;
+    }
     return this.router.lastSuccessfulNavigation?.extras?.state as
       | Record<string, unknown>
       | undefined;

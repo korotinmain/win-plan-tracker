@@ -1,10 +1,17 @@
 <div class="sp-hub">
-  <div class="sp-hub__accent"></div>
-
+  <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
   <section class="sp-hub__hero">
     <div class="sp-hub__hero-copy">
-      <span class="sp-hub__eyebrow">Sprint Workspace</span>
-      <h1>Plan the next sprint as a workflow, not a spreadsheet.</h1>
+      <div class="sp-hub__connecting" *ngIf="connecting()">
+        <mat-spinner diameter="16"></mat-spinner>
+        <span>Connecting to Jira…</span>
+      </div>
+      <span class="sp-hub__eyebrow">
+        <span class="sp-hub__eyebrow-dot"></span>Sprint Workspace</span
+      >
+      <h1>
+        Plan the next sprint as a<br /><em>workflow</em>, not a spreadsheet.
+      </h1>
       <p>
         Review candidate work, estimate with confidence, balance capacity, and
         keep a clear planning history for every sprint.
@@ -12,11 +19,16 @@
 
       <div class="sp-hub__hero-actions">
         <button
-          class="sp-hub__btn sp-hub__btn--primary"
+          class="sp-hub__cta"
           (click)="startPlanning()"
-          [disabled]="planningButtonState() === 'hidden' || checkingPlanningState()"
+          [disabled]="
+            planningButtonState() === 'hidden' ||
+            planningButtonState() === 'no-issues' ||
+            checkingPlanningState()
+          "
           type="button"
         >
+          <span class="sp-hub__cta-shine"></span>
           <mat-spinner
             *ngIf="checkingPlanningState()"
             diameter="16"
@@ -40,14 +52,14 @@
         </button>
 
         <button
-          class="sp-hub__btn sp-hub__btn--ghost"
+          class="sp-hub__ghost-btn"
           (click)="refreshAll()"
           [disabled]="loadingSprints() || loadingHistory()"
           type="button"
         >
           <mat-spinner
             *ngIf="loadingSprints() || loadingHistory()"
-            diameter="16"
+            diameter="15"
           ></mat-spinner>
           <mat-icon *ngIf="!loadingSprints() && !loadingHistory()"
             >refresh</mat-icon
@@ -56,89 +68,96 @@
         </button>
       </div>
 
+      <!-- Workflow steps -->
       <div class="sp-hub__steps">
-        <div class="sp-hub__step">
-          <span>1</span>
-          <strong>Review backlog</strong>
-        </div>
-        <div class="sp-hub__step">
-          <span>2</span>
-          <strong>Estimate candidates</strong>
-        </div>
-        <div class="sp-hub__step">
-          <span>3</span>
-          <strong>Plan by capacity</strong>
-        </div>
-        <div class="sp-hub__step">
-          <span>4</span>
-          <strong>Review and commit</strong>
+        <div
+          class="sp-hub__step"
+          *ngFor="let step of workflowSteps; let i = index"
+        >
+          <span class="sp-hub__step-num">{{ i + 1 }}</span>
+          <mat-icon class="sp-hub__step-icon">{{ step.icon }}</mat-icon>
+          <strong>{{ step.label }}</strong>
         </div>
       </div>
     </div>
 
+    <!-- Right: status card -->
     <div class="sp-hub__status-card">
-      <div class="sp-hub__status-head">
-        <span class="sp-hub__status-label">Next sprint</span>
-        <span class="sp-hub__domain" *ngIf="configuredDomain()">{{
-          configuredDomain()
-        }}</span>
+      <div class="sp-hub__status-top">
+        <span class="sp-hub__eyebrow">
+          <span class="sp-hub__eyebrow-dot"></span>Next Sprint</span
+        >
+        <span class="sp-hub__jira-badge" *ngIf="configuredDomain()">
+          <mat-icon>link</mat-icon>{{ configuredDomain() }}
+        </span>
       </div>
 
       <ng-container *ngIf="nextSprint() as next; else noNextSprint">
-        <h2>{{ next.name }}</h2>
-        <p class="sp-hub__status-meta">
-          {{ next.issues.length }} issues
-          <span *ngIf="next.startDate && next.endDate">
-            · {{ next.startDate | date: "MMM d" }} -
-            {{ next.endDate | date: "MMM d" }}
-          </span>
-        </p>
+        <h2 class="sp-hub__sprint-name">{{ next.name }}</h2>
 
-        <div class="sp-hub__status-pill-row">
-          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'resume'">
-            Draft available
-          </span>
-          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'planned'">
-            Plan completed
-          </span>
-          <span class="sp-hub__pill" *ngIf="planningButtonState() === 'start'">
-            Ready to plan
-          </span>
+        <div class="sp-hub__sprint-meta">
           <span
-            class="sp-hub__pill sp-hub__pill--warn"
-            *ngIf="planningButtonState() === 'no-issues'"
+            ><mat-icon>confirmation_number</mat-icon
+            >{{ next.issues.length }} issues</span
           >
-            No issues in sprint
+          <span *ngIf="next.startDate && next.endDate">
+            <mat-icon>date_range</mat-icon
+            >{{ next.startDate | date: "MMM d" }} –
+            {{ next.endDate | date: "MMM d" }}
           </span>
         </div>
 
-        <div class="sp-hub__metrics">
-          <div>
-            <strong>{{ draftCount() }}</strong>
-            <span>Drafts</span>
+        <div class="sp-hub__state-pill-row">
+          <div
+            class="sp-hub__state-pill"
+            [ngClass]="'sp-hub__state-pill--' + planningButtonState()"
+          >
+            <span class="sp-hub__state-dot"></span>
+            {{
+              planningButtonState() === "resume"
+                ? "Draft in progress"
+                : planningButtonState() === "planned"
+                  ? "Plan completed"
+                  : planningButtonState() === "start"
+                    ? "Ready to plan"
+                    : planningButtonState() === "no-issues"
+                      ? "No issues in sprint"
+                      : "–"
+            }}
           </div>
-          <div>
-            <strong>{{ completedCount() }}</strong>
-            <span>Completed plans</span>
+        </div>
+
+        <div class="sp-hub__status-metrics">
+          <div class="sp-hub__status-metric">
+            <strong>{{ draftCount() }}</strong
+            ><span>Drafts</span>
           </div>
-          <div>
-            <strong>{{ next.issues.length }}</strong>
-            <span>Candidate issues</span>
+          <div class="sp-hub__status-metric">
+            <strong>{{ completedCount() }}</strong
+            ><span>Completed</span>
+          </div>
+          <div class="sp-hub__status-metric">
+            <strong>{{ next.issues.length }}</strong
+            ><span>Issues</span>
           </div>
         </div>
       </ng-container>
 
       <ng-template #noNextSprint>
-        <h2>No future sprint found</h2>
-        <p class="sp-hub__status-meta">
-          Jira did not return a future sprint for this board.
-        </p>
+        <div class="sp-hub__no-sprint">
+          <div class="sp-hub__no-sprint-icon">
+            <mat-icon>rocket_launch</mat-icon>
+          </div>
+          <h2>No future sprint found</h2>
+          <p>Jira did not return a future sprint for this board.</p>
+        </div>
       </ng-template>
     </div>
   </section>
 
-  <div *ngIf="configured() === false" class="sp-hub__empty">
-    <mat-icon>cloud_off</mat-icon>
+  <!-- ── Jira unconfigured ──────────────────────────────────────────────────── -->
+  <div *ngIf="configured() === false" class="sp-hub__unconfigured">
+    <div class="sp-hub__unconfigured-icon"><mat-icon>cloud_off</mat-icon></div>
     <h2>Jira is not configured</h2>
     <p>
       Set <code>JIRA_DOMAIN</code>, <code>JIRA_EMAIL</code>, and
@@ -147,205 +166,342 @@
   </div>
 
   <ng-container *ngIf="configured()">
-    <section class="sp-hub__overview">
-      <article class="sp-hub__panel sp-hub__panel--active">
-        <div class="sp-hub__panel-head">
-          <div>
-            <span class="sp-hub__panel-label">Current sprint</span>
-            <h3>{{ activeSprint()?.name ?? "No active sprint" }}</h3>
-          </div>
-          <span
-            class="sp-hub__badge"
-            *ngIf="daysRemaining(activeSprint()) !== null"
-          >
-            {{ daysRemaining(activeSprint()) }}d left
-          </span>
+    <!-- ── KPI strip ──────────────────────────────────────────────────────────── -->
+    <div class="sp-hub__kpi-strip">
+      <div class="sp-hub__kpi">
+        <div class="sp-hub__kpi-icon sp-hub__kpi-icon--indigo">
+          <mat-icon>bolt</mat-icon>
         </div>
-
-        <div class="sp-hub__progress" *ngIf="activeSprint()">
-          <div class="sp-hub__progress-bar">
-            <div
-              class="sp-hub__progress-fill"
-              [style.width.%]="sprintProgress(activeSprint())"
-            ></div>
-          </div>
-          <span>{{ sprintProgress(activeSprint()) }}% done</span>
+        <div>
+          <strong>{{ avgVelocity() }}</strong
+          ><span>Avg SP&nbsp;/&nbsp;sprint</span>
         </div>
-
-        <div class="sp-hub__stat-grid">
-          <div>
-            <strong>{{ activeStats().total }}</strong>
-            <span>Total</span>
-          </div>
-          <div>
-            <strong>{{ activeStats().inProgress }}</strong>
-            <span>In progress</span>
-          </div>
-          <div>
-            <strong>{{ activeStats().done }}</strong>
-            <span>Done</span>
-          </div>
-          <div>
-            <strong>{{ activeStats().todo }}</strong>
-            <span>To do</span>
-          </div>
+      </div>
+      <div class="sp-hub__kpi-divider"></div>
+      <div class="sp-hub__kpi">
+        <div class="sp-hub__kpi-icon sp-hub__kpi-icon--violet">
+          <mat-icon>history</mat-icon>
         </div>
-      </article>
-
-      <article class="sp-hub__panel sp-hub__panel--flow">
-        <div class="sp-hub__panel-head">
+        <div>
+          <strong>{{ planningHistory().length }}</strong
+          ><span>Planning sessions</span>
+        </div>
+      </div>
+      <div class="sp-hub__kpi-divider"></div>
+      <div class="sp-hub__kpi">
+        <div class="sp-hub__kpi-icon sp-hub__kpi-icon--green">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div>
+          <strong>{{ completedCount() }}</strong
+          ><span>Completed plans</span>
+        </div>
+      </div>
+      <ng-container *ngIf="activeSprint()">
+        <div class="sp-hub__kpi-divider"></div>
+        <div class="sp-hub__kpi">
+          <div class="sp-hub__kpi-icon sp-hub__kpi-icon--amber">
+            <mat-icon>trending_up</mat-icon>
+          </div>
           <div>
-            <span class="sp-hub__panel-label">Planning process</span>
-            <h3>Designed for decision-making</h3>
+            <strong>{{ sprintProgress(activeSprint()) }}%</strong
+            ><span>Active sprint done</span>
           </div>
         </div>
+      </ng-container>
+    </div>
 
-        <div class="sp-hub__flow-list">
-          <div>
-            <mat-icon>playlist_add_check</mat-icon>
-            <strong>Review</strong>
-            <p>Shortlist the right work and check readiness before planning.</p>
-          </div>
-          <div>
-            <mat-icon>calculate</mat-icon>
-            <strong>Estimate</strong>
-            <p>Work through candidate issues in a focused estimation queue.</p>
-          </div>
-          <div>
-            <mat-icon>calendar_view_week</mat-icon>
-            <strong>Plan</strong>
-            <p>Balance participants and workdays with clear sprint context.</p>
-          </div>
-          <div>
-            <mat-icon>rule</mat-icon>
-            <strong>Review</strong>
-            <p>Validate risks, overload, and stretch work before committing.</p>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="sp-hub__content-grid">
-      <article class="sp-hub__panel sp-hub__issues">
-        <div class="sp-hub__panel-head">
-          <div>
-            <span class="sp-hub__panel-label">Next sprint inbox</span>
-            <h3>{{ nextSprint()?.issues?.length ?? 0 }} issues ready for review</h3>
-          </div>
-        </div>
-
-        <div *ngIf="loadingSprints()" class="sp-hub__loading">
-          <mat-spinner diameter="28"></mat-spinner>
-          <span>Loading sprint issues…</span>
-        </div>
-
-        <div
-          *ngIf="!loadingSprints() && (nextSprint()?.issues?.length ?? 0) === 0"
-          class="sp-hub__empty-inline"
-        >
-          <mat-icon>inbox</mat-icon>
-          <p>No issues available for the next sprint.</p>
-        </div>
-
-        <div class="sp-hub__issue-list" *ngIf="(nextSprint()?.issues?.length ?? 0) > 0">
-          <a
-            *ngFor="let issue of nextSprint()!.issues.slice(0, 8)"
-            class="sp-hub__issue"
-            href="https://{{ configuredDomain() }}/browse/{{ issue.id }}"
-            target="_blank"
-            rel="noopener"
-          >
-            <div class="sp-hub__issue-top">
-              <span>{{ issue.id }}</span>
-              <mat-icon [class]="'type-' + issue.type.toLowerCase()">{{
-                typeIcon(issue.type)
-              }}</mat-icon>
+    <!-- ── Two-column main grid ──────────────────────────────────────────────── -->
+    <div class="sp-hub__grid">
+      <!-- Left column -->
+      <div class="sp-hub__col-left">
+        <!-- Active sprint card -->
+        <article class="sp-hub__card" *ngIf="activeSprint() as active">
+          <div class="sp-hub__card-head">
+            <div>
+              <span class="sp-hub__eyebrow">
+                <span
+                  class="sp-hub__eyebrow-dot sp-hub__eyebrow-dot--green"
+                ></span
+                >Current Sprint</span
+              >
+              <h3>{{ active.name }}</h3>
             </div>
-            <strong>{{ issue.title }}</strong>
-            <div class="sp-hub__issue-meta">
-              <span>{{ issue.type }}</span>
-              <span *ngIf="issue.assignee">{{ issue.assignee }}</span>
-              <span *ngIf="issue.storyPoints">{{ issue.storyPoints }} SP</span>
+            <div class="sp-hub__badge-group">
+              <span
+                class="sp-hub__badge sp-hub__badge--days"
+                *ngIf="daysRemaining(active) !== null"
+              >
+                {{ daysRemaining(active) }}d left
+              </span>
+              <span class="sp-hub__badge sp-hub__badge--progress"
+                >{{ sprintProgress(active) }}%</span
+              >
             </div>
-          </a>
-        </div>
-      </article>
-
-      <article class="sp-hub__panel sp-hub__history">
-        <div class="sp-hub__panel-head">
-          <div>
-            <span class="sp-hub__panel-label">Planning history</span>
-            <h3>Drafts and completed sprint plans</h3>
           </div>
-          <button
-            class="sp-hub__btn sp-hub__btn--ghost sp-hub__btn--small"
-            (click)="loadHistory()"
-            [disabled]="loadingHistory()"
-            type="button"
-          >
-            <mat-spinner *ngIf="loadingHistory()" diameter="14"></mat-spinner>
-            <mat-icon *ngIf="!loadingHistory()">refresh</mat-icon>
-          </button>
-        </div>
 
-        <div *ngIf="loadingHistory()" class="sp-hub__loading">
-          <mat-spinner diameter="28"></mat-spinner>
-          <span>Loading planning sessions…</span>
-        </div>
-
-        <div
-          *ngIf="!loadingHistory() && planningHistory().length === 0"
-          class="sp-hub__empty-inline"
-        >
-          <mat-icon>event_note</mat-icon>
-          <p>No planning sessions yet.</p>
-        </div>
-
-        <div class="sp-hub__history-list" *ngIf="planningHistory().length > 0">
-          <button
-            *ngFor="let session of planningHistory(); trackBy: trackSession"
-            class="sp-hub__history-card"
-            [class.sp-hub__history-card--draft]="session.status === 'draft'"
-            [class.sp-hub__history-card--done]="session.status === 'completed'"
-            (click)="viewSession(session)"
-            type="button"
-          >
-            <div class="sp-hub__history-top">
-              <div>
-                <span class="sp-hub__history-name">{{ session.sprintName }}</span>
-                <span class="sp-hub__history-date">
-                  {{ session.updatedAt.toDate() | date: "MMM d, y · HH:mm" }}
-                </span>
+          <div class="sp-hub__progress-row">
+            <div class="sp-hub__progress-ring-wrap">
+              <svg class="sp-hub__ring" viewBox="0 0 44 44" aria-hidden="true">
+                <defs>
+                  <linearGradient
+                    id="sp-ring-grad"
+                    gradientTransform="rotate(90)"
+                  >
+                    <stop offset="0%" stop-color="#6366f1" />
+                    <stop offset="100%" stop-color="#10b981" />
+                  </linearGradient>
+                </defs>
+                <circle cx="22" cy="22" r="17" class="sp-hub__ring-track" />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="17"
+                  class="sp-hub__ring-fill"
+                  stroke="url(#sp-ring-grad)"
+                  [attr.stroke-dashoffset]="
+                    (1 - sprintProgress(active) / 100) * 106.81
+                  "
+                />
+              </svg>
+              <span class="sp-hub__ring-label"
+                >{{ sprintProgress(active) }}%</span
+              >
+            </div>
+            <div class="sp-hub__progress-detail">
+              <div class="sp-hub__stat-row">
+                <div class="sp-hub__stat-chip">
+                  <strong>{{ activeStats().total }}</strong
+                  ><span>Total</span>
+                </div>
+                <div class="sp-hub__stat-chip sp-hub__stat-chip--blue">
+                  <strong>{{ activeStats().inProgress }}</strong
+                  ><span>In Progress</span>
+                </div>
+                <div class="sp-hub__stat-chip sp-hub__stat-chip--green">
+                  <strong>{{ activeStats().done }}</strong
+                  ><span>Done</span>
+                </div>
+                <div class="sp-hub__stat-chip">
+                  <strong>{{ activeStats().todo }}</strong
+                  ><span>To Do</span>
+                </div>
               </div>
-              <span class="sp-hub__history-status">{{
-                session.status === "draft" ? "Draft" : "Completed"
+              <div class="sp-hub__bar-track">
+                <div
+                  class="sp-hub__bar-fill sp-hub__bar-fill--done"
+                  [style.width.%]="
+                    activeStats().total
+                      ? (activeStats().done / activeStats().total) * 100
+                      : 0
+                  "
+                ></div>
+                <div
+                  class="sp-hub__bar-fill sp-hub__bar-fill--progress"
+                  [style.width.%]="
+                    activeStats().total
+                      ? (activeStats().inProgress / activeStats().total) * 100
+                      : 0
+                  "
+                ></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Next sprint issue inbox — moved to full-width row below grid -->
+      </div>
+
+      <!-- Right column: history + velocity -->
+      <div class="sp-hub__col-right">
+        <article class="sp-hub__card">
+          <div class="sp-hub__card-head">
+            <div>
+              <span class="sp-hub__eyebrow">
+                <span class="sp-hub__eyebrow-dot"></span>Planning History</span
+              >
+              <h3>Velocity &amp; sprint plans</h3>
+            </div>
+            <button
+              class="sp-hub__icon-btn"
+              (click)="loadHistory()"
+              [disabled]="loadingHistory()"
+              type="button"
+              matTooltip="Refresh history"
+            >
+              <mat-spinner *ngIf="loadingHistory()" diameter="14"></mat-spinner>
+              <mat-icon *ngIf="!loadingHistory()">refresh</mat-icon>
+            </button>
+          </div>
+
+          <!-- Sprint velocity sparkline -->
+          <div class="sp-hub__velocity" *ngIf="velocityData().length > 0">
+            <span class="sp-hub__velocity-label">Story Points per Sprint</span>
+            <div class="sp-hub__velocity-bars">
+              <div
+                *ngFor="let v of velocityData()"
+                class="sp-hub__velocity-bar"
+                [style.height.px]="(v.sp / maxVelocity()) * 52 || 3"
+                [matTooltip]="v.name + ': ' + v.sp + ' SP'"
+              >
+                <span class="sp-hub__velocity-val">{{ v.sp }}</span>
+              </div>
+            </div>
+            <div class="sp-hub__velocity-avg" *ngIf="avgVelocity() > 0">
+              <span>Avg velocity</span><strong>{{ avgVelocity() }} SP</strong>
+            </div>
+          </div>
+
+          <div class="sp-hub__loading-row" *ngIf="loadingHistory()">
+            <mat-spinner diameter="22"></mat-spinner
+            ><span>Loading sessions…</span>
+          </div>
+
+          <div
+            class="sp-hub__empty-inline"
+            *ngIf="!loadingHistory() && planningHistory().length === 0"
+          >
+            <mat-icon>event_note</mat-icon>
+            <p>No planning sessions yet.</p>
+          </div>
+
+          <div class="sp-hub__sessions" *ngIf="planningHistory().length > 0">
+            <button
+              *ngFor="
+                let session of planningHistory().slice(0, 3);
+                trackBy: trackSession
+              "
+              class="sp-hub__session"
+              [ngClass]="{
+                'sp-hub__session--draft': session.status === 'draft',
+                'sp-hub__session--done': session.status === 'completed',
+              }"
+              (click)="viewSession(session)"
+              type="button"
+            >
+              <div
+                class="sp-hub__session-icon"
+                [ngClass]="{
+                  'sp-hub__session-icon--done': session.status === 'completed',
+                }"
+              >
+                <mat-icon>{{
+                  session.status === "completed" ? "check_circle" : "edit_note"
+                }}</mat-icon>
+              </div>
+              <div class="sp-hub__session-body">
+                <div class="sp-hub__session-name">{{ session.sprintName }}</div>
+                <div class="sp-hub__session-date">
+                  {{ session.updatedAt.toDate() | date: "MMM d, y · HH:mm" }}
+                </div>
+                <div class="sp-hub__session-chips">
+                  <span class="sp-hub__session-chip"
+                    >{{ session.summary?.plannedTasks ?? 0 }} tasks</span
+                  >
+                  <span class="sp-hub__session-chip sp-hub__session-chip--sp"
+                    >{{ session.summary?.totalStoryPoints ?? 0 }} SP</span
+                  >
+                  <span class="sp-hub__session-chip"
+                    >{{
+                      session.participants?.length ??
+                        session.participantIds?.length ??
+                        0
+                    }}
+                    people</span
+                  >
+                </div>
+              </div>
+              <div class="sp-hub__session-right">
+                <span
+                  class="sp-hub__session-badge"
+                  [ngClass]="{
+                    'sp-hub__session-badge--draft': session.status === 'draft',
+                    'sp-hub__session-badge--done':
+                      session.status === 'completed',
+                  }"
+                  >{{ session.status === "draft" ? "Draft" : "Done" }}</span
+                >
+                <mat-icon class="sp-hub__session-chevron"
+                  >chevron_right</mat-icon
+                >
+              </div>
+            </button>
+          </div>
+
+          <!-- View all link -->
+          <button
+            *ngIf="planningHistory().length > 0"
+            class="sp-hub__view-all-btn"
+            type="button"
+            (click)="viewAllHistory()"
+          >
+            <span>View all {{ planningHistory().length }} sessions</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </article>
+      </div>
+    </div>
+
+    <!-- ── Full-width Next Sprint Inbox ──────────────────────────────────────── -->
+    <article class="sp-hub__card sp-hub__card--inbox">
+      <div class="sp-hub__card-head">
+        <div>
+          <span class="sp-hub__eyebrow">
+            <span class="sp-hub__eyebrow-dot"></span>Next Sprint Inbox</span
+          >
+          <h3>
+            {{ nextSprint()?.issues?.length ?? 0 }} issues ready for review
+          </h3>
+        </div>
+      </div>
+
+      <div class="sp-hub__loading-row" *ngIf="loadingSprints()">
+        <mat-spinner diameter="22"></mat-spinner>
+        <span>Loading sprint issues…</span>
+      </div>
+
+      <div
+        class="sp-hub__empty-inline"
+        *ngIf="!loadingSprints() && (nextSprint()?.issues?.length ?? 0) === 0"
+      >
+        <mat-icon>inbox</mat-icon>
+        <p>No issues available for the next sprint.</p>
+      </div>
+
+      <div
+        class="sp-hub__issue-list sp-hub__issue-list--grid"
+        *ngIf="(nextSprint()?.issues?.length ?? 0) > 0"
+      >
+        <a
+          *ngFor="let issue of nextSprint()!.issues.slice(0, 12)"
+          class="sp-hub__issue-row"
+          [href]="'https://' + configuredDomain() + '/browse/' + issue.id"
+          target="_blank"
+          rel="noopener"
+        >
+          <div
+            class="sp-hub__issue-type"
+            [ngClass]="'sp-hub__issue-type--' + issue.type.toLowerCase()"
+          >
+            <mat-icon>{{ typeIcon(issue.type) }}</mat-icon>
+          </div>
+          <div class="sp-hub__issue-body">
+            <div class="sp-hub__issue-title">{{ issue.title }}</div>
+            <div class="sp-hub__issue-meta">
+              <span class="sp-hub__issue-key">{{ issue.id }}</span>
+              <span *ngIf="issue.assignee" class="sp-hub__issue-assignee">{{
+                issue.assignee
               }}</span>
             </div>
-
-            <div class="sp-hub__history-stats">
-              <div>
-                <strong>{{ session.summary.plannedTasks }}</strong>
-                <span>Planned</span>
-              </div>
-              <div>
-                <strong>{{ session.summary.totalStoryPoints }}</strong>
-                <span>SP</span>
-              </div>
-              <div>
-                <strong>{{ session.summary.unplannedTasks }}</strong>
-                <span>Left</span>
-              </div>
-            </div>
-
-            <div class="sp-hub__history-foot">
-              <span>{{ session.participants.length }} participants</span>
-              <span *ngIf="session.workflowStep">
-                Step: {{ session.workflowStep }}
-              </span>
-            </div>
-          </button>
-        </div>
-      </article>
-    </section>
+          </div>
+          <div class="sp-hub__issue-right">
+            <span class="sp-hub__sp-chip" *ngIf="issue.storyPoints"
+              >{{ issue.storyPoints }} SP</span
+            >
+            <mat-icon class="sp-hub__issue-ext-icon">open_in_new</mat-icon>
+          </div>
+        </a>
+      </div>
+    </article>
   </ng-container>
 </div>

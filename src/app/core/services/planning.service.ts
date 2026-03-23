@@ -304,7 +304,8 @@ export class PlanningService {
     ]);
 
     return (
-      sessions.find((session) => canReadLegacyPlanningSession(session, uid)) ?? null
+      sessions.find((session) => canReadLegacyPlanningSession(session, uid)) ??
+      null
     );
   }
 
@@ -317,7 +318,9 @@ export class PlanningService {
       orderBy('updatedAt', 'desc'),
     ]);
 
-    return sessions.filter((session) => canReadLegacyPlanningSession(session, uid));
+    return sessions.filter((session) =>
+      canReadLegacyPlanningSession(session, uid),
+    );
   }
 
   private async getFirstSessionByConstraints(
@@ -364,10 +367,11 @@ export class PlanningService {
     const session: Omit<PlanningSessionV2, 'id'> = {
       schemaVersion: 2,
       sprintId: payload.sprintId,
-      sprintName: payload.sprintName,
-      sprintGoal: payload.sprintGoal,
-      sprintStartDate: payload.sprintStartDate,
-      sprintEndDate: payload.sprintEndDate,
+      sprintName: payload.sprintName ?? '',
+      // Firestore rejects `undefined`; coerce nullable strings to null explicitly
+      sprintGoal: payload.sprintGoal ?? null,
+      sprintStartDate: payload.sprintStartDate ?? null,
+      sprintEndDate: payload.sprintEndDate ?? null,
       teamId: access.teamId,
       status: 'draft',
       phase: 'setup',
@@ -420,7 +424,10 @@ export class PlanningService {
   /** Facilitator-only. Moves the active review index to the given issue position. */
   async setReviewIndex(sessionId: string, index: number): Promise<void> {
     const ref = doc(this.col, sessionId);
-    await updateDoc(ref, { currentReviewIndex: index, updatedAt: Timestamp.now() });
+    await updateDoc(ref, {
+      currentReviewIndex: index,
+      updatedAt: Timestamp.now(),
+    });
   }
 
   /**

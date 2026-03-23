@@ -68,6 +68,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sprints/history',
+        loadComponent: () =>
+          import('./features/sprints/sprint-history/sprint-history.component').then(
+            (m) => m.SprintHistoryComponent,
+          ),
+      },
+      {
         path: 'teams',
         canActivate: [roleGuard(['admin', 'manager'])],
         loadComponent: () =>
