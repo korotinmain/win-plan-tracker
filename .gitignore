@@ -52,9 +52,7 @@ src/environments/environment.*.ts
 .env.*
 *.local
 
-# Firebase deployment config (may contain project-specific tokens)
-.firebaserc
-firebase.json
+# Firebase local state and debug logs
 .firebase/
 firebase-debug.log
 firestore-debug.log
