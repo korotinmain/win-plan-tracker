@@ -1,6 +1,11 @@
+import { TestBed } from '@angular/core/testing';
+import { Functions } from '@angular/fire/functions';
 import { Team } from '../models/team.model';
 import { AppUser } from '../models/user.model';
 import {
+  TeamDirectoryService,
+  teamMembershipCandidatesCallable,
+  TeamMembershipCandidate,
   filterCandidateUsers,
   filterJoinableTeams,
 } from './team-directory.service';
@@ -111,5 +116,66 @@ describe('team-directory.service helpers', () => {
     expect(
       filterJoinableTeams(teams, 'user-1', 'ga').map((team) => team.id),
     ).toEqual(['g']);
+  });
+});
+
+describe('TeamDirectoryService membership candidates', () => {
+  let service: TeamDirectoryService;
+  let callable: jasmine.Spy;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: Functions, useValue: {} }],
+    });
+
+    callable = spyOn(
+      teamMembershipCandidatesCallable,
+      'getTeamMembershipCandidates',
+    ).and.callFake(async (_functions: Functions, payload: any) => ({
+      candidates: [
+        {
+          uid: 'user-1',
+          displayName: 'Alex Johnson',
+          email: 'alex@example.com',
+          photoURL: 'https://example.com/avatar.png',
+          teamId: 'team-1',
+        },
+      ],
+      payload,
+    }));
+
+    service = TestBed.inject(TeamDirectoryService);
+  });
+
+  it('maps callable candidates into the frontend candidate type', async () => {
+    const candidates: TeamMembershipCandidate[] =
+      await service.getMembershipCandidates('team-1');
+
+    expect(candidates).toEqual([
+      {
+        uid: 'user-1',
+        displayName: 'Alex Johnson',
+        email: 'alex@example.com',
+        photoURL: 'https://example.com/avatar.png',
+        teamId: 'team-1',
+      },
+    ]);
+  });
+
+  it('passes only teamId when no search text is provided', async () => {
+    await service.getMembershipCandidates('team-1');
+
+    expect(callable).toHaveBeenCalledWith(jasmine.anything(), {
+      teamId: 'team-1',
+    });
+  });
+
+  it('passes teamId and optional search to the callable wrapper', async () => {
+    await service.getMembershipCandidates('team-1', 'alex');
+
+    expect(callable).toHaveBeenCalledWith(jasmine.anything(), {
+      teamId: 'team-1',
+      search: 'alex',
+    });
   });
 });
