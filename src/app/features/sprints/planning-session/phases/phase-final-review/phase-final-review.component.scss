@@ -1,0 +1,313 @@
+:host {
+  display: block;
+}
+
+.fr {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 0;
+
+  // ── Sprint identity header ─────────────────────────────────
+  &__sprint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__sprint-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--c-text);
+  }
+
+  &__review-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-3);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  // ── Stats row ──────────────────────────────────────────────
+  &__stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    padding: 16px 8px;
+  }
+
+  &__stat {
+    flex: 1;
+    text-align: center;
+    padding: 4px 12px;
+
+    &--committed &-value {
+      color: var(--c-accent);
+    }
+  }
+
+  &__stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  &__stat-label {
+    font-size: 11px;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  &__stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--c-border);
+    flex-shrink: 0;
+  }
+
+  // ── Issue groups ───────────────────────────────────────────
+  &__groups {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__group {
+    background: var(--c-surface);
+    border: 1.5px solid var(--c-border);
+    border-radius: 14px;
+    overflow: hidden;
+
+    &--confirmed {
+      border-color: color-mix(in srgb, var(--c-success) 35%, var(--c-border));
+    }
+
+    &--risky {
+      border-color: color-mix(in srgb, var(--c-warning) 35%, var(--c-border));
+    }
+
+    &--deferred {
+      border-color: color-mix(in srgb, var(--c-critical) 25%, var(--c-border));
+    }
+  }
+
+  &__group-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: color-mix(in srgb, var(--c-surface) 60%, transparent);
+    border-bottom: 1px solid var(--c-border);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--c-text-3);
+      flex-shrink: 0;
+    }
+  }
+
+  .fr__group--confirmed .fr__group-head mat-icon { color: var(--c-success); }
+  .fr__group--risky .fr__group-head mat-icon     { color: var(--c-warning); }
+  .fr__group--deferred .fr__group-head mat-icon  { color: var(--c-critical); }
+
+  &__group-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__group-count {
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--c-accent) 15%, transparent);
+    color: var(--c-accent);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0 8px;
+  }
+
+  // ── Issue rows ─────────────────────────────────────────────
+  &__issue-list {
+    padding: 4px 0;
+  }
+
+  &__issue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    transition: background 0.1s;
+
+    &:hover {
+      background: color-mix(in srgb, var(--c-accent) 5%, transparent);
+    }
+  }
+
+  &__issue-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: var(--c-accent);
+    flex-shrink: 0;
+  }
+
+  &__issue-key {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-text-3);
+    flex-shrink: 0;
+    min-width: 60px;
+  }
+
+  &__issue-title {
+    flex: 1;
+    font-size: 13px;
+    color: var(--c-text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__issue-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  &__assignee {
+    font-size: 12px;
+    color: var(--c-text-3);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__issue-sp {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-accent);
+    background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+    border-radius: 8px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  &__issue-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0 18px 8px 43px;
+
+    mat-icon {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+      color: var(--c-text-3);
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 12px;
+      color: var(--c-text-3);
+      line-height: 1.4;
+    }
+  }
+
+  // ── Footer ─────────────────────────────────────────────────
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 4px;
+  }
+
+  &__back-btn {
+    color: var(--c-text-2);
+    border-color: var(--c-border);
+
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+
+  &__finalize-btn {
+    background: linear-gradient(135deg, var(--c-accent), color-mix(in srgb, var(--c-accent) 70%, #8b5cf6));
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 0 28px;
+    height: 46px;
+    border-radius: 23px;
+    transition: opacity 0.15s, box-shadow 0.15s;
+
+    &:not([disabled]):hover {
+      box-shadow: 0 4px 20px color-mix(in srgb, var(--c-accent) 40%, transparent);
+    }
+
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+
+  // ── Observer state ─────────────────────────────────────────
+  &__observer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--c-text-3);
+    font-size: 14px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 12px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}

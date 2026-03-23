@@ -1,0 +1,104 @@
+<div class="fr">
+  <!-- Sprint identity header -->
+  <div class="fr__sprint-header">
+    <div class="fr__sprint-name">{{ session.sprintName }}</div>
+    <span class="fr__review-label">Final Review</span>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="fr__stats">
+    <div class="fr__stat fr__stat--committed">
+      <div class="fr__stat-value">{{ committedSP }}</div>
+      <div class="fr__stat-label">Committed SP</div>
+    </div>
+    <div class="fr__stat-divider"></div>
+    <div class="fr__stat">
+      <div class="fr__stat-value">{{ confirmedCount }}</div>
+      <div class="fr__stat-label">Confirmed</div>
+    </div>
+    <div class="fr__stat-divider"></div>
+    <div class="fr__stat">
+      <div class="fr__stat-value">{{ deferredCount }}</div>
+      <div class="fr__stat-label">Deferred</div>
+    </div>
+    <div class="fr__stat-divider"></div>
+    <div class="fr__stat">
+      <div class="fr__stat-value">{{ session.participantIds.length }}</div>
+      <div class="fr__stat-label">Participants</div>
+    </div>
+  </div>
+
+  <!-- Issue groups by outcome -->
+  <div class="fr__groups">
+    @for (g of OUTCOME_GROUPS; track g.outcome) {
+      @if (groupFor(g.outcome).length > 0) {
+        <div class="fr__group"
+          [class.fr__group--confirmed]="g.outcome === 'confirmed'"
+          [class.fr__group--risky]="g.outcome === 'risky-accepted'"
+          [class.fr__group--deferred]="g.outcome === 'deferred'"
+        >
+          <div class="fr__group-head">
+            <mat-icon>{{ g.icon }}</mat-icon>
+            <span class="fr__group-label">{{ g.label }}</span>
+            <span class="fr__group-count">{{ groupFor(g.outcome).length }}</span>
+          </div>
+
+          <div class="fr__issue-list">
+            @for (issue of groupFor(g.outcome); track issue.issueId) {
+              <div class="fr__issue-row">
+                <mat-icon class="fr__issue-icon">{{ getTypeIcon(issue.type) }}</mat-icon>
+                <span class="fr__issue-key">{{ issue.issueKey }}</span>
+                <span class="fr__issue-title">{{ issue.title }}</span>
+                <div class="fr__issue-right">
+                  @if (issue.assignee) {
+                    <span class="fr__assignee">{{ issue.assignee }}</span>
+                  }
+                  @if (issue.storyPoints > 0) {
+                    <span class="fr__issue-sp">{{ issue.storyPoints }} SP</span>
+                  }
+                </div>
+              </div>
+              @if (issue.notes) {
+                <div class="fr__issue-notes">
+                  <mat-icon>notes</mat-icon>
+                  <span>{{ issue.notes }}</span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Footer -->
+  @if (isFacilitator) {
+    <div class="fr__footer">
+      <button mat-stroked-button class="fr__back-btn" (click)="back.emit()" [disabled]="finalizing() || advancing">
+        <mat-icon>arrow_back</mat-icon>Back
+      </button>
+
+      <button
+        mat-flat-button
+        class="fr__finalize-btn"
+        (click)="finalize()"
+        [disabled]="finalizing() || advancing"
+      >
+        @if (finalizing() || advancing) {
+          <ng-container>
+            <mat-icon class="spin">progress_activity</mat-icon>Finalizing…
+          </ng-container>
+        } @else {
+          <ng-container>
+            <mat-icon>check_circle</mat-icon>Commit Sprint Plan
+          </ng-container>
+        }
+      </button>
+    </div>
+  } @else {
+    <div class="fr__observer">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Waiting for facilitator to finalize…</span>
+    </div>
+  }
+</div>

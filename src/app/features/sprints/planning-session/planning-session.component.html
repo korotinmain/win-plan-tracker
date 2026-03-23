@@ -124,21 +124,23 @@
       ></app-phase-balancing>
     }
 
-    <!-- Phases coming in future increments — placeholder -->
-    @else if (session() && currentPhase() !== 'setup') {
-      <div class="ps-shell__state-center">
-        <div class="ps-shell__placeholder-card">
-          <mat-icon class="ps-shell__placeholder-icon">construction</mat-icon>
-          <h3>{{ currentPhase() | titlecase }} Phase</h3>
-          <p>This phase is being built in the next increment.</p>
-          @if (isFacilitator()) {
-            <button class="ps-shell__action-btn ps-shell__action-btn--ghost" (click)="prevPhase()" type="button">
-              <mat-icon>arrow_back</mat-icon>
-              Go back to Setup
-            </button>
-          }
-        </div>
-      </div>
+    <!-- Final review phase -->
+    @else if (session() && currentPhase() === 'final-review') {
+      <app-phase-final-review
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advance()"
+        (back)="prevPhase()"
+      ></app-phase-final-review>
+    }
+
+    <!-- Finalized phase -->
+    @else if (session() && currentPhase() === 'finalized') {
+      <app-phase-finalized
+        [session]="session()!"
+        (done)="goBack()"
+      ></app-phase-finalized>
     }
   </main>
 </div>

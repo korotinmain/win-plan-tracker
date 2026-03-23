@@ -1,0 +1,45 @@
+<div class="fin">
+  <!-- Hero -->
+  <div class="fin__hero">
+    <div class="fin__checkmark">
+      <mat-icon>check_circle</mat-icon>
+    </div>
+    <div class="fin__headline">Sprint Plan Committed</div>
+    <div class="fin__subtext">{{ session.sprintName }} is ready to go</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="fin__stats">
+    <div class="fin__stat fin__stat--primary">
+      <div class="fin__stat-value">{{ committedSP }}</div>
+      <div class="fin__stat-label">Committed SP</div>
+    </div>
+    <div class="fin__stat-divider"></div>
+    <div class="fin__stat">
+      <div class="fin__stat-value">{{ confirmedCount }}</div>
+      <div class="fin__stat-label">Confirmed</div>
+    </div>
+    <div class="fin__stat-divider"></div>
+    <div class="fin__stat fin__stat--warning">
+      <div class="fin__stat-value">{{ riskyCount }}</div>
+      <div class="fin__stat-label">Risky Accepted</div>
+    </div>
+    <div class="fin__stat-divider"></div>
+    <div class="fin__stat fin__stat--muted">
+      <div class="fin__stat-value">{{ deferredCount }}</div>
+      <div class="fin__stat-label">Deferred</div>
+    </div>
+    <div class="fin__stat-divider"></div>
+    <div class="fin__stat">
+      <div class="fin__stat-value">{{ participantCount }}</div>
+      <div class="fin__stat-label">Participants</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="fin__actions">
+    <button mat-flat-button class="fin__done-btn" (click)="done.emit()">
+      <mat-icon>arrow_back</mat-icon>Back to Sprints
+    </button>
+  </div>
+</div>
