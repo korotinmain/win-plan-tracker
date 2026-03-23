@@ -26,6 +26,7 @@ import { PhaseSetupComponent } from './phases/phase-setup/phase-setup.component'
 import { PhaseReadinessComponent } from './phases/phase-readiness/phase-readiness.component';
 import { PhaseContextComponent } from './phases/phase-context/phase-context.component';
 import { PhaseReviewComponent } from './phases/phase-review/phase-review.component';
+import { PhaseBalancingComponent } from './phases/phase-balancing/phase-balancing.component';
 import { ReadinessWarning, computeReadinessWarnings } from './phases/phase-readiness/readiness.util';
 
 // ─── Phase ordering ──────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ function buildIssueReviews(issues: JiraSprintIssue[]): IssueReview[] {
     PhaseReadinessComponent,
     PhaseContextComponent,
     PhaseReviewComponent,
+    PhaseBalancingComponent,
   ],
   templateUrl: './planning-session.component.html',
   styleUrls: ['./planning-session.component.scss'],

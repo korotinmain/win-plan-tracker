@@ -1,0 +1,113 @@
+<div class="bal">
+  <!-- Summary stats -->
+  <div class="bal__stats">
+    <div class="bal__stat">
+      <div class="bal__stat-value">{{ totalCommittedSP() }}</div>
+      <div class="bal__stat-label">Committed SP</div>
+    </div>
+    <div class="bal__stat-divider"></div>
+    <div class="bal__stat">
+      <div class="bal__stat-value">{{ totalIssues() }}</div>
+      <div class="bal__stat-label">Committed issues</div>
+    </div>
+    <div class="bal__stat-divider"></div>
+    <div class="bal__stat">
+      <div class="bal__stat-value">{{ session.participantIds.length }}</div>
+      <div class="bal__stat-label">Team members</div>
+    </div>
+  </div>
+
+  <!-- Per-person workload lanes -->
+  @if (lanes().length > 0) {
+    <div class="bal__lanes">
+      @for (lane of lanes(); track lane.uid) {
+        <div class="bal__lane" [class.bal__lane--overloaded]="lane.isOverloaded">
+          <!-- Lane header -->
+          <div class="bal__lane-head">
+            <div class="bal__avatar">{{ lane.name.charAt(0).toUpperCase() }}</div>
+
+            <div class="bal__lane-meta">
+              <div class="bal__lane-name">
+                {{ lane.name }}
+                @if (lane.isOverloaded) {
+                  <span class="bal__overload-chip">
+                    <mat-icon>warning</mat-icon>Overloaded
+                  </span>
+                }
+              </div>
+
+              <!-- SP bar -->
+              <div class="bal__bar-wrap">
+                <div
+                  class="bal__bar"
+                  [class.bal__bar--overloaded]="lane.isOverloaded"
+                  [style.width.%]="lane.barPct"
+                ></div>
+              </div>
+            </div>
+
+            <div class="bal__sp-badge" [class.bal__sp-badge--overloaded]="lane.isOverloaded">
+              {{ lane.plannedSP }} SP
+            </div>
+          </div>
+
+          <!-- Issues under this person -->
+          @if (lane.issues.length > 0) {
+            <div class="bal__issue-list">
+              @for (issue of lane.issues; track issue.issueId) {
+                <div class="bal__issue-row">
+                  <mat-icon class="bal__issue-icon">{{ getTypeIcon(issue.type) }}</mat-icon>
+                  <span class="bal__issue-key">{{ issue.issueKey }}</span>
+                  <span class="bal__issue-title">{{ issue.title }}</span>
+                  <div class="bal__issue-right">
+                    <app-outcome-badge [outcome]="issue.outcome" />
+                    @if (issue.storyPoints > 0) {
+                      <span class="bal__issue-sp">{{ issue.storyPoints }} SP</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="bal__lane-empty">No committed issues assigned</div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="bal__global-empty">
+      <mat-icon>check_box_outline_blank</mat-icon>
+      <span>No committed issues yet — go back to the review phase to set outcomes.</span>
+    </div>
+  }
+
+  <!-- Footer -->
+  @if (isFacilitator) {
+    <div class="bal__footer">
+      <button mat-stroked-button class="bal__back-btn" (click)="back.emit()" [disabled]="advancing || savingCapacity()">
+        <mat-icon>arrow_back</mat-icon>Back
+      </button>
+      <button
+        mat-flat-button
+        class="bal__advance-btn"
+        (click)="saveAndAdvance()"
+        [disabled]="advancing || savingCapacity()"
+      >
+        @if (savingCapacity() || advancing) {
+          <ng-container>
+            <mat-icon class="spin">progress_activity</mat-icon>Saving…
+          </ng-container>
+        } @else {
+          <ng-container>
+            Proceed to Final Review<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </ng-container>
+        }
+      </button>
+    </div>
+  } @else {
+    <div class="bal__observer">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Waiting for facilitator to proceed…</span>
+    </div>
+  }
+</div>

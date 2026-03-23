@@ -113,6 +113,17 @@
       ></app-phase-review>
     }
 
+    <!-- Balancing phase -->
+    @else if (session() && currentPhase() === 'balancing') {
+      <app-phase-balancing
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advance()"
+        (back)="prevPhase()"
+      ></app-phase-balancing>
+    }
+
     <!-- Phases coming in future increments — placeholder -->
     @else if (session() && currentPhase() !== 'setup') {
       <div class="ps-shell__state-center">
