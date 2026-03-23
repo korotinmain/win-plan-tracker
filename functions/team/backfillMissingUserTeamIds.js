@@ -17,9 +17,7 @@ async function backfillMissingUserTeamIds({
   logger = console,
   apply = false,
 } = {}) {
-  const firestore =
-    db ||
-    require("firebase-admin").firestore();
+  const firestore = db || require("firebase-admin").firestore();
   const snap = await firestore.collection("users").get();
   const missingTeamIdDocs = collectMissingUserTeamIdDocs(snap.docs);
 
@@ -35,7 +33,7 @@ async function backfillMissingUserTeamIds({
   }
 
   let updated = 0;
-  let batch = db.batch();
+  let batch = firestore.batch();
   let batchWrites = 0;
 
   for (const docSnap of missingTeamIdDocs) {
@@ -45,7 +43,7 @@ async function backfillMissingUserTeamIds({
 
     if (batchWrites === 450) {
       await batch.commit();
-      batch = db.batch();
+      batch = firestore.batch();
       batchWrites = 0;
     }
   }
