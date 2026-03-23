@@ -6,7 +6,7 @@ const { createRequire } = require("node:module");
 const requireFromRepoRoot = createRequire(
   path.join(
     __dirname,
-    "../../../../functions/node_modules/firebase-functions/package.json",
+    "../node_modules/firebase-functions/package.json",
   ),
 );
 const functions = requireFromRepoRoot("firebase-functions");
