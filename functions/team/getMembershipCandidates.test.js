@@ -161,6 +161,27 @@ test("search trims whitespace and matches displayName or email", () => {
   );
 });
 
+test("legacy users without teamId are treated as unassigned", () => {
+  const result = resolveTeamMembershipCandidates({
+    team: {
+      id: "team-a",
+      managerId: "manager-a",
+      memberIds: [],
+    },
+    users: [
+      {
+        uid: "legacy-a",
+        displayName: "Legacy User",
+        email: "legacy@example.com",
+        photoURL: "",
+      },
+    ],
+    callerUid: "manager-a",
+  });
+
+  assert.deepEqual(result.map((candidate) => candidate.uid), ["legacy-a"]);
+});
+
 test("loads candidates only from unassigned and same-team queries", async () => {
   const queries = [];
   const rowsByTeamId = new Map([

@@ -34,6 +34,8 @@ function normalizeUser(user) {
     displayName: normalizeString(user.displayName),
     email: normalizeString(user.email),
     photoURL: normalizeString(user.photoURL),
+    // Legacy docs should be backfilled to teamId: "" by the admin utility,
+    // but helper normalization keeps pre-migration objects safe in tests.
     teamId: normalizeString(user.teamId),
   };
 }
