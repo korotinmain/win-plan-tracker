@@ -12,8 +12,13 @@ const { getJiraSprints } = require("./jira/getSprints");
 const {
   createUpdateTeamMembershipCallable,
 } = require("./team/updateMembership");
+const {
+  createGetTeamMembershipCandidatesCallable,
+} = require("./team/getMembershipCandidates");
 
 exports.checkJiraConfig = checkJiraConfig;
 exports.getJiraTasks = getJiraTasks;
 exports.getJiraSprints = getJiraSprints;
 exports.updateTeamMembership = createUpdateTeamMembershipCallable();
+exports.getTeamMembershipCandidates =
+  createGetTeamMembershipCandidatesCallable();
