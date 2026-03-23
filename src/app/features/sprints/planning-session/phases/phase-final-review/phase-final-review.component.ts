@@ -6,20 +6,18 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  inject,
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Timestamp } from '@firebase/firestore';
-import { inject } from '@angular/core';
 import {
   IssueOutcome,
   IssueReview,
   PlanningSessionV2,
 } from '../../../../../core/models/planning-session.model';
 import { PlanningService } from '../../../../../core/services/planning.service';
-import { OutcomeBadgeComponent } from '../../shared/outcome-badge/outcome-badge.component';
 
 const OUTCOME_GROUPS: { outcome: IssueOutcome; label: string; icon: string }[] = [
   { outcome: 'confirmed', label: 'Confirmed', icon: 'check_circle' },
@@ -38,7 +36,6 @@ const OUTCOME_GROUPS: { outcome: IssueOutcome; label: string; icon: string }[] =
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    OutcomeBadgeComponent,
   ],
   templateUrl: './phase-final-review.component.html',
   styleUrls: ['./phase-final-review.component.scss'],

@@ -11,6 +11,23 @@
       </div>
     </div>
 
+    @if (teamName()) {
+      <div
+        class="sidebar-team"
+        [class.collapsed]="!sidenavOpen()"
+        [matTooltip]="!sidenavOpen() ? (teamName() ?? '') : ''"
+        matTooltipPosition="right"
+      >
+        <div class="team-icon-box">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="team-name-block" *ngIf="sidenavOpen()">
+          <span class="team-label">Active Team</span>
+          <span class="team-name-text">{{ teamName() }}</span>
+        </div>
+      </div>
+    }
+
     <div class="sidebar-nav">
       <div class="nav-group">
         <span class="nav-group-label" *ngIf="sidenavOpen()">Workspace</span>
@@ -130,6 +147,12 @@
       <span class="header-title">{{ pageTitle() }}</span>
 
       <div class="header-end">
+        @if (teamName()) {
+          <div class="team-badge">
+            <mat-icon>corporate_fare</mat-icon>
+            <span>{{ teamName() }}</span>
+          </div>
+        }
         <div class="date-pill">
           <span class="date-dot"></span>
           <span>{{ today }}</span>

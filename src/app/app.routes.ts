@@ -69,7 +69,7 @@ export const routes: Routes = [
       },
       {
         path: 'teams',
-        canActivate: [roleGuard(['admin'])],
+        canActivate: [roleGuard(['admin', 'manager'])],
         loadComponent: () =>
           import('./features/teams/teams/teams.component').then(
             (m) => m.TeamsComponent,
@@ -77,7 +77,7 @@ export const routes: Routes = [
       },
       {
         path: 'teams/:id/settings',
-        canActivate: [roleGuard(['admin'])],
+        canActivate: [roleGuard(['admin', 'manager'])],
         loadComponent: () =>
           import('./features/teams/team-settings/team-settings.component').then(
             (m) => m.TeamSettingsComponent,

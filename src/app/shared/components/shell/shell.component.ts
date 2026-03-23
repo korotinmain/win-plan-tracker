@@ -1,8 +1,12 @@
 import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
-import { fromEvent } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
+import { fromEvent, of } from 'rxjs';
+import { doc } from '@firebase/firestore';
+import { db } from '../../../firebase';
+import { docObservable } from '../../utils/firestore.util';
+import { Team } from '../../../core/models/team.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,11 +73,22 @@ export class ShellComponent {
     year: 'numeric',
   });
 
+  readonly teamName = toSignal<string | null>(
+    this.authService.currentUser$.pipe(
+      switchMap(user => {
+        if (!user?.teamId) return of(null);
+        return docObservable<Team>(doc(db, 'teams', user.teamId));
+      }),
+      map(team => team?.name ?? null),
+    ),
+    { initialValue: null },
+  );
+
   workspaceNav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Calendar', icon: 'calendar_month', route: '/calendar' },
     { label: 'Sprints', icon: 'rocket_launch', route: '/sprints' },
-    { label: 'Team', icon: 'groups', route: '/teams', roles: ['admin'] },
+    { label: 'Team', icon: 'groups', route: '/teams', roles: ['admin', 'manager'] },
   ];
 
   accountNav: NavItem[] = [
