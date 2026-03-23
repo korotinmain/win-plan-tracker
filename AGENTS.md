@@ -209,6 +209,7 @@ Do not assume `functions/.env.local` is loaded unless you verify the local tooli
 - Normalize Firestore data in services where needed
 - Reuse `snapObservable(...)` for Firestore live queries instead of creating new snapshot wrappers
 - Do not leak raw backend or Firestore document shapes deep into components unless that pattern already exists locally
+- For team member-management candidate pickers, use `TeamDirectoryService.getMembershipCandidates(...)` instead of broad `users` collection reads
 
 ### State and async handling
 

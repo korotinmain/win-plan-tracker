@@ -1,6 +1,6 @@
 # Win Plan Tracker Production Readiness Roadmap
 
-Last updated: 2026-03-22
+Last updated: 2026-03-23
 Baseline commit: `d3535ed`
 Delivery mode: `audit-first roadmap`
 Execution style: `low-risk incremental delivery`
@@ -172,12 +172,12 @@ Status scale:
   - `users/{uid}`: `allow read: if signedIn();`
   - `teams/{teamId}`: `allow read: if signedIn() && (isMember(teamId) || hasNoTeam() || isAdminOrManager());`
 - Current Risk:
-  - the system still relies on broad `users` visibility for candidate-picking flows
+  - `users/{uid}` reads are still globally open to all signed-in users even though active member-management candidate pickers no longer need a broad browser read
   - `teams` no longer needs full signed-in visibility for joined users, but the remaining `users` contract still exceeds intended least-privilege boundaries
 - Recommended Direction:
   - document the minimum required read surfaces by feature
   - keep `teams` reads aligned with the now-scoped join/discovery and membership queries
-  - tighten `users` reads only after required UI queries are refactored
+  - tighten `users` reads after validating that only the explicit directory seam and any intentional out-of-band callers still depend on broad visibility
 - Current Phase 1 Progress:
   - broad-read inventory is now captured in `docs/security-access-inventory.md`
   - broad user/team directory access is isolated behind `src/app/core/services/team-directory.service.ts`
@@ -185,10 +185,17 @@ Status scale:
   - the settings and teams screens now unsubscribe from the full `teams` directory once a user already belongs to a team
   - `teams/{teamId}` reads are now narrowed to team members, no-team discovery, and elevated roles
   - emulator verification passed for member direct read allow, no-team direct read allow, no-team collection query allow, unrelated-team deny, elevated direct read allow, and membership-scoped query-shape allow
-  - `users/{uid}` narrowing is still blocked by current candidate-picker reads
+  - member-management candidate discovery now goes through the backend `getTeamMembershipCandidates` callable and `TeamDirectoryService.getMembershipCandidates(...)`
+  - add-member, manage-team, and team-settings no longer use `getDirectoryUsers()` for candidate selection
+  - the candidate-search rollout includes a legacy `users.teamId` backfill utility for environments that still contain docs without `teamId`
+  - `users/{uid}` hardening is no longer blocked by browser candidate-picker reads; the remaining work is rules tightening verification against the explicit directory seam and any intentional compatibility callers
 - Validation:
   - Firestore emulator checks for user/team reads across roles and actual query shapes
   - feature-by-feature smoke verification for team management and directory flows
+  - `node --test functions/team/getMembershipCandidates.test.js functions/team/backfillMissingUserTeamIds.test.js` -> `11 pass / 0 fail`
+  - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/core/services/team-directory.service.spec.ts` -> `TOTAL: 6 SUCCESS`
+  - `npm run test -- --watch=false --browsers=ChromeHeadless --include=src/app/features/teams/team-settings/team-settings.component.spec.ts` -> `TOTAL: 3 SUCCESS`
+  - `npm run build` -> pass with the pre-existing initial bundle budget warning
 - Phase: `Phase 1`
 - Status: `in_progress`
 
@@ -540,6 +547,7 @@ Status scale:
 | 2026-03-22 | `users/{uid}` hardening cannot be marked done until the cross-user membership write path has an explicit authority model | `TeamService.addMember(...)`, `joinTeam(...)`, and `removeMember(...)` currently mutate another user's team membership, which conflicts with the self-write-only rule |
 | 2026-03-22 | Team membership authority moves to a privileged backend callable instead of expanding client-side cross-user write rights | This resolves PR-011 without weakening `users/{uid}` rules and keeps stale-membership validation on a server-authoritative path |
 | 2026-03-22 | Legacy `planningSessions` without `teamId` still require follow-up migration work | Creator-only fallback is acceptable for Phase 1, but it should not remain the long-term contract |
+| 2026-03-23 | Member-management candidate discovery moves to a backend callable instead of broad `users` collection reads in the browser | This removes the largest remaining active `users` read dependency without widening the frontend DTO or weakening least-privilege boundaries |
 
 ## Progress Tracker
 
@@ -548,7 +556,7 @@ Status scale:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0: Baseline Audit | in_progress | Baseline captured, first findings recorded |
-| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles; PR-011 is closed via privileged membership callable; `users` narrowing is still blocked on broad candidate-picker reads |
+| Phase 1: Security / Access / Contracts | in_progress | `planningSessions` access model is explicit and emulator-verified; `teams` reads are now scoped to members, no-team discovery, and elevated roles; PR-011 is closed via privileged membership callable; active member-pickers now use backend candidate search, and the remaining PR-002 work is `users/{uid}` rule-tightening verification |
 | Phase 2: Architecture / Decomposition | planned | Depends on phase 1 boundaries being explicit |
 | Phase 3: Reliability / State / Typing | planned | Follows initial decomposition and access stabilization |
 | Phase 4: Tests / Verification | planned | Begins in parallel once first stable seams exist |
@@ -556,9 +564,9 @@ Status scale:
 
 ### Immediate Next Steps
 
-1. Review and confirm the roadmap findings and phase order.
-2. Design the smallest safe replacement for broad candidate-picker reads from `users`.
-3. Validate any future PR-002 rule changes with emulator allow/deny coverage, real query-shape checks, Functions-backed membership smoke checks, and team-management/join-team smoke checks.
+1. Validate the smallest safe `users/{uid}` rule tightening against the remaining explicit directory seam and any compatibility callers.
+2. Decide whether the temporary broad `getDirectoryUsers()` seam and `TeamService.getAllUsers()` shim can now be narrowed or removed.
+3. Validate the final PR-002 rules change with emulator allow/deny coverage, real query-shape checks, Functions-backed membership smoke checks, and team-management/join-team smoke checks.
 
 ## Open Questions / Blockers
 
