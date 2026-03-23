@@ -272,6 +272,16 @@ Do not perform opportunistic backend rewrites during unrelated frontend work.
 
 ## Sprint Planning Product Direction
 
+**Authoritative requirements: `docs/sprint-planning-jira-readonly-requirements.md`**
+
+Read that file before any sprint planning or Jira integration work. The key rules it defines:
+
+- Jira is read-only — WinPlan must never write to Jira
+- Story points use a **dual-value model**: Jira story points (official, from Jira) vs planned story points (agreed during session, stored in WinPlan only)
+- Planning snapshots are immutable — never rewrite historical records when Jira changes later
+- After finalization, a post-planning review screen must surface issues needing manual Jira update (no Jira story points, or planned SP ≠ Jira SP)
+- Planning history is WinPlan's memory — Jira alone cannot provide it
+
 These product assumptions should guide changes in the sprint planning area unless the task explicitly changes them.
 
 - The `/sprints` workspace currently shows an active sprint summary, a next-sprint issue inbox, and planning history loaded from `planningSessions`
@@ -281,7 +291,8 @@ These product assumptions should guide changes in the sprint planning area unles
 - Each task or story in planning should show at minimum:
   - title
   - assignee
-  - story points
+  - Jira story points (from Jira)
+  - planned story points (from WinPlan session)
 - The planning experience should remain a structured guided workflow rather than a loose external collaboration process
 - The current workflow is `review -> estimate -> plan -> review-sprint` with backlog, candidate, and planned buckets
 - Saved sessions already include `participants`, `turnOrder`, and `turnOrderIndex`, but strict turn-based facilitation and active-turn notifications are not fully implemented today
@@ -311,6 +322,7 @@ Do not replace these patterns casually.
 Before making changes:
 
 - Read `docs/domain-model.md` before any implementation work — it is the authoritative reference for domain vocabulary, data shapes, and model relationships
+- Read `docs/sprint-planning-jira-readonly-requirements.md` before any sprint planning or Jira integration work — it is the authoritative reference for product behavior, ownership boundaries, the dual story-point model, planning snapshot requirements, and the post-planning Jira review flow
 - Inspect nearby files and follow the local pattern used in that feature area
 - Prefer modifying existing code over introducing parallel abstractions
 - Reuse existing services, helpers, and shared UI primitives before creating new ones
