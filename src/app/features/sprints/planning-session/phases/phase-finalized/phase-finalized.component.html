@@ -36,6 +36,32 @@
     </div>
   </div>
 
+  <!-- Jira Update Checklist -->
+  @if (jiraUpdateRequired.length > 0) {
+    <div class="fin__jira-review">
+      <div class="fin__jira-review-header">
+        <mat-icon>assignment_late</mat-icon>
+        <div>
+          <div class="fin__jira-review-title">Manual Jira updates required</div>
+          <div class="fin__jira-review-sub">
+            {{ jiraUpdateRequired.length }} committed issue{{ jiraUpdateRequired.length !== 1 ? 's' : '' }}
+            need{{ jiraUpdateRequired.length === 1 ? 's' : '' }} updating in Jira
+          </div>
+        </div>
+      </div>
+      <div class="fin__jira-list">
+        @for (item of jiraUpdateRequired; track item.issue.issueId) {
+          <div class="fin__jira-item">
+            <span class="fin__jira-key">{{ item.issue.issueKey }}</span>
+            <span class="fin__jira-title">{{ item.issue.title }}</span>
+            <span class="fin__jira-reason">{{ item.reason }}</span>
+          </div>
+        }
+      </div>
+      <p class="fin__jira-note">WinPlan does not write to Jira. Update these manually.</p>
+    </div>
+  }
+
   <!-- CTA -->
   <div class="fin__actions">
     <button mat-flat-button class="fin__done-btn" (click)="done.emit()">

@@ -59,7 +59,10 @@
         </div>
         <div class="rev__meta-item" [class.rev__meta-item--muted]="issue.storyPoints === 0">
           <mat-icon>speed</mat-icon>
-          <span>{{ issue.storyPoints === 0 ? '—' : issue.storyPoints + ' SP' }}</span>
+          <span>Jira: {{ issue.storyPoints === 0 ? '&mdash;' : issue.storyPoints + ' SP' }}</span>
+          @if (issue.plannedStoryPoints != null) {
+            <span class="rev__planned-sp-inline">→ {{ issue.plannedStoryPoints }} SP planned</span>
+          }
         </div>
         <div class="rev__meta-item">
           <mat-icon>{{ getPriorityIcon(issue.priority) }}</mat-icon>
@@ -95,6 +98,30 @@
           }
         </div>
 
+        <!-- Planned SP (facilitator only) -->
+        <div class="rev__planned-sp-wrap">
+          <div class="rev__section-label">Planned story points</div>
+          <div class="rev__sp-chips">
+            <button
+              type="button"
+              class="rev__sp-chip"
+              [class.rev__sp-chip--active]="localPlannedSP() === null"
+              (click)="setPlannedSP(null)"
+              [disabled]="saving()"
+            >&mdash;</button>
+            @for (val of SP_PRESETS; track val) {
+              <button
+                type="button"
+                class="rev__sp-chip"
+                [class.rev__sp-chip--active]="localPlannedSP() === val"
+                (click)="setPlannedSP(val)"
+                [disabled]="saving()"
+              >{{ val }}</button>
+            }
+          </div>
+          <span class="rev__sp-jira-hint">Jira: {{ issue.storyPoints === 0 ? 'no estimate' : issue.storyPoints + ' SP' }}</span>
+        </div>
+
         <!-- Notes -->
         <div class="rev__notes-wrap">
           <label class="rev__section-label" for="review-notes">Discussion notes</label>
@@ -127,6 +154,13 @@
         }
         @if (issue.notes) {
           <div class="rev__observer-notes">{{ issue.notes }}</div>
+        }
+        @if (issue.plannedStoryPoints != null) {
+          <div class="rev__observer-sp">
+            <mat-icon>speed</mat-icon>
+            Planned: {{ issue.plannedStoryPoints }} SP
+            <span class="rev__observer-sp-jira">(Jira: {{ issue.storyPoints || '&mdash;' }})</span>
+          </div>
         }
       </div>
     }

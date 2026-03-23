@@ -1,7 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { PlanningSessionV2 } from '../../../../../core/models/planning-session.model';
+import {
+  IssueReview,
+  PlanningSessionV2,
+  effectiveSP,
+} from '../../../../../core/models/planning-session.model';
 
 @Component({
   selector: 'app-phase-finalized',
@@ -29,7 +33,25 @@ export class PhaseFinalizedComponent {
   get committedSP(): number {
     return (this.session.issueReviews ?? [])
       .filter((r) => r.outcome === 'confirmed' || r.outcome === 'risky-accepted')
-      .reduce((s, r) => s + (r.storyPoints ?? 0), 0);
+      .reduce((s, r) => s + effectiveSP(r), 0);
+  }
+
+  get jiraUpdateRequired(): { issue: IssueReview; reason: string }[] {
+    const committed = (this.session.issueReviews ?? []).filter(
+      (r) => r.outcome === 'confirmed' || r.outcome === 'risky-accepted',
+    );
+    return committed
+      .filter((r) => {
+        const jira = r.storyPoints ?? 0;
+        const planned = r.plannedStoryPoints;
+        return jira === 0 || (planned != null && planned !== jira);
+      })
+      .map((r) => ({
+        issue: r,
+        reason: (r.storyPoints ?? 0) === 0
+          ? 'No Jira estimate'
+          : `Planned ${r.plannedStoryPoints} SP · Jira ${r.storyPoints} SP`,
+      }));
   }
 
   get participantCount(): number {

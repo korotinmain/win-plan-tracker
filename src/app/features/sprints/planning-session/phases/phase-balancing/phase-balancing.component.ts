@@ -16,6 +16,7 @@ import {
   IssueReview,
   PlanningSessionV2,
   computeSessionSummary,
+  effectiveSP as getEffectiveSP,
 } from '../../../../../core/models/planning-session.model';
 import { PlanningService } from '../../../../../core/services/planning.service';
 import { inject } from '@angular/core';
@@ -26,7 +27,8 @@ interface LaneIssue {
   issueId: string;
   issueKey: string;
   title: string;
-  storyPoints: number;
+  storyPoints: number;    // Jira SP
+  effectiveSP: number;    // plannedSP ?? jiraSP
   outcome: IssueReview['outcome'];
   type: string;
 }
@@ -96,7 +98,7 @@ export class PhaseBalancingComponent implements OnChanges {
       (r) => r.outcome === 'confirmed' || r.outcome === 'risky-accepted',
     );
     this.totalCommittedSP.set(
-      committedReviews.reduce((s, r) => s + (r.storyPoints ?? 0), 0),
+      committedReviews.reduce((s, r) => s + getEffectiveSP(r), 0),
     );
     this.totalIssues.set(committedReviews.length);
   }
@@ -117,6 +119,7 @@ export class PhaseBalancingComponent implements OnChanges {
         issueKey: r.issueKey,
         title: r.title,
         storyPoints: r.storyPoints,
+        effectiveSP: getEffectiveSP(r),
         outcome: r.outcome,
         type: r.type,
       }));

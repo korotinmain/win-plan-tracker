@@ -1,6 +1,7 @@
 import {
   CapacityEntry,
   IssueReview,
+  effectiveSP,
 } from '../../../../../core/models/planning-session.model';
 
 /** Issues that count toward committed workload. */
@@ -51,7 +52,7 @@ export function computeCapacity(
       });
     }
     const entry = map.get(key)!;
-    entry.plannedSP += r.storyPoints ?? 0;
+    entry.plannedSP += effectiveSP(r);
   }
 
   // Mark overloaded (only when availableSP is known > 0)

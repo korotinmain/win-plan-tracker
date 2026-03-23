@@ -35,7 +35,14 @@ export interface IssueReview {
   issueId: string;
   issueKey: string;
   title: string;
+  /** Official story point value read from Jira at session creation time. */
   storyPoints: number;
+  /**
+   * Story point value agreed during the WinPlan planning session.
+   * Null means the facilitator has not set a planning-specific value.
+   * Planning calculations prefer this over `storyPoints` when set.
+   */
+  plannedStoryPoints?: number | null;
   assignee: string | null;
   type: string;
   priority: string;
@@ -164,6 +171,16 @@ export interface PlanningSessionV2 {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns the effective story point value for planning calculations.
+ * Prefers the planning-session value (`plannedStoryPoints`) over the Jira
+ * value (`storyPoints`). Falls back gracefully for legacy sessions that
+ * only have the `storyPoints` field.
+ */
+export function effectiveSP(r: IssueReview): number {
+  return r.plannedStoryPoints ?? r.storyPoints ?? 0;
+}
+
 /** Type guard — distinguishes v2 sessions from the legacy v1 shape. */
 export function isPlanningSessionV2(
   session: { schemaVersion?: unknown },
@@ -189,11 +206,11 @@ export function computeSessionSummary(
     switch (r.outcome) {
       case 'confirmed':
         confirmedCount++;
-        committedSP += r.storyPoints;
+        committedSP += effectiveSP(r);
         break;
       case 'risky-accepted':
         riskyCount++;
-        committedSP += r.storyPoints;
+        committedSP += effectiveSP(r);
         break;
       case 'deferred':
         deferredCount++;
@@ -214,7 +231,7 @@ export function computeSessionSummary(
     unclearCount,
     splitCandidateCount,
     totalIssues: reviews.length,
-    totalSP: reviews.reduce((sum, r) => sum + r.storyPoints, 0),
+    totalSP: reviews.reduce((sum, r) => sum + effectiveSP(r), 0),
     committedSP,
   };
 }

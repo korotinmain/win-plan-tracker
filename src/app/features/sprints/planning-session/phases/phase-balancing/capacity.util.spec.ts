@@ -121,6 +121,24 @@ describe('computeCapacity', () => {
     const alice = result.find((e) => e.uid === 'uid-alice')!;
     expect(alice.name).toBe('Alice');
   });
+
+  it('uses plannedStoryPoints over storyPoints when set', () => {
+    const reviews = [
+      makeReview({ assignee: 'Alice', storyPoints: 3, plannedStoryPoints: 8, outcome: 'confirmed' }),
+    ];
+    const result = computeCapacity(reviews, participantIds, participantNames);
+    const alice = result.find((e) => e.name === 'Alice')!;
+    expect(alice.plannedSP).toBe(8);
+  });
+
+  it('falls back to storyPoints when plannedStoryPoints is null', () => {
+    const reviews = [
+      makeReview({ assignee: 'Alice', storyPoints: 5, plannedStoryPoints: null, outcome: 'confirmed' }),
+    ];
+    const result = computeCapacity(reviews, participantIds, participantNames);
+    const alice = result.find((e) => e.name === 'Alice')!;
+    expect(alice.plannedSP).toBe(5);
+  });
 });
 
 describe('maxPlannedSP', () => {

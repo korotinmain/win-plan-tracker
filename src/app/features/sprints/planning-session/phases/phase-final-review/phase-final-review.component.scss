@@ -216,6 +216,11 @@
     border-radius: 8px;
     padding: 2px 8px;
     white-space: nowrap;
+
+    &--modified {
+      color: var(--c-warning);
+      background: color-mix(in srgb, var(--c-warning) 12%, transparent);
+    }
   }
 
   &__issue-notes {

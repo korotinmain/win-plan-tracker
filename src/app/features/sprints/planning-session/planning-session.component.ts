@@ -61,6 +61,7 @@ function buildIssueReviews(issues: JiraSprintIssue[]): IssueReview[] {
     issueKey: issue.id,
     title: issue.title,
     storyPoints: issue.storyPoints ?? 0,
+    plannedStoryPoints: null,
     assignee: issue.assignee,
     type: issue.type,
     priority: issue.priority,

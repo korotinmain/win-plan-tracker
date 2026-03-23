@@ -61,8 +61,8 @@
                   <span class="bal__issue-title">{{ issue.title }}</span>
                   <div class="bal__issue-right">
                     <app-outcome-badge [outcome]="issue.outcome" />
-                    @if (issue.storyPoints > 0) {
-                      <span class="bal__issue-sp">{{ issue.storyPoints }} SP</span>
+                    @if (issue.effectiveSP > 0) {
+                      <span class="bal__issue-sp" [class.bal__issue-sp--modified]="issue.effectiveSP !== issue.storyPoints" [title]="issue.effectiveSP !== issue.storyPoints ? 'Jira: ' + issue.storyPoints + ' SP' : ''">{{ issue.effectiveSP }} SP</span>
                     }
                   </div>
                 </div>

@@ -36,6 +36,8 @@ const OUTCOME_ORDER: IssueOutcome[] = [
   'split-candidate',
 ];
 
+const SP_PRESETS = [1, 2, 3, 5, 8, 13, 21];
+
 @Component({
   selector: 'app-phase-review',
   standalone: true,
@@ -63,10 +65,12 @@ export class PhaseReviewComponent implements OnChanges {
 
   readonly OUTCOME_ORDER = OUTCOME_ORDER;
   readonly OUTCOME_CONFIGS = OUTCOME_CONFIGS;
+  readonly SP_PRESETS = SP_PRESETS;
 
-  // ── Local edit state (facilitator only) ───────────────────────────────────
+  // ── Local edit state (facilitator only) ────────────────────────────────────────────
   readonly localOutcome = signal<IssueOutcome | null>(null);
   readonly localNotes = signal('');
+  readonly localPlannedSP = signal<number | null>(null);
   readonly saving = signal(false);
   readonly navigating = signal(false);
   readonly markingWeighed = signal(false);
@@ -122,6 +126,7 @@ export class PhaseReviewComponent implements OnChanges {
     const issue = this.currentIssue;
     this.localOutcome.set(issue?.outcome ?? null);
     this.localNotes.set(issue?.notes ?? '');
+    this.localPlannedSP.set(issue?.plannedStoryPoints ?? null);
   }
 
   // ── Facilitator actions ────────────────────────────────────────────────────
@@ -131,7 +136,7 @@ export class PhaseReviewComponent implements OnChanges {
     // Toggle off if same outcome clicked again
     const next = this.localOutcome() === outcome ? null : outcome;
     this.localOutcome.set(next);
-    await this.saveCurrentIssue(next, this.localNotes());
+    await this.saveCurrentIssue(next, this.localNotes(), this.localPlannedSP());
   }
 
   onNotesChange(value: string): void {
@@ -140,12 +145,19 @@ export class PhaseReviewComponent implements OnChanges {
 
   async saveNotes(): Promise<void> {
     if (!this.isFacilitator) return;
-    await this.saveCurrentIssue(this.localOutcome(), this.localNotes());
+    await this.saveCurrentIssue(this.localOutcome(), this.localNotes(), this.localPlannedSP());
+  }
+
+  async setPlannedSP(val: number | null): Promise<void> {
+    if (!this.isFacilitator) return;
+    this.localPlannedSP.set(val);
+    await this.saveCurrentIssue(this.localOutcome(), this.localNotes(), val);
   }
 
   private async saveCurrentIssue(
     outcome: IssueOutcome | null,
     notes: string,
+    plannedStoryPoints: number | null,
   ): Promise<void> {
     if (!this.session?.id) return;
     const reviews = [...this.session.issueReviews];
@@ -154,6 +166,7 @@ export class PhaseReviewComponent implements OnChanges {
       ...reviews[idx],
       outcome,
       notes,
+      plannedStoryPoints,
       reviewedAt: outcome ? Timestamp.now() : null,
       reviewedBy: outcome ? (this.auth.currentUser?.uid ?? null) : null,
     };

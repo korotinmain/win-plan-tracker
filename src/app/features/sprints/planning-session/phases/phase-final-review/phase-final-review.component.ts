@@ -16,6 +16,7 @@ import {
   IssueOutcome,
   IssueReview,
   PlanningSessionV2,
+  effectiveSP,
 } from '../../../../../core/models/planning-session.model';
 import { PlanningService } from '../../../../../core/services/planning.service';
 
@@ -83,7 +84,11 @@ export class PhaseFinalReviewComponent implements OnChanges {
   get committedSP(): number {
     return (this.session.issueReviews ?? [])
       .filter((r) => r.outcome === 'confirmed' || r.outcome === 'risky-accepted')
-      .reduce((s, r) => s + (r.storyPoints ?? 0), 0);
+      .reduce((s, r) => s + effectiveSP(r), 0);
+  }
+
+  getEffectiveSP(r: IssueReview): number {
+    return effectiveSP(r);
   }
 
   get confirmedCount(): number {

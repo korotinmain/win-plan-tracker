@@ -1,6 +1,7 @@
 import {
   IssueReview,
   computeSessionSummary,
+  effectiveSP,
   isPlanningSessionV2,
 } from './planning-session.model';
 
@@ -159,5 +160,50 @@ describe('computeSessionSummary', () => {
     const copy = [...reviews];
     computeSessionSummary(reviews);
     expect(reviews).toEqual(copy);
+  });
+
+  it('uses plannedStoryPoints for committedSP when set', () => {
+    const reviews = [
+      makeReview({ outcome: 'confirmed', storyPoints: 5, plannedStoryPoints: 8 }),
+    ];
+    const summary = computeSessionSummary(reviews);
+    expect(summary.committedSP).toBe(8);
+    expect(summary.totalSP).toBe(8);
+  });
+
+  it('falls back to storyPoints when plannedStoryPoints is null', () => {
+    const reviews = [
+      makeReview({ outcome: 'confirmed', storyPoints: 5, plannedStoryPoints: null }),
+    ];
+    expect(computeSessionSummary(reviews).committedSP).toBe(5);
+  });
+
+  it('falls back to storyPoints when plannedStoryPoints is not set', () => {
+    const reviews = [makeReview({ outcome: 'confirmed', storyPoints: 5 })];
+    expect(computeSessionSummary(reviews).committedSP).toBe(5);
+  });
+});
+
+// ─── effectiveSP ──────────────────────────────────────────────────────────────
+
+describe('effectiveSP', () => {
+  it('returns storyPoints when plannedStoryPoints is not set', () => {
+    expect(effectiveSP(makeReview({ storyPoints: 5 }))).toBe(5);
+  });
+
+  it('returns storyPoints when plannedStoryPoints is null', () => {
+    expect(effectiveSP(makeReview({ storyPoints: 5, plannedStoryPoints: null }))).toBe(5);
+  });
+
+  it('returns plannedStoryPoints when it is set', () => {
+    expect(effectiveSP(makeReview({ storyPoints: 5, plannedStoryPoints: 8 }))).toBe(8);
+  });
+
+  it('returns plannedStoryPoints of 0 when explicitly set to 0', () => {
+    expect(effectiveSP(makeReview({ storyPoints: 5, plannedStoryPoints: 0 }))).toBe(0);
+  });
+
+  it('returns 0 when both storyPoints and plannedStoryPoints are 0', () => {
+    expect(effectiveSP(makeReview({ storyPoints: 0 }))).toBe(0);
   });
 });

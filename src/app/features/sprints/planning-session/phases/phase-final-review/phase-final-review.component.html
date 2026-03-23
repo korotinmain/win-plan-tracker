@@ -53,8 +53,8 @@
                   @if (issue.assignee) {
                     <span class="fr__assignee">{{ issue.assignee }}</span>
                   }
-                  @if (issue.storyPoints > 0) {
-                    <span class="fr__issue-sp">{{ issue.storyPoints }} SP</span>
+                  @if (getEffectiveSP(issue) > 0) {
+                    <span class="fr__issue-sp" [class.fr__issue-sp--modified]="issue.plannedStoryPoints != null && issue.plannedStoryPoints !== issue.storyPoints" [title]="issue.plannedStoryPoints != null && issue.plannedStoryPoints !== issue.storyPoints ? 'Jira: ' + issue.storyPoints + ' SP' : ''">{{ getEffectiveSP(issue) }} SP</span>
                   }
                 </div>
               </div>
