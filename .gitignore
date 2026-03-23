@@ -56,3 +56,6 @@ src/environments/environment.*.ts
 .firebaserc
 firebase.json
 .firebase/
+firebase-debug.log
+firestore-debug.log
+database-debug.log
