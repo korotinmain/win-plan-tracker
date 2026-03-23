@@ -56,8 +56,15 @@ export const routes: Routes = [
       {
         path: 'sprints/planning',
         loadComponent: () =>
-          import('./features/sprints/sprint-planning/sprint-planning.component').then(
-            (m) => m.SprintPlanningComponent,
+          import('./features/sprints/planning-session/planning-session.component').then(
+            (m) => m.PlanningSessionComponent,
+          ),
+      },
+      {
+        path: 'sprints/planning/:sessionId',
+        loadComponent: () =>
+          import('./features/sprints/planning-session/planning-session.component').then(
+            (m) => m.PlanningSessionComponent,
           ),
       },
       {

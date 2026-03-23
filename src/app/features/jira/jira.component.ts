@@ -8,7 +8,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { mapPlanningParticipants } from '../../core/services/planning-session-access.util';
 import {
   PlanningService,
   PlanningSession,
@@ -187,19 +186,7 @@ export class JiraComponent implements OnInit {
     if (state === 'hidden' || state === 'no-issues') return;
 
     if (state === 'resume' && this.draftSession()) {
-      const session = this.draftSession()!;
-      this.router.navigate(['/sprints/planning'], {
-        state: {
-          sessionId: session.id,
-          participants: mapPlanningParticipants(
-            session.participants ?? [],
-            session.participantIds,
-          ).map((participant) => ({
-            ...participant,
-            initials: this.initials(participant.name),
-          })),
-        },
-      });
+      this.router.navigate(['/sprints/planning', this.draftSession()!.id]);
       return;
     }
 
@@ -253,18 +240,13 @@ export class JiraComponent implements OnInit {
     ref.afterClosed().subscribe((selected: PlanMemberOption[] | null) => {
       if (!selected?.length) return;
       this.router.navigate(['/sprints/planning'], {
-        state: { participants: selected },
+        state: { participants: selected, sprint: this.nextSprint() },
       });
     });
   }
 
   viewSession(session: PlanningSession): void {
-    this.router.navigate(['/sprints/planning'], {
-      state: {
-        sessionId: session.id,
-        readOnly: session.status === 'completed',
-      },
-    });
+    this.router.navigate(['/sprints/planning', session.id]);
   }
 
   sprintProgress(sprint: JiraSprint | null): number {

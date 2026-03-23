@@ -1,0 +1,165 @@
+:host {
+  display: block;
+}
+
+// ── Shared tokens ─────────────────────────────────────────────────────────────
+$node-size: 36px;
+$node-half: 18px;
+$connector-color: var(--c-border);
+$connector-done-color: var(--c-accent);
+
+.phase-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--c-border-faint);
+}
+
+// ── Full stepper (≥ 640px) ───────────────────────────────────────────────────
+.phase-header__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+
+  @media (max-width: 639px) {
+    display: none;
+  }
+}
+
+.phase-header__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+  min-width: 60px;
+
+  &:last-child {
+    flex: 0 0 auto;
+  }
+}
+
+.phase-header__node {
+  width: $node-size;
+  height: $node-size;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font:
+    600 0.8125rem/1 'Inter',
+    sans-serif;
+  position: relative;
+  z-index: 1;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+
+  .phase-header__node-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+  }
+}
+
+.phase-header__label {
+  font:
+    500 0.6875rem/1 'Inter',
+    sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+// State modifiers ─────────────────────────────────────────────────────────────
+.phase-header__step--done {
+  .phase-header__node {
+    background: color-mix(in srgb, var(--c-accent) 15%, transparent);
+    border: 1.5px solid color-mix(in srgb, var(--c-accent) 40%, transparent);
+    color: var(--c-accent);
+  }
+  .phase-header__label {
+    color: color-mix(in srgb, var(--c-accent) 70%, var(--c-text-3));
+  }
+}
+
+.phase-header__step--active {
+  .phase-header__node {
+    background: var(--c-accent);
+    border: 1.5px solid var(--c-accent);
+    color: #fff;
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--c-accent) 20%, transparent),
+      0 4px 14px color-mix(in srgb, var(--c-accent) 35%, transparent);
+    transform: scale(1.08);
+  }
+  .phase-header__label {
+    color: var(--c-accent);
+    font-weight: 600;
+  }
+}
+
+.phase-header__step--upcoming {
+  .phase-header__node {
+    background: var(--c-surface-2);
+    border: 1.5px solid var(--c-border);
+    color: var(--c-text-3);
+  }
+  .phase-header__label {
+    color: var(--c-text-3);
+  }
+}
+
+// Connector line between nodes ─────────────────────────────────────────────
+.phase-header__connector {
+  position: absolute;
+  top: $node-half;
+  left: calc(50% + #{$node-half});
+  right: calc(-50% + #{$node-half});
+  height: 1.5px;
+  background: $connector-color;
+  transform: translateY(-50%);
+  z-index: 0;
+
+  .phase-header__step--done & {
+    background: $connector-done-color;
+    opacity: 0.4;
+  }
+  .phase-header__step--active & {
+    background: $connector-color;
+  }
+}
+
+// ── Compact indicator (< 640px) ───────────────────────────────────────────────
+.phase-header__compact {
+  display: none;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 639px) {
+    display: flex;
+  }
+
+  .phase-header__compact-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--c-accent);
+  }
+
+  .phase-header__compact-label {
+    font:
+      600 0.9375rem/1 'Inter',
+      sans-serif;
+    color: var(--c-text);
+  }
+
+  .phase-header__compact-count {
+    font:
+      500 0.75rem/1 'Inter',
+      sans-serif;
+    color: var(--c-text-3);
+    margin-left: auto;
+  }
+}

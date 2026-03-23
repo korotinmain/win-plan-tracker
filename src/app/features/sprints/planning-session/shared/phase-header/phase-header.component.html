@@ -1,0 +1,34 @@
+<nav class="phase-header" aria-label="Planning session phases">
+  <!-- Full stepper — visible ≥ 640px -->
+  <div class="phase-header__track" aria-hidden="true">
+    @for (phase of phases; track phase.phase; let i = $index) {
+      <div
+        class="phase-header__step"
+        [class.phase-header__step--done]="getState(phase) === 'done'"
+        [class.phase-header__step--active]="getState(phase) === 'active'"
+        [class.phase-header__step--upcoming]="getState(phase) === 'upcoming'"
+      >
+        <div class="phase-header__node">
+          @if (getState(phase) === 'done') {
+            <mat-icon class="phase-header__node-icon">check</mat-icon>
+          } @else if (getState(phase) === 'active') {
+            <mat-icon class="phase-header__node-icon">{{ phase.icon }}</mat-icon>
+          } @else {
+            <span class="phase-header__node-num">{{ i + 1 }}</span>
+          }
+        </div>
+        <span class="phase-header__label">{{ phase.label }}</span>
+        @if (i < phases.length - 1) {
+          <div class="phase-header__connector"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Compact indicator — visible < 640px -->
+  <div class="phase-header__compact" aria-label="Current phase">
+    <mat-icon class="phase-header__compact-icon">{{ currentConfig.icon }}</mat-icon>
+    <span class="phase-header__compact-label">{{ currentConfig.label }}</span>
+    <span class="phase-header__compact-count">Step {{ currentIndex + 1 }} / {{ phases.length }}</span>
+  </div>
+</nav>

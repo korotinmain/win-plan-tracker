@@ -1,0 +1,155 @@
+<div class="setup">
+  <!-- Sprint identification card -->
+  <div class="setup__sprint-card enter">
+    <div class="setup__sprint-card-accent"></div>
+    <div class="setup__sprint-card-body">
+      <div class="setup__sprint-meta">
+        <span class="setup__sprint-badge">
+          <mat-icon>sprint</mat-icon>
+          Sprint Planning
+        </span>
+        <span class="setup__sprint-name">{{ session.sprintName }}</span>
+      </div>
+
+      <div class="setup__sprint-details">
+        <div class="setup__detail-item">
+          <mat-icon class="setup__detail-icon">calendar_today</mat-icon>
+          <div class="setup__detail-body">
+            <span class="setup__detail-label">Sprint window</span>
+            <span class="setup__detail-value">{{ formattedDateRange }}</span>
+          </div>
+        </div>
+
+        @if (sprintDurationDays > 0) {
+          <div class="setup__detail-item">
+            <mat-icon class="setup__detail-icon">timer</mat-icon>
+            <div class="setup__detail-body">
+              <span class="setup__detail-label">Duration</span>
+              <span class="setup__detail-value">{{ sprintDurationDays }} days</span>
+            </div>
+          </div>
+        }
+
+        <div class="setup__detail-item">
+          <mat-icon class="setup__detail-icon">playlist_add_check</mat-icon>
+          <div class="setup__detail-body">
+            <span class="setup__detail-label">Candidate issues</span>
+            <span class="setup__detail-value">{{ session.issueReviews.length }} to review</span>
+          </div>
+        </div>
+
+        <div class="setup__detail-item">
+          <mat-icon class="setup__detail-icon">manage_accounts</mat-icon>
+          <div class="setup__detail-body">
+            <span class="setup__detail-label">Facilitator</span>
+            <span class="setup__detail-value">{{ session.facilitatorName }}</span>
+          </div>
+        </div>
+      </div>
+
+      @if (session.sprintGoal) {
+        <div class="setup__sprint-goal">
+          <span class="setup__sprint-goal-label">Sprint goal</span>
+          <p class="setup__sprint-goal-text">{{ session.sprintGoal }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Readiness signals -->
+  @if (issueCountBySeverity().missing > 0 || issueCountBySeverity().large > 0 || issueCountBySeverity().noOwner > 0) {
+    <div class="setup__signals enter" style="animation-delay: 0.05s">
+      <div class="setup__signals-title">
+        <mat-icon>warning_amber</mat-icon>
+        Issues to review before starting
+      </div>
+      <div class="setup__signals-list">
+        @if (issueCountBySeverity().missing > 0) {
+          <div class="setup__signal setup__signal--warn">
+            <mat-icon>data_usage</mat-icon>
+            <span>{{ issueCountBySeverity().missing }} issue{{ issueCountBySeverity().missing !== 1 ? 's' : '' }} missing story points</span>
+          </div>
+        }
+        @if (issueCountBySeverity().large > 0) {
+          <div class="setup__signal setup__signal--info">
+            <mat-icon>open_in_full</mat-icon>
+            <span>{{ issueCountBySeverity().large }} suspiciously large issue{{ issueCountBySeverity().large !== 1 ? 's' : '' }} (≥ 13 SP)</span>
+          </div>
+        }
+        @if (issueCountBySeverity().noOwner > 0) {
+          <div class="setup__signal setup__signal--info">
+            <mat-icon>person_off</mat-icon>
+            <span>{{ issueCountBySeverity().noOwner }} unassigned issue{{ issueCountBySeverity().noOwner !== 1 ? 's' : '' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Participants section -->
+  <div class="setup__participants enter" style="animation-delay: 0.1s">
+    <div class="setup__section-header">
+      <h3 class="setup__section-title">
+        <mat-icon>group</mat-icon>
+        Participants
+        <span class="setup__section-count">{{ session.participantNames.length }}</span>
+      </h3>
+    </div>
+
+    <div class="setup__participant-grid">
+      @for (name of session.participantNames; track name; let i = $index) {
+        <div
+          class="setup__participant"
+          [class.setup__participant--facilitator]="session.participantIds[i] === session.facilitatorId"
+          matTooltip="{{ name }}{{ session.participantIds[i] === session.facilitatorId ? ' (Facilitator)' : '' }}"
+        >
+          <div
+            class="setup__participant-avatar"
+            [style.background]="colorFor(i).bg"
+            [style.color]="colorFor(i).text"
+          >
+            {{ initialsFor(name) }}
+          </div>
+          <span class="setup__participant-name">{{ name }}</span>
+          @if (session.participantIds[i] === session.facilitatorId) {
+            <span class="setup__participant-role">Facilitator</span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="setup__actions enter" style="animation-delay: 0.15s">
+    <button
+      class="setup__btn setup__btn--ghost"
+      (click)="exit.emit()"
+      type="button"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      Back to Sprints
+    </button>
+
+    @if (isFacilitator) {
+      <button
+        class="setup__btn setup__btn--primary"
+        (click)="advance.emit()"
+        [disabled]="advancing"
+        type="button"
+      >
+        @if (advancing) {
+          <span class="setup__spinner"></span>
+        } @else {
+          <mat-icon>health_and_safety</mat-icon>
+        }
+        Begin Readiness Check
+        <mat-icon class="setup__btn-arrow">arrow_forward</mat-icon>
+      </button>
+    } @else {
+      <div class="setup__waiting">
+        <mat-icon>hourglass_empty</mat-icon>
+        Waiting for facilitator to begin the session…
+      </div>
+    }
+  </div>
+</div>

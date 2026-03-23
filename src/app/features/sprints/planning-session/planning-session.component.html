@@ -1,0 +1,100 @@
+<div class="ps-shell">
+  <!-- Top bar -->
+  <header class="ps-shell__top-bar">
+    <button class="ps-shell__back-btn" (click)="goBack()" type="button">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Sprints</span>
+    </button>
+
+    @if (session(); as s) {
+      <div class="ps-shell__top-center">
+        <span class="ps-shell__sprint-label">{{ s.sprintName }}</span>
+        <span
+          class="ps-shell__status-chip"
+          [class.ps-shell__status-chip--draft]="s.status === 'draft'"
+          [class.ps-shell__status-chip--done]="s.status === 'completed'"
+        >
+          {{ s.status === 'completed' ? 'Committed' : 'In Progress' }}
+        </span>
+      </div>
+
+      <div class="ps-shell__participants-stack">
+        @for (name of s.participantNames.slice(0, 5); track name; let i = $index) {
+          <div
+            class="ps-shell__participant-dot"
+            [style.z-index]="10 - i"
+            [title]="name"
+          >
+            {{ name.slice(0, 1).toUpperCase() }}
+          </div>
+        }
+        @if (s.participantNames.length > 5) {
+          <div class="ps-shell__participant-dot ps-shell__participant-dot--more">
+            +{{ s.participantNames.length - 5 }}
+          </div>
+        }
+      </div>
+    }
+  </header>
+
+  <!-- Phase stepper -->
+  @if (!loading() && !error() && session()) {
+    <app-phase-header [currentPhase]="currentPhase()"></app-phase-header>
+  }
+
+  <!-- Phase content -->
+  <main class="ps-shell__content">
+    <!-- Loading skeleton -->
+    @if (loading() || creating()) {
+      <div class="ps-shell__state-center">
+        <div class="ps-shell__loader">
+          <div class="ps-shell__loader-ring"></div>
+          <span>{{ creating() ? 'Creating session…' : 'Loading session…' }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Error state -->
+    @else if (error()) {
+      <div class="ps-shell__state-center">
+        <div class="ps-shell__error-card">
+          <mat-icon class="ps-shell__error-icon">error_outline</mat-icon>
+          <h3>Something went wrong</h3>
+          <p>{{ error() }}</p>
+          <button class="ps-shell__action-btn" (click)="goBack()" type="button">
+            <mat-icon>arrow_back</mat-icon>
+            Back to Sprints
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Setup phase -->
+    @else if (session() && currentPhase() === 'setup') {
+      <app-phase-setup
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advance()"
+        (exit)="goBack()"
+      ></app-phase-setup>
+    }
+
+    <!-- Phases coming in future increments — placeholder -->
+    @else if (session() && currentPhase() !== 'setup') {
+      <div class="ps-shell__state-center">
+        <div class="ps-shell__placeholder-card">
+          <mat-icon class="ps-shell__placeholder-icon">construction</mat-icon>
+          <h3>{{ currentPhase() | titlecase }} Phase</h3>
+          <p>This phase is being built in the next increment.</p>
+          @if (isFacilitator()) {
+            <button class="ps-shell__action-btn ps-shell__action-btn--ghost" (click)="prevPhase()" type="button">
+              <mat-icon>arrow_back</mat-icon>
+              Go back to Setup
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </main>
+</div>
