@@ -1,5 +1,3 @@
-const admin = require("firebase-admin");
-
 function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value, key);
 }
@@ -8,15 +6,22 @@ function isMissingTeamId(userData) {
   return !hasOwn(userData, "teamId");
 }
 
+function collectMissingUserTeamIdDocs(docs) {
+  return Array.isArray(docs)
+    ? docs.filter((docSnap) => isMissingTeamId(docSnap.data() || {}))
+    : [];
+}
+
 async function backfillMissingUserTeamIds({
-  db = admin.firestore(),
+  db,
   logger = console,
   apply = false,
 } = {}) {
-  const snap = await db.collection("users").get();
-  const missingTeamIdDocs = snap.docs.filter((docSnap) =>
-    isMissingTeamId(docSnap.data() || {}),
-  );
+  const firestore =
+    db ||
+    require("firebase-admin").firestore();
+  const snap = await firestore.collection("users").get();
+  const missingTeamIdDocs = collectMissingUserTeamIdDocs(snap.docs);
 
   if (!apply) {
     logger.log(
@@ -58,6 +63,7 @@ async function backfillMissingUserTeamIds({
 }
 
 async function main() {
+  const admin = require("firebase-admin");
   if (!admin.apps.length) {
     admin.initializeApp();
   }
@@ -75,5 +81,6 @@ if (require.main === module) {
 
 module.exports = {
   backfillMissingUserTeamIds,
+  collectMissingUserTeamIdDocs,
   isMissingTeamId,
 };
