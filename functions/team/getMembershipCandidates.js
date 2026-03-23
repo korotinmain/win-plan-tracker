@@ -48,12 +48,7 @@ function mapTeamMembershipCandidate(user) {
   };
 }
 
-function resolveTeamMembershipCandidates({
-  team,
-  users,
-  callerUid,
-  search = "",
-}) {
+function ensureTeamMembershipCandidateAccess(team, callerUid) {
   const normalizedCallerUid = normalizeString(callerUid);
   if (!normalizedCallerUid) {
     throw new TeamMembershipCandidatesError(
@@ -76,6 +71,17 @@ function resolveTeamMembershipCandidates({
       "Only the current team manager may list membership candidates.",
     );
   }
+
+  return teamId;
+}
+
+function resolveTeamMembershipCandidates({
+  team,
+  users,
+  callerUid,
+  search = "",
+}) {
+  const teamId = ensureTeamMembershipCandidateAccess(team, callerUid);
 
   const existingMemberIds = new Set(normalizeStringArray(team?.memberIds));
   const queryText = normalizeSearch(search);
@@ -103,6 +109,34 @@ function resolveTeamMembershipCandidates({
       );
     })
     .map(mapTeamMembershipCandidate);
+}
+
+async function loadTeamMembershipCandidateUsers(db, teamId) {
+  const usersCollection = db.collection("users");
+  const [unassignedSnap, sameTeamSnap] = await Promise.all([
+    usersCollection.where("teamId", "==", "").get(),
+    usersCollection.where("teamId", "==", teamId).get(),
+  ]);
+
+  const normalizedUsers = [];
+  const seenUids = new Set();
+
+  for (const snapshot of [unassignedSnap, sameTeamSnap]) {
+    for (const docSnap of snapshot.docs || []) {
+      const user = normalizeUser({
+        ...docSnap.data(),
+        uid: docSnap.id,
+      });
+      if (!user || seenUids.has(user.uid)) {
+        continue;
+      }
+
+      seenUids.add(user.uid);
+      normalizedUsers.push(user);
+    }
+  }
+
+  return normalizedUsers;
 }
 
 function normalizeCallableError(error, HttpsErrorCtor) {
@@ -145,14 +179,21 @@ function createGetTeamMembershipCandidatesCallable() {
 
     try {
       const db = admin.firestore();
-      const [teamSnap, usersSnap] = await Promise.all([
-        db.doc(`teams/${teamId}`).get(),
-        db.collection("users").get(),
-      ]);
+      const teamSnap = await db.doc(`teams/${teamId}`).get();
 
       if (!teamSnap.exists) {
         throw new TeamMembershipCandidatesError("not-found", "Team not found.");
       }
+
+      ensureTeamMembershipCandidateAccess(
+        {
+          id: teamSnap.id,
+          ...teamSnap.data(),
+        },
+        auth.uid,
+      );
+
+      const users = await loadTeamMembershipCandidateUsers(db, teamId);
 
       return {
         candidates: resolveTeamMembershipCandidates({
@@ -160,10 +201,7 @@ function createGetTeamMembershipCandidatesCallable() {
             id: teamSnap.id,
             ...teamSnap.data(),
           },
-          users: usersSnap.docs.map((docSnap) => ({
-            ...docSnap.data(),
-            uid: docSnap.id,
-          })),
+          users,
           callerUid: auth.uid,
           search,
         }),
@@ -177,6 +215,8 @@ function createGetTeamMembershipCandidatesCallable() {
 module.exports = {
   TeamMembershipCandidatesError,
   createGetTeamMembershipCandidatesCallable,
+  ensureTeamMembershipCandidateAccess,
+  loadTeamMembershipCandidateUsers,
   mapTeamMembershipCandidate,
   normalizeCallableError,
   resolveTeamMembershipCandidates,

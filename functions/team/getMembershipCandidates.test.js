@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  loadTeamMembershipCandidateUsers,
   resolveTeamMembershipCandidates,
 } = require("./getMembershipCandidates");
 
@@ -158,4 +159,67 @@ test("search trims whitespace and matches displayName or email", () => {
     result.map((candidate) => candidate.uid),
     ["name-match", "email-match"],
   );
+});
+
+test("loads candidates only from unassigned and same-team queries", async () => {
+  const queries = [];
+  const rowsByTeamId = new Map([
+    [
+      "",
+      [
+        {
+          id: "candidate-a",
+          data: () => ({
+            displayName: "Alice Candidate",
+            email: "alice@example.com",
+            photoURL: "https://example.com/alice.png",
+            teamId: "",
+          }),
+        },
+      ],
+    ],
+    [
+      "team-a",
+      [
+        {
+          id: "repair-a",
+          data: () => ({
+            displayName: "Riley Repair",
+            email: "riley@example.com",
+            photoURL: "https://example.com/riley.png",
+            teamId: "team-a",
+          }),
+        },
+      ],
+    ],
+  ]);
+
+  const db = {
+    collection(name) {
+      assert.equal(name, "users");
+      return {
+        where(field, op, value) {
+          queries.push({ field, op, value });
+          assert.equal(field, "teamId");
+          assert.equal(op, "==");
+          return {
+            async get() {
+              return { docs: rowsByTeamId.get(value) ?? [] };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const users = await loadTeamMembershipCandidateUsers(db, "team-a");
+
+  assert.deepEqual(queries, [
+    { field: "teamId", op: "==", value: "" },
+    { field: "teamId", op: "==", value: "team-a" },
+  ]);
+  assert.deepEqual(users.map((user) => user.uid), [
+    "candidate-a",
+    "repair-a",
+  ]);
 });
