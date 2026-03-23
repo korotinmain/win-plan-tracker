@@ -1,0 +1,222 @@
+<div class="rev">
+  <!-- Progress header -->
+  <div class="rev__progress-bar-wrap">
+    <div class="rev__progress-meta">
+      <span class="rev__progress-label">
+        Issue {{ currentIndex + 1 }} of {{ totalIssues }}
+      </span>
+      <span class="rev__progress-count">
+        {{ reviewedCount }} reviewed
+        @if (allReviewed) {
+          <span class="rev__all-done-badge">
+            <mat-icon>check_circle</mat-icon>All done
+          </span>
+        }
+      </span>
+    </div>
+    <div class="rev__progress-track">
+      <div class="rev__progress-fill" [style.width.%]="progressPct"></div>
+    </div>
+  </div>
+
+  @if (currentIssue; as issue) {
+    <!-- Issue card -->
+    <div class="rev__issue-card" [class.rev__issue-card--reviewed]="issue.outcome !== null">
+      <!-- Badges row -->
+      <div class="rev__issue-badges">
+        <span class="rev__type-badge">
+          <mat-icon>{{ getTypeIcon(issue.type) }}</mat-icon>{{ issue.type }}
+        </span>
+        <span class="rev__issue-key">{{ issue.issueKey }}</span>
+        @if (issue.isCarryover) {
+          <span class="rev__badge rev__badge--carryover">
+            <mat-icon>replay</mat-icon>Carryover
+          </span>
+        }
+        @if (issue.isSuspiciouslyLarge) {
+          <span class="rev__badge rev__badge--large">
+            <mat-icon>open_in_full</mat-icon>Large
+          </span>
+        }
+        @if (issue.hasNoEstimate) {
+          <span class="rev__badge rev__badge--warn">
+            <mat-icon>data_usage</mat-icon>No estimate
+          </span>
+        }
+        @if (issue.outcome) {
+          <app-outcome-badge [outcome]="issue.outcome" />
+        }
+      </div>
+
+      <!-- Title -->
+      <h2 class="rev__issue-title">{{ issue.title }}</h2>
+
+      <!-- Meta row -->
+      <div class="rev__issue-meta">
+        <div class="rev__meta-item">
+          <mat-icon>person</mat-icon>
+          <span>{{ issue.assignee ?? 'Unassigned' }}</span>
+        </div>
+        <div class="rev__meta-item" [class.rev__meta-item--muted]="issue.storyPoints === 0">
+          <mat-icon>speed</mat-icon>
+          <span>{{ issue.storyPoints === 0 ? '—' : issue.storyPoints + ' SP' }}</span>
+        </div>
+        <div class="rev__meta-item">
+          <mat-icon>{{ getPriorityIcon(issue.priority) }}</mat-icon>
+          <span>{{ issue.priority }}</span>
+        </div>
+        <div class="rev__meta-item rev__status-chip" [attr.data-category]="issue.statusCategory">
+          {{ issue.status }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Outcome selection (facilitator only) -->
+    @if (isFacilitator) {
+      <div class="rev__outcome-section">
+        <div class="rev__section-label">Set outcome</div>
+        <div class="rev__outcome-grid">
+          @for (id of OUTCOME_ORDER; track id) {
+            <button
+              class="rev__outcome-btn"
+              [class.rev__outcome-btn--active]="localOutcome() === id"
+              [class.rev__outcome-btn--confirmed]="id === 'confirmed'"
+              [class.rev__outcome-btn--reassigned]="id === 'reassigned'"
+              [class.rev__outcome-btn--risky]="id === 'risky-accepted'"
+              [class.rev__outcome-btn--unclear]="id === 'needs-clarification'"
+              [class.rev__outcome-btn--deferred]="id === 'deferred'"
+              [class.rev__outcome-btn--split]="id === 'split-candidate'"
+              (click)="setOutcome(id)"
+              [disabled]="saving()"
+            >
+              <mat-icon>{{ OUTCOME_CONFIGS[id].icon }}</mat-icon>
+              <span>{{ OUTCOME_CONFIGS[id].label }}</span>
+            </button>
+          }
+        </div>
+
+        <!-- Notes -->
+        <div class="rev__notes-wrap">
+          <label class="rev__section-label" for="review-notes">Discussion notes</label>
+          <textarea
+            id="review-notes"
+            class="rev__notes"
+            rows="3"
+            placeholder="Optional — capture key decisions, questions, or context…"
+            [value]="localNotes()"
+            (input)="onNotesChange($any($event.target).value)"
+            (blur)="saveNotes()"
+          ></textarea>
+          @if (saving()) {
+            <span class="rev__saving-indicator">
+              <mat-icon class="spin">progress_activity</mat-icon>Saving…
+            </span>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- Observer: show saved outcome & notes read-only -->
+      <div class="rev__observer-view">
+        <div class="rev__section-label">Current outcome</div>
+        @if (issue.outcome) {
+          <app-outcome-badge [outcome]="issue.outcome" />
+        } @else {
+          <span class="rev__pending-badge">
+            <mat-icon>hourglass_empty</mat-icon>Pending facilitator decision…
+          </span>
+        }
+        @if (issue.notes) {
+          <div class="rev__observer-notes">{{ issue.notes }}</div>
+        }
+      </div>
+    }
+
+    <!-- Participation -->
+    <div class="rev__participation">
+      <div class="rev__participation-label">
+        <mat-icon>group</mat-icon>
+        {{ participantsWeighedIn.length }}/{{ session.participantIds.length }}
+        participant{{ session.participantIds.length !== 1 ? 's' : '' }} have weighed in
+      </div>
+
+      @if (!hasCurrentUserWeighedIn) {
+        <button
+          class="rev__weigh-btn"
+          (click)="markWeighed()"
+          [disabled]="markingWeighed()"
+        >
+          <mat-icon>thumb_up</mat-icon>
+          I've reviewed this
+        </button>
+      } @else {
+        <span class="rev__weighed-indicator">
+          <mat-icon>check_circle</mat-icon>You've weighed in
+        </span>
+      }
+    </div>
+  } @else {
+    <!-- Empty state: no issues -->
+    <div class="rev__empty">
+      <mat-icon>check_box_outline_blank</mat-icon>
+      <span>No issues in this sprint backlog.</span>
+    </div>
+  }
+
+  <!-- Footer navigation -->
+  <div class="rev__footer">
+    <div class="rev__nav-left">
+      <button
+        class="rev__nav-btn"
+        (click)="back.emit()"
+        [disabled]="advancing || navigating()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        <span>Context</span>
+      </button>
+
+      @if (!isFirstIssue) {
+        <button
+          class="rev__nav-btn"
+          (click)="navPrev()"
+          [disabled]="navigating() || !isFacilitator"
+        >
+          <mat-icon>chevron_left</mat-icon>
+          <span>Prev</span>
+        </button>
+      }
+    </div>
+
+    <div class="rev__nav-right">
+      @if (!isLastIssue) {
+        <button
+          class="rev__nav-btn rev__nav-btn--next"
+          (click)="navNext()"
+          [disabled]="navigating() || !isFacilitator"
+        >
+          <span>Next</span>
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      }
+
+      @if (isFacilitator) {
+        <button
+          class="rev__finish-btn"
+          [class.rev__finish-btn--ready]="allReviewed"
+          (click)="advance.emit()"
+          [disabled]="advancing || !allReviewed"
+          [matTooltip]="allReviewed ? '' : 'Set an outcome for every issue first'"
+        >
+          @if (advancing) {
+            <ng-container>
+              <mat-icon class="spin">progress_activity</mat-icon>Saving…
+            </ng-container>
+          } @else {
+            <ng-container>
+              Proceed to Balancing<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            </ng-container>
+          }
+        </button>
+      }
+    </div>
+  </div>
+</div>

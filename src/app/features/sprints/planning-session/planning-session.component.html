@@ -102,6 +102,17 @@
       ></app-phase-context>
     }
 
+    <!-- Review phase -->
+    @else if (session() && currentPhase() === 'review') {
+      <app-phase-review
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advance()"
+        (back)="prevPhase()"
+      ></app-phase-review>
+    }
+
     <!-- Phases coming in future increments — placeholder -->
     @else if (session() && currentPhase() !== 'setup') {
       <div class="ps-shell__state-center">
