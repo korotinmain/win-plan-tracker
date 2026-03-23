@@ -1,0 +1,117 @@
+<div class="pc">
+  <!-- Sprint identity card -->
+  <div class="pc__sprint-card">
+    <div class="pc__sprint-label">Sprint</div>
+    <div class="pc__sprint-name">{{ session.sprintName }}</div>
+
+    <div class="pc__sprint-meta">
+      <div class="pc__meta-item">
+        <mat-icon>calendar_today</mat-icon>
+        <span>{{ sprintDateRange }}</span>
+        @if (workingDays() !== null) {
+          <span class="pc__meta-tag">{{ workingDays() }} working day{{ workingDays() !== 1 ? 's' : '' }}</span>
+        }
+      </div>
+
+      @if (session.sprintGoal) {
+        <div class="pc__meta-item pc__meta-item--goal">
+          <mat-icon>flag</mat-icon>
+          <span class="pc__goal">{{ session.sprintGoal }}</span>
+        </div>
+      } @else {
+        <div class="pc__meta-item pc__meta-item--muted">
+          <mat-icon>flag</mat-icon>
+          <span>No sprint goal set</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="pc__stats">
+    <div class="pc__stat">
+      <div class="pc__stat-value">{{ totalIssues() }}</div>
+      <div class="pc__stat-label">Total issues</div>
+    </div>
+    <div class="pc__stat-divider"></div>
+    <div class="pc__stat">
+      <div class="pc__stat-value">{{ totalSP() }}</div>
+      <div class="pc__stat-label">Story points</div>
+    </div>
+    <div class="pc__stat-divider"></div>
+    <div class="pc__stat">
+      <div class="pc__stat-value">{{ session.participantIds.length }}</div>
+      <div class="pc__stat-label">Participant{{ session.participantIds.length !== 1 ? 's' : '' }}</div>
+    </div>
+    @if (workingDays() !== null) {
+      <div class="pc__stat-divider"></div>
+      <div class="pc__stat">
+        <div class="pc__stat-value">{{ workingDays() }}</div>
+        <div class="pc__stat-label">Working days</div>
+      </div>
+    }
+  </div>
+
+  <!-- Issue type breakdown -->
+  @if (typeStats().length > 0) {
+    <div class="pc__section">
+      <div class="pc__section-title">Issue Breakdown</div>
+      <div class="pc__type-list">
+        @for (stat of typeStats(); track stat.type) {
+          <div class="pc__type-row">
+            <div class="pc__type-left">
+              <mat-icon class="pc__type-icon">{{ getTypeIcon(stat.type) }}</mat-icon>
+              <span class="pc__type-name">{{ stat.type }}</span>
+            </div>
+            <div class="pc__type-right">
+              <span class="pc__type-count">{{ stat.count }}</span>
+              @if (stat.sp > 0) {
+                <span class="pc__type-sp">{{ stat.sp }} SP</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Participants -->
+  <div class="pc__section">
+    <div class="pc__section-title">Planning Team</div>
+    <div class="pc__participants">
+      @for (name of session.participantNames; track name) {
+        <div class="pc__avatar" [matTooltip]="name">
+          {{ name.charAt(0).toUpperCase() }}
+        </div>
+      }
+    </div>
+    <div class="pc__facilitator-note">
+      Facilitated by <strong>{{ session.facilitatorName }}</strong>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  @if (isFacilitator) {
+    <div class="pc__footer">
+      <button mat-stroked-button class="pc__back-btn" (click)="back.emit()" [disabled]="advancing">
+        <mat-icon>arrow_back</mat-icon>Back
+      </button>
+      <button mat-flat-button class="pc__advance-btn" (click)="advance.emit()" [disabled]="advancing">
+        @if (advancing) {
+          <ng-container>
+            <mat-icon class="spin">progress_activity</mat-icon>Saving…
+          </ng-container>
+        } @else {
+          <ng-container>
+            Begin Issue Review<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </ng-container>
+        }
+      </button>
+    </div>
+  } @else {
+    <div class="pc__observer">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Waiting for facilitator to proceed…</span>
+    </div>
+  }
+</div>

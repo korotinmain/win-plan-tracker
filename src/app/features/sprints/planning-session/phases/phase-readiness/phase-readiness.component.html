@@ -1,0 +1,116 @@
+<div class="pr">
+  <!-- Header -->
+  <div class="pr__header">
+    <div class="pr__header-left">
+      <span class="pr__icon" [class.pr__icon--ok]="isClean" [class.pr__icon--warn]="!isClean">
+        <mat-icon>{{ isClean ? 'check_circle' : 'warning_amber' }}</mat-icon>
+      </span>
+      <div>
+        <div class="pr__title">Readiness Check</div>
+        <div class="pr__subtitle">
+          @if (isClean) {
+            All issues look good — sprint is ready to plan
+          } @else if (criticalCount > 0) {
+            {{ criticalCount }} blocker{{ criticalCount > 1 ? 's' : '' }} need attention before planning
+          } @else {
+            {{ warningCount }} item{{ warningCount > 1 ? 's' : '' }} worth reviewing before you start
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="pr__badges">
+      @if (criticalCount > 0) {
+        <div class="pr__count pr__count--critical">
+          <mat-icon>block</mat-icon>{{ criticalCount }} critical
+        </div>
+      }
+      @if (warningCount > 0) {
+        <div class="pr__count pr__count--warning">
+          <mat-icon>warning</mat-icon>{{ warningCount }} warning{{ warningCount > 1 ? 's' : '' }}
+        </div>
+      }
+      @if (infoCount > 0) {
+        <div class="pr__count pr__count--info">
+          <mat-icon>info</mat-icon>{{ infoCount }} info
+        </div>
+      }
+      @if (isClean && warnings().length === 0) {
+        <div class="pr__count pr__count--ok">
+          <mat-icon>verified</mat-icon>No findings
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Warning cards -->
+  @if (warnings().length > 0) {
+    <div class="pr__list">
+      @for (w of warnings(); track w.id) {
+        <div class="pr__card" [class.pr__card--expanded]="isExpanded(w.id)">
+          <button class="pr__card-head" (click)="toggle(w.id)" [attr.aria-expanded]="isExpanded(w.id)">
+            <app-readiness-badge [severity]="w.severity" [label]="w.title" [icon]="w.icon" />
+            <div class="pr__card-meta">
+              <span class="pr__affected-count">{{ w.affectedIssueIds.length }} issue{{ w.affectedIssueIds.length > 1 ? 's' : '' }}</span>
+              <mat-icon class="pr__chevron">{{ isExpanded(w.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </div>
+          </button>
+
+          @if (isExpanded(w.id)) {
+            <div class="pr__card-body">
+              <p class="pr__detail">{{ w.detail }}</p>
+              @if (w.affectedIssueIds.length > 0) {
+                <div class="pr__issues">
+                  @for (key of w.affectedIssueIds; track key) {
+                    <span class="pr__issue-key">{{ key }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="pr__empty">
+      <mat-icon>task_alt</mat-icon>
+      <span>Sprint backlog looks healthy — no issues flagged</span>
+    </div>
+  }
+
+  <!-- Footer CTA (facilitator only) -->
+  @if (isFacilitator) {
+    <div class="pr__footer">
+      <button mat-stroked-button class="pr__back-btn" (click)="back.emit()" [disabled]="advancing">
+        <mat-icon>arrow_back</mat-icon>Back
+      </button>
+
+      <button
+        mat-flat-button
+        class="pr__advance-btn"
+        [class.pr__advance-btn--warn]="!isClean"
+        (click)="advance.emit()"
+        [disabled]="advancing"
+      >
+        @if (advancing) {
+          <ng-container>
+            <mat-icon class="spin">progress_activity</mat-icon>Saving…
+          </ng-container>
+        } @else if (isClean) {
+          <ng-container>
+            Proceed to Sprint Context<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </ng-container>
+        } @else {
+          <ng-container>
+            Proceed anyway<mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </ng-container>
+        }
+      </button>
+    </div>
+  } @else {
+    <div class="pr__observer">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Waiting for facilitator to proceed…</span>
+    </div>
+  }
+</div>

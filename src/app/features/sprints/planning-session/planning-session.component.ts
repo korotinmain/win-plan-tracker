@@ -23,6 +23,9 @@ import { PlanningService } from '../../../core/services/planning.service';
 import { PlanMemberOption } from '../participant-select-dialog/participant-select-dialog.component';
 import { PhaseHeaderComponent } from './shared/phase-header/phase-header.component';
 import { PhaseSetupComponent } from './phases/phase-setup/phase-setup.component';
+import { PhaseReadinessComponent } from './phases/phase-readiness/phase-readiness.component';
+import { PhaseContextComponent } from './phases/phase-context/phase-context.component';
+import { ReadinessWarning, computeReadinessWarnings } from './phases/phase-readiness/readiness.util';
 
 // ─── Phase ordering ──────────────────────────────────────────────────────────
 const PHASE_ORDER: PlanningPhase[] = [
@@ -75,6 +78,8 @@ function buildIssueReviews(issues: JiraSprintIssue[]): IssueReview[] {
     MatSnackBarModule,
     PhaseHeaderComponent,
     PhaseSetupComponent,
+    PhaseReadinessComponent,
+    PhaseContextComponent,
   ],
   templateUrl: './planning-session.component.html',
   styleUrls: ['./planning-session.component.scss'],
@@ -216,6 +221,23 @@ export class PlanningSessionComponent implements OnInit, OnDestroy {
     this.advancing.set(true);
     try {
       await this.planningService.advancePhase(s.id, PHASE_ORDER[idx + 1]);
+    } finally {
+      this.advancing.set(false);
+    }
+  }
+
+  async advanceFromReadiness(): Promise<void> {
+    const s = this.session();
+    if (!s?.id || !this.isFacilitator()) return;
+
+    const warnings: ReadinessWarning[] = computeReadinessWarnings(s.issueReviews);
+    const warningTitles = warnings.map((w) => w.title);
+
+    this.advancing.set(true);
+    try {
+      await this.planningService.advancePhase(s.id, 'context', {
+        readinessWarnings: warningTitles,
+      });
     } finally {
       this.advancing.set(false);
     }

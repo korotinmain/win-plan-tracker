@@ -1,0 +1,289 @@
+:host {
+  display: block;
+}
+
+.pc {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 0;
+
+  // ── Sprint card ────────────────────────────────────────────
+  &__sprint-card {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c-accent) 14%, var(--c-surface)),
+      var(--c-surface)
+    );
+    border: 1px solid color-mix(in srgb, var(--c-accent) 30%, var(--c-border));
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+
+  &__sprint-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-accent);
+    margin-bottom: 4px;
+  }
+
+  &__sprint-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+
+  &__sprint-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__meta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--c-text-2);
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--c-accent);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    &--goal {
+      align-items: flex-start;
+    }
+
+    &--muted {
+      color: var(--c-text-3);
+      mat-icon { color: var(--c-text-3); }
+    }
+  }
+
+  &__meta-tag {
+    background: color-mix(in srgb, var(--c-accent) 14%, transparent);
+    color: var(--c-accent);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+
+  &__goal {
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  // ── Stats row ──────────────────────────────────────────────
+  &__stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    padding: 16px 8px;
+    overflow: hidden;
+  }
+
+  &__stat {
+    flex: 1;
+    text-align: center;
+    padding: 4px 12px;
+  }
+
+  &__stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  &__stat-label {
+    font-size: 11px;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  &__stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--c-border);
+    flex-shrink: 0;
+  }
+
+  // ── Section ────────────────────────────────────────────────
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-text-3);
+  }
+
+  // ── Issue type breakdown ───────────────────────────────────
+  &__type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__type-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    gap: 12px;
+  }
+
+  &__type-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__type-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--c-accent);
+  }
+
+  &__type-name {
+    font-size: 13px;
+    color: var(--c-text);
+    font-weight: 500;
+  }
+
+  &__type-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__type-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c-text);
+    min-width: 20px;
+    text-align: right;
+  }
+
+  &__type-sp {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-accent);
+    background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+    border-radius: 8px;
+    padding: 2px 7px;
+  }
+
+  // ── Participants ───────────────────────────────────────────
+  &__participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg,
+      var(--c-accent),
+      color-mix(in srgb, var(--c-accent) 60%, #8b5cf6)
+    );
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    user-select: none;
+  }
+
+  &__facilitator-note {
+    font-size: 12px;
+    color: var(--c-text-3);
+
+    strong {
+      color: var(--c-text-2);
+    }
+  }
+
+  // ── Footer ────────────────────────────────────────────────
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--c-border);
+  }
+
+  &__back-btn {
+    color: var(--c-text-2);
+    border-color: var(--c-border) !important;
+  }
+
+  &__advance-btn {
+    background: var(--c-accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+    min-width: 200px;
+  }
+
+  // ── Observer ──────────────────────────────────────────────
+  &__observer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: color-mix(in srgb, var(--c-accent) 6%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--c-accent) 30%, transparent);
+    border-radius: 12px;
+    color: var(--c-text-2);
+    font-size: 13px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--c-accent);
+    }
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

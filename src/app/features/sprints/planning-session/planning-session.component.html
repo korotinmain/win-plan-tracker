@@ -80,6 +80,28 @@
       ></app-phase-setup>
     }
 
+    <!-- Readiness phase -->
+    @else if (session() && currentPhase() === 'readiness') {
+      <app-phase-readiness
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advanceFromReadiness()"
+        (back)="prevPhase()"
+      ></app-phase-readiness>
+    }
+
+    <!-- Context phase -->
+    @else if (session() && currentPhase() === 'context') {
+      <app-phase-context
+        [session]="session()!"
+        [isFacilitator]="isFacilitator()"
+        [advancing]="advancing()"
+        (advance)="advance()"
+        (back)="prevPhase()"
+      ></app-phase-context>
+    }
+
     <!-- Phases coming in future increments — placeholder -->
     @else if (session() && currentPhase() !== 'setup') {
       <div class="ps-shell__state-center">
