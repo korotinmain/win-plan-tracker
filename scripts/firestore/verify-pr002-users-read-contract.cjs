@@ -88,6 +88,7 @@ async function main() {
   const clients = [];
 
   try {
+    const signedOut = createClient('signed-out');
     const admin = await createSignedInUser('admin', {
       displayName: 'Admin User',
       email: 'admin@example.com',
@@ -113,7 +114,7 @@ async function main() {
       teamId: '',
     });
 
-    clients.push(admin, member, outsider, noTeam);
+    clients.push(signedOut, admin, member, outsider, noTeam);
 
     await setDoc(doc(admin.db, 'teams', 'team-alpha'), {
       id: 'team-alpha',
@@ -168,6 +169,14 @@ async function main() {
       if (snapshot.size !== 2) {
         throw new Error(`Expected 2 team docs, found ${snapshot.size}`);
       }
+    });
+
+    await expectDenied('7. signed-out user cannot read another user profile doc', async () => {
+      await getDoc(doc(signedOut.db, 'users', outsider.uid));
+    });
+
+    await expectDenied('8. signed-out user cannot read teams collection', async () => {
+      await getDocs(collection(signedOut.db, 'teams'));
     });
 
     console.log('PR-002 users/team read contract verification passed.');
